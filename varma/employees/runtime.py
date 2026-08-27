@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 
 from varma.clock import now_london
 from varma.controls.engine import ControlEngine
-from varma.db.models import ChatMessage, Employee, IntelligenceBrief
+from varma.db.models import ChatMessage, Employee, Handoff, IntelligenceBrief
 from varma.memory.stores import MemoryStores
+from varma.meetings.handoff import CEO_SLUG, handoff_to_dict
 from varma.ports.llm import get_llm
 from varma.skills.prepare_daily_intelligence_brief import brief_to_dict
 
@@ -28,8 +29,29 @@ class EmployeeRuntime:
             .first()
         )
 
+    def inbox(self) -> list[Handoff]:
+        return (
+            self.session.query(Handoff)
+            .filter_by(to_employee_id=self.employee.id)
+            .order_by(Handoff.created_at.desc())
+            .all()
+        )
+
+    def latest_received_brief(self) -> IntelligenceBrief | None:
+        handoff = (
+            self.session.query(Handoff)
+            .filter_by(to_employee_id=self.employee.id, artefact_type="intelligence_brief")
+            .order_by(Handoff.created_at.desc())
+            .first()
+        )
+        if handoff is None:
+            return None
+        return self.session.get(IntelligenceBrief, handoff.artefact_id)
+
     def context_pack(self) -> dict:
-        brief = self.latest_brief()
+        produced = self.latest_brief()
+        received = self.latest_received_brief()
+        brief = produced or received
         return {
             "employee": {
                 "id": self.employee.id,
@@ -44,6 +66,10 @@ class EmployeeRuntime:
             "lessons": [m.content for m in self.memory.employee_lessons(self.employee.id)],
             "controls": self.controls.snapshot(),
             "latest_brief": brief_to_dict(brief) if brief else None,
+            "produced_brief": brief_to_dict(produced) if produced else None,
+            "received_brief": brief_to_dict(received) if received else None,
+            "inbox": [handoff_to_dict(h) for h in self.inbox()[:10]],
+            "cannot_approve_live_trading": self.employee.slug == CEO_SLUG,
         }
 
     def chat(self, message: str, *, from_role: str = "board_member") -> ChatMessage:

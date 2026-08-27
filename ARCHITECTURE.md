@@ -37,12 +37,12 @@ Board Member UI  (office canvas + RIGHT-HAND PANEL + approvals)
    Chat  -->  same employee runtime   (Talk is an OPEN BOARD DECISION; off in this slice)
         |
 Company Kernel
-    Identity, Employees (MI + CEO), Permissions, trading_mode, allow_list
-    Skills, Routines, Scheduler (Europe/London)
-    Memory (employee / organisation / evidence)
-    Meeting handoffs (brief → CEO; artefact in the database)
-    Control engine
-    Observability, Cost ledger
+   Identity, Employees (MI + CEO), Permissions, trading_mode, allow_list
+   Skills, Routines, Scheduler (Europe/London)
+   Memory (employee / organisation / evidence)
+   Meeting handoffs (MI brief → CEO; artefact in the database)
+   Control engine
+   Observability, Cost ledger
         |
    LLMPort          DataPorts           ExecutionPort
    (FakeLLM)    (fake delayed/news)    (LIVE adapter not loaded)

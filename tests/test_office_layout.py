@@ -20,3 +20,8 @@ def test_right_hand_panel_not_overlay():
 def test_office_click_opens_panel_logic():
     assert "right-panel" in JS
     assert "status" in JS.lower() or "bubble" in JS.lower()
+    assert "ceo" in JS
+    assert "market-intelligence-research" in JS
+    assert "Ask the CEO" in JS or "ceo" in JS
+    assert "right-panel" in HTML
+    assert "covering overlay" in HTML.lower() or "no covering overlay" in HTML.lower()

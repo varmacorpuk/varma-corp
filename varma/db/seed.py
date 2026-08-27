@@ -1,4 +1,4 @@
-"""Seed the first vertical slice. Does not invent Board-permanent numbers."""
+"""Seed persistent identities and TEMPORARY development defaults. Does not invent Board-permanent numbers."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from varma.db.models import (
     Skill,
     WatchlistItem,
 )
+from varma.meetings.handoff import CEO_SLUG
 
 MI_SLUG = "market-intelligence-research"
 
@@ -131,6 +132,8 @@ def seed_if_empty(session: Session) -> None:
             )
         )
 
+    _seed_ceo(session)
+
     if session.query(WatchlistItem).count() == 0:
         for symbol, name, venue in TEMPORARY_WATCHLIST:
             session.add(
@@ -144,3 +147,64 @@ def seed_if_empty(session: Session) -> None:
             )
 
     session.commit()
+
+
+def _seed_ceo(session: Session) -> None:
+    """Persistent CEO identity. Meeting recipient of the MI brief. Cannot approve LIVE."""
+    ceo = session.query(Employee).filter_by(slug=CEO_SLUG).one_or_none()
+    if ceo is not None:
+        return
+    ceo = Employee(
+        slug=CEO_SLUG,
+        display_name="CEO",
+        role_title="Chief Executive Officer",
+        department="CEO / Management",
+        personality=(
+            "Operational, holds the meeting pack, does not treat a brief as a trade. "
+            "Does not approve live trading. Personality never overrides controls."
+        ),
+        responsibilities=(
+            "Meeting recipient of the Market Intelligence brief for the 07:30 "
+            "Europe/London company meeting (Document 18). "
+            "Cannot place orders. Cannot write control tables. Cannot approve LIVE."
+        ),
+        authority_boundaries=(
+            "No live-trading approval — Board Member only (Document 11). "
+            "No execution. No allow-list writes. No trading_mode writes. "
+            "No numeric limit writes. A handoff is not execution authority."
+        ),
+        status="AVAILABLE",
+        status_bubble="AVAILABLE",
+        office_x=220,
+        office_y=70,
+        is_primary_agent=1,
+        created_at=now_london(),
+    )
+    session.add(ceo)
+    session.flush()
+    session.add(
+        MemoryEmployee(
+            employee_id=ceo.id,
+            kind="lesson",
+            content=(
+                "The intelligence brief is a meeting pack, not a trade. "
+                "CEO cannot approve live trading. Explicit Board Member approval is required. "
+                "Silence is not approval."
+            ),
+            created_at=now_london(),
+        )
+    )
+    for action, allowed in (
+        ("place_order", False),
+        ("write_controls", False),
+        ("approve_live", False),
+        ("transition_to_live", False),
+    ):
+        session.add(
+            Permission(
+                subject_type="employee",
+                subject_id=ceo.id,
+                action=action,
+                allowed=allowed,
+            )
+        )

@@ -1,20 +1,21 @@
-# Varma Corp. — first vertical slice
+# Varma Corp. — kernel + Board Member control room
 
 Company kernel plus a Board Member control-room desktop. This is DEVELOPMENT on this box, not production runtime, and not the Board Member Mac/Windows as the system of record.
 
-Human user terminology: Board Member. The CEO is an AI employee (not built in this slice). Never MD.
+Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 
 ## What this slice proves
 
 1. FastAPI kernel: health, Board Member auth stub, control tables (permissions, empty allow-list, trading_mode=LIVE_BLOCKED). Employees cannot write those tables.
-2. One persistent employee: Market Intelligence / Research Analyst (identity, role, four memory stores, skill, routine).
+2. Two persistent employees: Market Intelligence / Research Analyst (Asha Patel) and CEO (identity, role, memory, permissions). LLM calls are invocations, not the employee.
 3. Skill prepare_daily_intelligence_brief. FakeLLM for tests. Optional LLM env is unused by default.
 4. On-demand brief plus a documented 06:30 Europe/London weekday routine.
 5. Independent verification of the brief (required fields, source+timestamp, freshness, TEMPORARY cost cap).
-6. Brief stored in the database, not as source of truth on a desktop disk.
-7. Desktop: 2D office, one employee sprite, click to right-hand panel with the latest brief; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. No Talk/voice.
-8. pytest without paid APIs. Execution in LIVE mode is denied. Empty allow-list cannot execute.
-9. TEMPORARY DEVELOPMENT DEFAULT watchlist of a few listed stocks. It is not the execution allow-list. No gold.
+6. Brief stored in the database, then handed off to the CEO as the 07:30 meeting recipient (Document 18). Handoff artefact lives in the database, not on a desktop disk.
+7. Desktop: 2D office, MI + CEO sprites, click to right-hand panel; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. No Talk/voice.
+8. CEO does not approve live trading. Chat to CEO uses the same runtime. Asha Patel (MI) still produces the brief.
+9. pytest without paid APIs. Execution in LIVE mode is denied. Empty allow-list cannot execute.
+10. TEMPORARY DEVELOPMENT DEFAULT watchlist of a few listed stocks. It is not the execution allow-list. No gold.
 
 ## System separation
 
@@ -52,11 +53,11 @@ One client for Mac and Windows (Electron). Browser also works in development.
 
 Then open http://127.0.0.1:5173
 
-Click the employee. The right-hand panel shows the latest brief. Office stays visible. Chat uses the same employee runtime. Talk is disabled.
+Click Asha Patel or the CEO. The right-hand panel shows work (produced brief and/or meeting inbox). Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO cannot approve LIVE.
 
 ## 06:30 Europe/London routine
 
-Documented weekday schedule: 06:30 Europe/London, output due before the 07:30 company meeting (Documents 02, 09, 18).
+Documented weekday schedule: 06:30 Europe/London, output due before the 07:30 company meeting (Documents 02, 09, 18). The CEO is the meeting recipient of that pack.
 
 This slice does not start a 24/7 daemon scheduler. Run on demand:
 
@@ -71,6 +72,7 @@ A later slice can attach the same skill to a Europe/London scheduler.
 - Numeric limits: unset, so deny (OPEN BOARD DECISION, not invented here)
 - LIVE adapter: not loaded
 - Employees cannot write control tables
+- CEO cannot approve live trading (Board Member only)
 - Paper and live trading are not implemented in this slice
 
 Gate: PAPER then EVALUATION then recommendation then Board review then explicit Board approval then LIVE. Silence is not approval.
@@ -91,7 +93,7 @@ OPEN BOARD DECISIONS left unset (must not be invented): numeric paper limits; pa
 
 ## Next slice
 
-CEO as meeting recipient of the intelligence brief (Document 18), then Challenge on a sample thesis, then Risk as a deny-path demo.
+Challenge on a sample thesis, then Risk as a deny-path demo.
 
 ## Specs
 
@@ -101,4 +103,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; brief verification; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
+Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO cannot approve LIVE; brief verification and handoff to CEO; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.

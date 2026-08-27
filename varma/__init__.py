@@ -1,4 +1,4 @@
-"""Varma Corp. company kernel — first vertical slice.
+"""Varma Corp. company kernel.
 
 This package is the organisation, not the virtual office.
 The office is a projection (Document 16).

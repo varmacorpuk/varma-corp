@@ -193,6 +193,22 @@ class IntelligenceBrief(Base):
     no_execution_authority: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class Handoff(Base):
+    """Meeting / workflow handoff artefact. Database is source of truth, not the desktop."""
+
+    __tablename__ = "handoffs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    from_employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"))
+    to_employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"))
+    artefact_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    artefact_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    purpose: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="DELIVERED")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    note: Mapped[str] = mapped_column(Text, default="")
+
+
 class CostEntry(Base):
     __tablename__ = "cost_ledger"
 

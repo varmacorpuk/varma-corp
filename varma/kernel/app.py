@@ -8,6 +8,7 @@ from typing import Any
 from fastapi import Body, Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from varma import __version__
@@ -18,6 +19,7 @@ from varma.db.models import ChatMessage, Employee, IntelligenceBrief, WatchlistI
 from varma.db.seed import MI_SLUG, seed_if_empty
 from varma.employees.runtime import EmployeeRuntime
 from varma.kernel.auth import Actor, parse_actor, require_board_member
+from varma.meetings.handoff import CEO_SLUG, handoff_to_dict
 from varma.ports.execution import ExecutionPort
 from varma.routines.run_brief import run_brief
 from varma.skills.prepare_daily_intelligence_brief import brief_to_dict
@@ -158,6 +160,24 @@ def create_app() -> FastAPI:
             return {"brief": None, "note": "No brief stored yet. Run python -m varma.routines.run_brief"}
         return {"brief": brief_to_dict(brief)}
 
+    @app.get("/employees/{slug}/inbox")
+    def inbox(slug: str, session: Session = Depends(_session)) -> dict[str, Any]:
+        emp = _get_employee(session, slug)
+        rt = EmployeeRuntime(session, emp)
+        items: list[dict[str, Any]] = []
+        for h in rt.inbox():
+            item = handoff_to_dict(h)
+            if h.artefact_type == "intelligence_brief":
+                artefact = session.get(IntelligenceBrief, h.artefact_id)
+                item["brief"] = brief_to_dict(artefact) if artefact else None
+            items.append(item)
+        return {
+            "employee": emp.slug,
+            "display_name": emp.display_name,
+            "ceo_cannot_approve_live_trading": emp.slug == CEO_SLUG,
+            "items": items,
+        }
+
     @app.post("/employees/{slug}/chat")
     def chat(
         slug: str,
@@ -221,13 +241,20 @@ def create_app() -> FastAPI:
     ) -> dict[str, Any]:
         actor = parse_actor(authorization, x_varma_actor, x_varma_employee)
         port = ExecutionPort(session)
-        emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
-        actor_id = actor.identity if actor.actor_type != "employee" else (actor.identity or emp.id)
-        if actor.actor_type == "employee" and actor.identity in {MI_SLUG, emp.slug}:
-            actor_id = emp.id
+        if actor.actor_type == "employee":
+            actor_id = _resolve_employee_actor_id(session, actor)
+            actor_type = "employee"
+        elif actor.actor_type == "board_member":
+            actor_id = actor.identity
+            actor_type = "board_member"
+        else:
+            # Anonymous attempts still go through the engine as an employee-shaped deny.
+            mi = session.query(Employee).filter_by(slug=MI_SLUG).one()
+            actor_id = mi.id
+            actor_type = "employee"
         decision = port.place_order(
-            actor_id=actor_id if actor.actor_type != "anonymous" else emp.id,
-            actor_type="employee" if actor.actor_type != "board_member" else "board_member",
+            actor_id=actor_id,
+            actor_type=actor_type,
             order=payload.model_dump(),
         )
         raise HTTPException(403, detail={"reason": decision.reason, "allowed": False})
@@ -271,11 +298,23 @@ def create_app() -> FastAPI:
                 "width": 320,
                 "height": 200,
                 "style": "placeholder-pixel-2d",
-                "rooms": [{"id": "research", "label": "Research desk"}],
+                "rooms": [
+                    {"id": "research", "label": "Research desk"},
+                    {"id": "ceo", "label": "CEO desk"},
+                ],
             },
         }
 
     return app
+
+
+def _resolve_employee_actor_id(session: Session, actor: Actor) -> str:
+    emp = (
+        session.query(Employee)
+        .filter(or_(Employee.slug == actor.identity, Employee.id == actor.identity))
+        .one_or_none()
+    )
+    return emp.id if emp else actor.identity
 
 
 def _get_employee(session: Session, slug: str) -> Employee:
@@ -297,6 +336,8 @@ def _employee_public(e: Employee) -> dict[str, Any]:
         "office_x": e.office_x,
         "office_y": e.office_y,
         "is_primary_agent": bool(e.is_primary_agent),
+        "cannot_approve_live_trading": e.slug == CEO_SLUG,
+        "is_meeting_brief_recipient": e.slug == CEO_SLUG,
     }
 
 

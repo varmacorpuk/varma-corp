@@ -1,6 +1,7 @@
 from tests.conftest import BOARD_HEADERS, EMPLOYEE_HEADERS
 from varma.controls.engine import ControlEngine
 from varma.db.models import Employee
+from varma.db.seed import MI_SLUG
 from varma.ports.execution import ExecutionPort, LiveBrokerAdapter
 
 
@@ -17,7 +18,7 @@ def test_live_place_order_denied_via_api(client):
 
 
 def test_empty_allow_list_cannot_execute(session):
-    emp = session.query(Employee).first()
+    emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     engine = ControlEngine(session)
     assert engine.allow_list_symbols() == []
     d = engine.place_order(
@@ -32,7 +33,7 @@ def test_empty_allow_list_cannot_execute(session):
 def test_empty_allow_list_denies_even_if_permission_granted(session):
     from varma.db.models import Permission
 
-    emp = session.query(Employee).first()
+    emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     perm = (
         session.query(Permission)
         .filter_by(subject_id=emp.id, action="place_order")
@@ -58,7 +59,7 @@ def test_live_adapter_cannot_be_constructed():
 
 
 def test_gold_cannot_execute(session):
-    emp = session.query(Employee).first()
+    emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     from varma.db.models import Permission
 
     perm = (
@@ -81,7 +82,7 @@ def test_missing_limits_deny_after_allow_list(session):
     from varma.clock import now_london
     from varma.db.models import AllowListInstrument, Permission
 
-    emp = session.query(Employee).first()
+    emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     session.query(Permission).filter_by(subject_id=emp.id, action="place_order").one().allowed = True
     session.add(
         AllowListInstrument(

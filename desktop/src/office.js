@@ -47,17 +47,26 @@
     ctx.fillStyle = "#111";
     ctx.font = "10px monospace";
     ctx.fillText("RESEARCH", 72, 136);
+    // CEO desk
+    ctx.fillStyle = "#3d2b1f";
+    ctx.fillRect(400, 70, 120, 40);
+    ctx.fillStyle = "#d8c39a";
+    ctx.fillRect(408, 62, 48, 12);
+    ctx.fillStyle = "#111";
+    ctx.fillText("CEO", 412, 56);
 
     employees.forEach((e) => {
       const x = (e.office_x || 96) * 2;
       const y = (e.office_y || 108) * 1.4;
-      drawSprite(x, y, selected && selected.slug === e.slug);
+      const kind = e.slug === "ceo" ? "ceo" : "research";
+      drawSprite(x, y, selected && selected.slug === e.slug, kind);
       drawBubble(x, y, e.status_bubble || e.status || "OK");
-      e._hit = { x: x - 8, y: y - 40, w: 80, h: 70 };
+      drawName(x, y, e.display_name || e.slug);
+      e._hit = { x: x - 8, y: y - 40, w: 80, h: 90 };
     });
   }
 
-  function drawSprite(x, y, highlight) {
+  function drawSprite(x, y, highlight, kind) {
     const s = sprite.scale;
     const px = (gx, gy, c, gw, gh) => {
       ctx.fillStyle = c;
@@ -67,11 +76,19 @@
       ctx.fillStyle = "rgba(255,255,180,0.5)";
       ctx.fillRect(x - 6, y - 6, 16 * s + 12, 24 * s + 12);
     }
-    px(4, 2, "#2b2118", 8, 6); // hair
-    px(5, 4, "#e6c8a8", 6, 6); // face
-    px(3, 10, "#2f5d50", 10, 8); // body
-    px(4, 18, "#1d3557", 3, 6); // legs
-    px(9, 18, "#1d3557", 3, 6);
+    if (kind === "ceo") {
+      px(4, 2, "#1a1a1a", 8, 6);
+      px(5, 4, "#d2b48c", 6, 6);
+      px(3, 10, "#1d3557", 10, 8);
+      px(4, 18, "#111", 3, 6);
+      px(9, 18, "#111", 3, 6);
+    } else {
+      px(4, 2, "#2b2118", 8, 6);
+      px(5, 4, "#e6c8a8", 6, 6);
+      px(3, 10, "#2f5d50", 10, 8);
+      px(4, 18, "#1d3557", 3, 6);
+      px(9, 18, "#1d3557", 3, 6);
+    }
   }
 
   function drawBubble(x, y, text) {
@@ -86,6 +103,12 @@
     ctx.fillStyle = "#111";
     ctx.font = "9px monospace";
     ctx.fillText(label, bx + 3, by + 10);
+  }
+
+  function drawName(x, y, name) {
+    ctx.fillStyle = "#111";
+    ctx.font = "10px monospace";
+    ctx.fillText(String(name || "").slice(0, 16), x - 4, y + 28 * sprite.scale / 4 + 20);
   }
 
   canvas.addEventListener("click", (ev) => {
@@ -105,17 +128,35 @@
     placeholder.hidden = true;
     panelBody.hidden = false;
     chatForm.hidden = false;
+    chatInput.placeholder = emp.slug === "ceo" ? "Ask the CEO…" : "Ask the analyst…";
     const detail = await get("/employees/" + emp.slug);
     const latest = await get("/employees/" + emp.slug + "/brief/latest");
+    const inbox = await get("/employees/" + emp.slug + "/inbox");
     const brief = latest.brief;
+    const received = (inbox.items || []).find((it) => it.brief);
     panelBody.innerHTML = `
       <h3>${escapeHtml(detail.display_name)}</h3>
       <p class="meta">${escapeHtml(detail.role_title)} · ${escapeHtml(detail.department)}</p>
       <p class="bubble-note">Status bubble: ${escapeHtml(detail.status_bubble)} (short). Detail belongs here, not as an overlay.</p>
       <p class="meta">Click does not grant authority.</p>
-      <h3>Latest brief</h3>
-      ${brief ? renderBrief(brief) : "<p>No brief in the database yet. Run <code>python -m varma.routines.run_brief</code>.</p>"}
+      ${
+        emp.slug === "ceo"
+          ? "<p class=\"meta\"><strong>CEO does not approve live trading.</strong> Board Member is the human authority. A meeting pack is not LIVE approval.</p>"
+          : ""
+      }
+      <h3>Latest produced brief</h3>
+      ${brief ? renderBrief(brief) : "<p>No brief produced by this employee.</p>"}
+      <h3>Meeting inbox</h3>
+      ${received ? renderInboxItem(received) : "<p>No handoff artefacts in this inbox.</p>"}
     `;
+  }
+
+  function renderInboxItem(item) {
+    return `<div class="brief">
+      <p class="meta">Handoff ${escapeHtml(item.status || "")} · ${escapeHtml(item.purpose || "")}</p>
+      <p class="meta">${escapeHtml(item.note || "")}</p>
+      ${item.brief ? renderBrief(item.brief) : ""}
+    </div>`;
   }
 
   function renderBrief(b) {
@@ -128,7 +169,7 @@
     return `<div class="brief">
       <strong>${escapeHtml(b.headline)}</strong>
       <p>${escapeHtml(b.summary)}</p>
-      <p>Freshness: ${escapeHtml(b.freshness_flag)} · verified: ${b.verification_passed} · cost_units: ${b.cost_units}</p>
+      <p>Recipient: ${escapeHtml(b.intended_recipient || "")} · Freshness: ${escapeHtml(b.freshness_flag)} · verified: ${b.verification_passed} · cost_units: ${b.cost_units}</p>
       <p>${escapeHtml(b.watchlist_disclaimer || "")}</p>
       <ul>${items}</ul>
     </div>`;
@@ -172,6 +213,13 @@
           status_bubble: "OFFLINE",
           office_x: 96,
           office_y: 108,
+        },
+        {
+          slug: "ceo",
+          display_name: "CEO",
+          status_bubble: "OFFLINE",
+          office_x: 220,
+          office_y: 70,
         },
       ];
       draw();

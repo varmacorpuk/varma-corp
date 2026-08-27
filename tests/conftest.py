@@ -49,3 +49,4 @@ def client(db_url: str) -> TestClient:
 
 BOARD_HEADERS = {"Authorization": "Bearer dev-board-member"}
 EMPLOYEE_HEADERS = {"X-Varma-Employee": "market-intelligence-research"}
+CEO_HEADERS = {"X-Varma-Employee": "ceo"}

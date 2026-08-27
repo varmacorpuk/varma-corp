@@ -13,6 +13,7 @@ from varma.controls.engine import ControlEngine
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
 from varma.db.models import Employee, IntelligenceBrief, WatchlistItem
 from varma.memory.stores import MemoryStores
+from varma.meetings.handoff import CEO_SLUG, handoff_brief_to_ceo
 from varma.ports.data import DataPort, FakeMarketData
 from varma.ports.llm import LLMPort, get_llm
 from varma.verification.brief import expected_freshness, verify_brief
@@ -97,7 +98,7 @@ class PrepareDailyIntelligenceBrief:
                 f"TEMPORARY freshness windows: news {settings.temporary_news_fresh_hours}h, "
                 f"prices {settings.temporary_price_fresh_hours}h. Not Board-approved thresholds."
             ),
-            intended_recipient="company_meeting",
+            intended_recipient=CEO_SLUG,
             trading_mode_at_production=state["trading_mode"],
             skill_name=SKILL_NAME,
             skill_version=SKILL_VERSION,
@@ -139,6 +140,7 @@ class PrepareDailyIntelligenceBrief:
         employee.status = "PREPARING" if not brief.verification_passed else "AVAILABLE"
         employee.status_bubble = "BRIEF READY" if brief.verification_passed else "BRIEF FAILED"
         self.session.commit()
+        handoff_brief_to_ceo(self.session, brief, employee)
         return brief
 
     def to_dict(self, brief: IntelligenceBrief) -> dict[str, Any]:

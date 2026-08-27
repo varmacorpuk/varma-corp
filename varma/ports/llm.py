@@ -60,12 +60,13 @@ class FakeLLM:
             "headline": headline[:240],
             "summary": (
                 "Structured intelligence brief for the 07:30 Europe/London meeting. "
-                "Research only. Watchlist items are TEMPORARY DEVELOPMENT DEFAULTS "
+                "Recipient: CEO (AI employee). Research only. "
+                "Watchlist items are TEMPORARY DEVELOPMENT DEFAULTS "
                 "and are not the execution allow-list. No trade is proposed. "
-                "trading_mode remains LIVE_BLOCKED."
+                "trading_mode remains LIVE_BLOCKED. CEO cannot approve live trading."
             ),
             "items": items,
-            "intended_recipient": "company_meeting",
+            "intended_recipient": "ceo",
             "no_execution_authority": True,
             "cost_units": 2,
         }
@@ -73,9 +74,28 @@ class FakeLLM:
     def _chat(self, context: dict[str, Any]) -> dict[str, Any]:
         employee = context.get("employee") or {}
         message = (context.get("message") or "").strip()
-        brief = context.get("latest_brief")
-        name = employee.get("display_name", "Research")
-        role = employee.get("role_title", "Market Intelligence / Research Analyst")
+        brief = context.get("latest_brief") or context.get("received_brief")
+        name = employee.get("display_name", "Employee")
+        role = employee.get("role_title", "")
+        slug = employee.get("slug") or ""
+        ceo = slug == "ceo" or context.get("cannot_approve_live_trading")
+        if ceo:
+            if brief:
+                reply = (
+                    f"{name} ({role}). I am the meeting recipient of the Market Intelligence brief. "
+                    f"Latest pack headline: {brief.get('headline')}. "
+                    f"Freshness: {brief.get('freshness_flag')}. "
+                    f"I cannot approve live trading. That is a Board Member action. "
+                    f"I cannot place orders or write controls. You asked: {message[:280]}"
+                )
+            else:
+                reply = (
+                    f"{name} ({role}). I have no meeting pack yet. "
+                    f"Market Intelligence must run the 06:30 brief first. "
+                    f"I cannot approve live trading. I cannot place orders. "
+                    f"You asked: {message[:280]}"
+                )
+            return {"text": reply, "cost_units": 1}
         if brief:
             reply = (
                 f"{name} ({role}). Latest verified brief headline: "

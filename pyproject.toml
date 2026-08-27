@@ -1,7 +1,7 @@
 [project]
 name = "varma-corp"
 version = "0.1.0"
-description = "Varma Corp. company kernel — first vertical slice"
+description = "Varma Corp. company kernel — Board Member control room"
 requires-python = ">=3.12"
 readme = "README.md"
 
