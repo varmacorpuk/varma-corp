@@ -155,6 +155,7 @@
     const artefacts = (data.meeting_artefacts && data.meeting_artefacts.items) || [];
     const thesis = pack.challenge_sample_thesis || {};
     const bubbles = data.status_bubbles || [];
+    const routines = data.routines || {};
     const costRows = costs.length
       ? costs
           .map(
@@ -205,6 +206,24 @@
           })
           .join("")
       : "<p class=\"meta\">No 07:30 meeting artefacts stored yet.</p>";
+    const documented = routines.documented || {};
+    const briefSched = documented.brief || {};
+    const filterSched = documented.nightly_filter || {};
+    const dbRoutines = routines.items || [];
+    const routineRows = `
+      <div class="ledger-row">06:30 weekday brief · ${escapeHtml(briefSched.timezone || "Europe/London")} · daemon: ${briefSched.daemon === true} · ${escapeHtml(briefSched.cli || "python -m varma.routines.run_brief")}<br /><span class="meta">${escapeHtml(briefSched.description || "")}</span></div>
+      <div class="ledger-row">Nightly memory filter · ${escapeHtml(filterSched.timezone || "Europe/London")} · daemon: ${filterSched.daemon === true} · writes_controls: ${filterSched.writes_controls === true} · ${escapeHtml(filterSched.cli || "")}<br /><span class="meta">${escapeHtml(filterSched.description || "")}</span></div>
+      ${
+        dbRoutines.length
+          ? dbRoutines
+              .map(
+                (row) =>
+                  `<div class="ledger-row">${escapeHtml(row.name || "")} · ${escapeHtml(row.schedule || "")} · ${escapeHtml(row.timezone || "")}<br /><span class="meta">${escapeHtml(row.notes || "")}</span></div>`
+              )
+              .join("")
+          : ""
+      }
+    `;
     return `
       <h3>Board observability</h3>
       <p class="meta">Read-only. Source: ${escapeHtml(data.source || "database")}. This view does not write controls, trading_mode, allow-list, or permissions.</p>
@@ -215,6 +234,9 @@
       <p class="meta">${escapeHtml(thesis.label || "SAMPLE — not a live trade")}. Not an order.</p>
       <h3>07:30 meeting artefacts</h3>
       ${artefactRows}
+      <h3>Documented routines</h3>
+      <p class="meta">On-demand. Europe/London. No 24/7 daemon. Nightly filter has no invented clock hour. Does not write controls.</p>
+      ${routineRows}
       <h3>Nightly memory filter</h3>
       <p class="meta">On-demand. Europe/London. Evidence append-only. Does not write controls.</p>
       ${filterBlock}

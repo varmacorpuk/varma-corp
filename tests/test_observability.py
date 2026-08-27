@@ -79,6 +79,7 @@ def test_board_observability_api_is_read_only(client):
     assert "meeting_pack" in office["board_observability"]["includes"]
     assert "meeting_artefacts" in office["board_observability"]["includes"]
     assert "status_bubbles" in office["board_observability"]["includes"]
+    assert "routines" in office["board_observability"]["includes"]
 
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
@@ -270,5 +271,46 @@ def test_observability_meeting_artefact_list(session):
     assert data["trading_mode"] == "LIVE_BLOCKED"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert data["writes_controls"] is False
+
+
+def test_observability_routine_schedules_from_database(session):
+    snap = BoardObservability(session).snapshot()
+    routines = snap["routines"]
+    assert routines["read_only"] is True
+    assert routines["source"] == "database"
+    assert routines["daemon"] is False
+    assert routines["writes_controls"] is False
+    assert routines["timezone"] == "Europe/London"
+    names = [row["name"] for row in routines["items"]]
+    assert "weekday_0630_london_intelligence_brief" in names
+    brief = routines["documented"]["brief"]
+    assert brief["schedule"] == "06:30 weekdays"
+    assert brief["timezone"] == "Europe/London"
+    assert brief["daemon"] is False
+    assert "06:30" in brief["description"]
+    filt = routines["documented"]["nightly_filter"]
+    assert filt["schedule"] == "nightly"
+    assert filt["timezone"] == "Europe/London"
+    assert filt["daemon"] is False
+    assert filt["writes_controls"] is False
+    assert ":" not in filt["schedule"]
+    assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
+    assert snap["writes_controls"] is False
+
+
+def test_observability_routine_schedules_api_board_only(client):
+    denied = client.get("/observability", headers=EMPLOYEE_HEADERS)
+    assert denied.status_code == 401
+    body = client.get("/observability", headers=BOARD_HEADERS).json()
+    assert body["routines"]["documented"]["brief"]["schedule"] == "06:30 weekdays"
+    assert body["routines"]["documented"]["nightly_filter"]["schedule"] == "nightly"
+    assert body["routines"]["daemon"] is False
+    assert body["routines"]["writes_controls"] is False
+    post = client.post("/observability", headers=BOARD_HEADERS, json={"schedule": "LIVE"})
+    assert post.status_code == 403
+    assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
+    assert client.get("/controls").json()["trading_mode"] == "LIVE_BLOCKED"
+
+
 
 

@@ -426,6 +426,7 @@ def create_app() -> FastAPI:
                     "meeting_pack",
                     "meeting_artefacts",
                     "status_bubbles",
+                    "routines",
                 ],
             },
         }

@@ -41,6 +41,9 @@ def test_office_click_opens_panel_logic():
     assert "nightly" in JS.lower()
     assert "07:30" in JS
     assert "meeting artefacts" in JS.lower() or "meeting_artefacts" in JS
+    assert "Documented routines" in JS
+    assert "06:30 weekday brief" in JS
+    assert "invented clock hour" in JS
     assert "organisation memory" in JS.lower() or "organisation_memory" in JS
     assert "status_bubbles" in JS or "status bubbles" in JS.lower()
     assert "data-employee-slug" in JS
