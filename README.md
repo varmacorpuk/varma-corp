@@ -22,13 +22,15 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 14. Same Board observability panel also shows: latest nightly memory-filter run; organisation-memory titles; 07:30 meeting pack status (MI brief headline, CEO handoff DELIVERED/not, Challenge SAMPLE thesis status, Risk DENIED/not); Board-only employee status bubbles. Click still opens the person in the right-hand panel. Chat stays hidden on observability.
 15. Same panel lists 07:30 meeting artefacts from the database (brief, CEO handoff, SAMPLE thesis, challenge review, Risk decision). Read-only. SAMPLE is not a live trade. Risk cannot approve LIVE.
 16. Board-only documented routine schedules in the same panel (06:30 weekday brief; nightly Europe/London filter). On-demand. No 24/7 daemon. No invented nightly clock hour.
-17. Same panel: Board-only read of missing numeric-limit KEYS (OPEN BOARD DECISIONS, values unset and not invented). Missing limits still DENY execution.
-18. Same panel: Board-only control snapshot (trading_mode=LIVE_BLOCKED, empty allow-list, employees cannot write controls). Read-only.
-19. Same panel: Board-only paper-gate status — PAPER not started, trading_mode=LIVE_BLOCKED, no execution. Paper duration/success thresholds remain unset OPEN BOARD DECISIONS.
-20. Same panel: Board-only confirmation that BROKER_PAPER and LIVE execution ports remain UNLOADED. Status only. No fills. Constructing or using those ports is denied.
+17. Same panel: Board-set numeric limits from **Board Addendum A 2026-08-27** (VALUES shown: simulated_capital 1000 GBP, max_position 200 GBP, max_daily_loss 50 GBP, max_orders_per_day 6, kill-switch floors 800 / -50 GBP). Not invented silent defaults. Employees cannot write limits. A missing key still DENIES execution.
+18. Same panel: Board-only control snapshot (trading_mode=LIVE_BLOCKED, empty allow-list, employees cannot write controls). Read-only except the Board-only kill switch.
+19. Same panel: Board-only paper-gate status — trading_mode stays LIVE_BLOCKED (do not switch to PAPER while the allow-list is empty). Internal paper fill simulator is the paper ledger. Empty allow-list ⇒ no orders. Success metric is Board-set: a successful trade is a CLOSED paper trade with profit > 0; evaluation trigger is win rate > 50% AND book profitable. Do not auto-switch LIVE. Paper duration remains an OPEN BOARD DECISION.
+20. Same panel: Board-only confirmation that BROKER_PAPER and LIVE execution ports remain UNLOADED. No broker fills. Constructing or using those ports is denied. Internal simulator still denies when the allow-list is empty, when LIVE, when the kill switch is on, or when limits are exceeded.
 21. On-demand 07:30 Europe/London company meeting record: Board Member API or documented CLI writes a meeting artefact to the database from existing handoffs (MI brief, CEO pack, Challenge SAMPLE, Risk DENY). Shown read-only in Board observability. Not a trade. Not LIVE approval. Not a daemon. Employees cannot start LIVE from a meeting.
 22. Latest 07:30 meeting attendance list: the four existing employees only (MI, CEO, Challenge, Risk). Not a 12-employee roster. Read-only in Board observability.
 23. Board Member can run the existing on-demand jobs from the right-hand Board observability panel (POST, not GET /observability): morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter. Employees are denied. Running a job does not load broker ports, change trading_mode, or fill paper/live orders. After a run the same panel refreshes from the database. CLI entry points still work.
+24. Board-usable kill switch (Board Member only): halt if paper equity <= 800 GBP OR London-day P&L <= -50 GBP, or when the Board Member triggers halt without an AI employee. On halt: cancel open PAPER orders only; never load LIVE; never flatten live (there is no live). Employees cannot reset it.
+25. Evaluation ledger tables exist (closed trades, P&L, win rate of profitable closes) even when fills are zero because the allow-list is empty.
 
 ## System separation
 
@@ -70,7 +72,7 @@ One client for Mac and Windows (Electron). Browser also works in development.
 
 Then open http://127.0.0.1:5173
 
-Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (on-demand job runs, control snapshot, missing numeric-limit keys, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, latest 07:30 company meeting record, cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Board Member can run the existing on-demand jobs from that panel. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. GET /observability is read-only. Job runs are Board-only POST endpoints.
+Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (on-demand job runs, Board Addendum A limits, kill switch, paper ledger, evaluation ledger, control snapshot, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, latest 07:30 company meeting record, cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Board Member can run the existing on-demand jobs from that panel and can halt/reset the kill switch. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. GET /observability is read-only. Job runs and the kill switch are Board-only POST endpoints.
 
 ## 06:30 Europe/London routine
 
@@ -84,16 +86,33 @@ A later slice can attach the same skill to a Europe/London scheduler.
 
 ## Controls (not memory)
 
-- trading_mode default: LIVE_BLOCKED
-- Execution allow-list: empty, so no execution
-- Numeric limits: unset, so deny (OPEN BOARD DECISION, not invented here)
+- trading_mode: LIVE_BLOCKED (does not switch to PAPER while the allow-list is empty)
+- Execution allow-list: empty, so no orders (paper or live)
+- Numeric limits: Board Addendum A 2026-08-27 (Board-set, VALUES shown)
+  - simulated_capital = 1000 GBP
+  - max_position = 200 GBP (one paper trade)
+  - max_daily_loss = 50 GBP
+  - max_orders_per_day = 6
+  - kill switch: halt if paper equity <= 800 GBP OR London-day P&L <= -50 GBP
+- Currency GBP. Timezone Europe/London.
 - LIVE adapter: not loaded
-- BROKER_PAPER and LIVE execution ports: UNLOADED (status only; no fills)
-- Employees cannot write control tables
-- CEO, Challenge, and Risk cannot approve live trading (Board Member only)
-- Paper and live trading are not implemented in this slice
+- BROKER_PAPER and LIVE execution ports: UNLOADED (no broker fills)
+- Internal PAPER FILL SIMULATOR is the paper ledger (Document 12). Still denies when the allow-list is empty, when LIVE, when the kill switch is on, or when limits are exceeded.
+- Employees cannot write control tables, allow-list, limits, trading_mode, or approve LIVE. CEO may recommend allow-list adds; cannot write them.
+- Board Member can trigger the kill switch without an AI employee. On halt: cancel open PAPER orders only; never load LIVE; never flatten live. Employees cannot reset it.
 
-Gate: PAPER then EVALUATION then recommendation then Board review then explicit Board approval then LIVE. Silence is not approval.
+Gate: PAPER then EVALUATION then recommendation then Board review then explicit Board approval then LIVE. Silence is not approval. A successful trade is a CLOSED paper trade with profit > 0. Evaluation trigger is win rate > 50% of closed trades profitable AND book profitable. Do not auto-switch LIVE. Paper continues until the Board explicitly approves moving on.
+
+## Internal paper fill simulator (Document 12)
+
+Not a broker. Assumptions (labelled INTERNAL, not a vendor contract):
+
+- Spread: 10 bps of mid. Half-spread + 5 bps slippage = 10 bps adverse vs mid.
+- Commission: 5 bps of fill notional.
+- Fake delayed last prices are treated as GBP notional (no FX vendor in this slice).
+- Currency GBP. Timezone Europe/London.
+
+Evaluation ledger tables (`closed_paper_trades`, fills, P&L, win rate) exist even when fills are zero because the allow-list is empty.
 
 ## TEMPORARY defaults (not Board-permanent)
 
@@ -106,8 +125,9 @@ These exist so development can run. They are not Board-approved universe members
 - Auth stub: see .env.example — DEVELOPMENT only
 - SQLite path: data/varma.db — TEMPORARY until Postgres
 - Fake delayed prices and news: in-process FakeMarketData — not a vendor contract
+- Simulator FX: none — last treated as GBP (INTERNAL ASSUMPTION)
 
-OPEN BOARD DECISIONS left unset (must not be invented): numeric paper limits; paper duration/success thresholds; Talk/voice required?; UK legal advice; exact authorised instrument list; material-cost approval thresholds.
+OPEN BOARD DECISIONS left unset (must not be invented): paper duration threshold; Talk/voice required?; UK legal advice; exact authorised instrument list; material-cost approval thresholds.
 
 ## Challenge and Risk (this slice)
 
@@ -154,10 +174,12 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 - 07:30 meeting pack status: latest MI brief headline, CEO handoff DELIVERED/not, Challenge SAMPLE thesis status, Risk DENIED/not.
 - 07:30 meeting artefact list (read-only): latest brief, CEO handoff, SAMPLE thesis, challenge review, Risk decision.
 - Board-only documented routine schedules: 06:30 weekday brief and nightly Europe/London filter (on-demand, no daemon, no invented nightly clock hour).
-- Board-only missing numeric-limit KEYS. Values remain unset OPEN BOARD DECISIONS and are not invented. Missing limits DENY execution.
-- Board-only control snapshot: `trading_mode=LIVE_BLOCKED`, empty allow-list, employees cannot write controls. Read-only.
-- Board-only paper-gate status: PAPER not started / `LIVE_BLOCKED` / no execution. Paper duration/success thresholds remain unset OPEN BOARD DECISIONS.
-- Board-only execution-port status: BROKER_PAPER and LIVE remain UNLOADED. Status only. No fills. Constructing or using those ports is denied.
+- Board-only missing numeric-limit keys (empty after Addendum A) and Board-set VALUES (simulated_capital 1000 GBP, max_position 200 GBP, max_daily_loss 50 GBP, max_orders_per_day 6, kill-switch floors). Not invented silent defaults.
+- Board-only control snapshot: `trading_mode=LIVE_BLOCKED`, empty allow-list, employees cannot write controls. Read-only except Board-only kill switch POST.
+- Board-only paper-gate status: trading_mode stays LIVE_BLOCKED; internal simulator ledger exists; empty allow-list ⇒ no orders. Success metric is Board-set. Paper duration remains an OPEN BOARD DECISION.
+- Board-only execution-port status: BROKER_PAPER and LIVE remain UNLOADED. No broker fills. Internal simulator still denies when the allow-list is empty.
+- Board-only kill switch status and Board Member halt/reset. On halt: cancel open PAPER orders only. Employees cannot reset it.
+- Board-only evaluation ledger (closed trades, P&L, win rate) — zero fills is valid while the allow-list is empty.
 - Latest on-demand 07:30 company meeting record (read-only): not a trade, not LIVE approval, employees cannot start LIVE from it. Attendance is the four existing employees only — not a 12-employee roster.
 - Board-only on-demand job runs from this same panel: morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter. POST `/routines/run-*`, not GET `/observability`. Employees are denied. Running a job does not load BROKER_PAPER or LIVE, does not change `trading_mode`, and does not fill paper/live orders. After a run the panel refreshes from the database. CLI entry points still work.
 - Board-only employee status bubbles. Click an employee (floor or bubble name) to open that person in the same right-hand panel.
@@ -168,7 +190,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 
 ## Next slice
 
-Still no paper/live execution and no 12-employee roster. BROKER_PAPER and LIVE remain UNLOADED. No fills. Approve LIVE remains impossible.
+Still no invented tickers. Still not live. Trader/Quant/Technology MVP combinable employees. BROKER_PAPER and LIVE remain UNLOADED. Empty allow-list ⇒ no orders. Approve LIVE remains impossible until the Board explicitly approves moving on.
 
 ## Specs
 
@@ -178,4 +200,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; on-demand 07:30 company meeting record from existing handoffs (not a trade, not LIVE approval, employees cannot start LIVE from it) with attendance of the four existing employees only; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, latest company meeting, status bubbles, documented routine schedules, missing numeric-limit keys, control snapshot, paper-gate status (PAPER not started), UNLOADED BROKER_PAPER and LIVE execution ports (status only, no fills), and employee chat history; Board Member can run the five on-demand jobs from the right-hand panel via POST (employees denied; GET /observability does not run jobs; running a job does not load broker ports, change trading_mode, or fill orders); constructing or using BROKER_PAPER/LIVE is denied; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
+Covers: LIVE mode denied; empty allow-list cannot execute; Board Addendum A limits are Board-set and shown; £201 order denies; 7th order in a day denies; kill switch denies; employees cannot write limits or reset the kill switch; missing limits still deny if deleted; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; on-demand 07:30 company meeting record from existing handoffs (not a trade, not LIVE approval, employees cannot start LIVE from it) with attendance of the four existing employees only; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, latest company meeting, status bubbles, documented routine schedules, Board-set numeric-limit VALUES, kill-switch state, evaluation ledger (zero fills valid), control snapshot, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, and employee chat history; Board Member can run the five on-demand jobs from the right-hand panel via POST (employees denied; GET /observability does not run jobs; running a job does not load broker ports, change trading_mode, or fill orders); constructing or using BROKER_PAPER/LIVE is denied; internal simulator still denies when allow-list empty / LIVE / kill switch / limits exceeded; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.

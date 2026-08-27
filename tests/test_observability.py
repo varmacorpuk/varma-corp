@@ -81,11 +81,14 @@ def test_board_observability_api_is_read_only(client):
     assert "status_bubbles" in office["board_observability"]["includes"]
     assert "routines" in office["board_observability"]["includes"]
     assert "missing_numeric_limits" in office["board_observability"]["includes"]
+    assert "numeric_limits" in office["board_observability"]["includes"]
     assert "controls" in office["board_observability"]["includes"]
     assert "paper_gate" in office["board_observability"]["includes"]
     assert "execution_ports" in office["board_observability"]["includes"]
     assert "company_meeting" in office["board_observability"]["includes"]
     assert "runnable_jobs" in office["board_observability"]["includes"]
+    assert "kill_switch" in office["board_observability"]["includes"]
+    assert "evaluation" in office["board_observability"]["includes"]
 
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
@@ -328,49 +331,43 @@ def test_observability_missing_numeric_limit_keys_board_only(session):
     missing = snap["missing_numeric_limits"]
     assert missing["read_only"] is True
     assert missing["source"] == "database"
-    assert missing["open_board_decision"] is True
+    assert missing["board_set"] is True
     assert missing["values_invented"] is False
-    assert missing["values_shown"] is False
+    assert missing["values_shown"] is True
     assert missing["deny_execution_when_missing"] is True
     assert missing["required_keys"] == list(REQUIRED_LIMIT_KEYS)
-    assert missing["unset_keys"] == list(REQUIRED_LIMIT_KEYS)
-    assert missing["all_unset"] is True
-    assert "value" not in missing
-    assert "values" not in missing
-    for key in REQUIRED_LIMIT_KEYS:
-        assert key not in missing
-        assert missing.get(key) is None
-    assert session.query(NumericLimit).count() == 0
+    assert missing["unset_keys"] == []
+    assert missing["all_unset"] is False
+    limits = snap["numeric_limits"]
+    assert limits["values_shown"] is True
+    assert limits["addendum"] == "Board Addendum A 2026-08-27"
+    assert limits["currency"] == "GBP"
+    by_key = {row["key"]: row for row in limits["items"]}
+    assert by_key["simulated_capital"]["value"] == "1000"
+    assert by_key["max_position"]["value"] == "200"
+    assert by_key["max_daily_loss"]["value"] == "50"
+    assert by_key["max_orders_per_day"]["value"] == "6"
+    assert by_key["kill_switch_equity_floor"]["value"] == "800"
+    assert by_key["kill_switch_daily_pnl_floor"]["value"] == "-50"
+    assert session.query(NumericLimit).count() == len(REQUIRED_LIMIT_KEYS)
     assert snap["writes_controls"] is False
     assert session.get(ControlState, 1).trading_mode == before_mode == "LIVE_BLOCKED"
     assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow == []
     assert LIVE_ADAPTER_LOADED is False
 
 
-def test_observability_does_not_show_limit_values_even_if_row_exists(session):
-    from varma.clock import now_london
-    from varma.controls.engine import REQUIRED_LIMIT_KEYS
-    from varma.db.models import NumericLimit
-
-    session.add(
-        NumericLimit(
-            key="simulated_capital",
-            value="DO-NOT-DISPLAY",
-            set_by="test-must-not-surface",
-            set_at=now_london(),
-        )
-    )
-    session.commit()
+def test_observability_shows_board_set_limit_values(session):
     snap = BoardObservability(session).snapshot()
-    missing = snap["missing_numeric_limits"]
-    assert "simulated_capital" not in missing["unset_keys"]
-    assert missing["unset_keys"] == [k for k in REQUIRED_LIMIT_KEYS if k != "simulated_capital"]
-    blob = str(missing)
-    assert "DO-NOT-DISPLAY" not in blob
-    assert "test-must-not-surface" not in blob
-    assert "value" not in missing
+    blob = str(snap["numeric_limits"])
+    assert "1000" in blob
+    assert "Board Addendum A 2026-08-27" in blob
+    assert snap["numeric_limits"]["values_invented"] is False
     assert snap["controls"]["trading_mode"] == "LIVE_BLOCKED"
     assert snap["writes_controls"] is False
+    assert snap["kill_switch"]["halted"] is False
+    assert snap["kill_switch"]["equity_floor_gbp"] == 800
+    assert snap["evaluation"]["closed_trades"] == 0
+    assert snap["evaluation"]["evaluation_auto_switch_live"] is False
 
 
 def test_observability_control_snapshot_board_only(client):
@@ -391,9 +388,11 @@ def test_observability_control_snapshot_board_only(client):
     assert controls["live_adapter_loaded"] is False
     assert body["employees_cannot_write_controls"] is True
     missing = body["missing_numeric_limits"]
-    assert "simulated_capital" in missing["unset_keys"]
-    assert missing["values_shown"] is False
-    assert missing["open_board_decision"] is True
+    assert missing["unset_keys"] == []
+    assert missing["values_shown"] is True
+    assert missing["board_set"] is True
+    limits = body["numeric_limits"]
+    assert any(row["key"] == "simulated_capital" and row["value"] == "1000" for row in limits["items"])
 
     post = client.post(
         "/observability",
@@ -418,6 +417,17 @@ def test_observability_missing_limits_still_deny_execution(session):
     BoardObservability(session).snapshot()
     emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     session.query(Permission).filter_by(subject_id=emp.id, action="place_order").one().allowed = True
+    session.commit()
+    snap = BoardObservability(session).snapshot()
+    assert snap["missing_numeric_limits"]["unset_keys"] == []
+    d = ControlEngine(session).place_order(
+        actor_id=emp.id,
+        actor_type="employee",
+        order={"symbol": "AAPL", "execution_port": "SIMULATOR"},
+    )
+    assert d.allowed is False
+    assert d.reason == "EMPTY_ALLOW_LIST"
+
     session.add(
         AllowListInstrument(
             symbol="AAPL",
@@ -426,11 +436,12 @@ def test_observability_missing_limits_still_deny_execution(session):
             approved_at=now_london(),
         )
     )
+    for row in session.query(NumericLimit).all():
+        session.delete(row)
     session.commit()
     snap = BoardObservability(session).snapshot()
     assert snap["missing_numeric_limits"]["unset_keys"]
     assert snap["missing_numeric_limits"]["deny_execution_when_missing"] is True
-    assert session.query(NumericLimit).count() == 0
     d = ControlEngine(session).place_order(
         actor_id=emp.id,
         actor_type="employee",
@@ -453,10 +464,11 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert gate["read_only"] is True
     assert gate["source"] == "database"
     assert gate["writes_controls"] is False
-    assert gate["paper_status"] == "not started"
+    assert gate["paper_status"].startswith("not started")
     assert gate["paper_started"] is False
-    assert gate["paper_execution_implemented"] is False
-    assert gate["evaluation_status"] == "not"
+    assert gate["paper_execution_implemented"] is True
+    assert gate["internal_simulator"] is True
+    assert gate["evaluation_status"] == "ledger ready"
     assert gate["live_trading_recommendation"] == "not"
     assert gate["board_review"] == "not"
     assert gate["explicit_board_approval"] == "not"
@@ -465,17 +477,14 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert gate["live_adapter_loaded"] is False
     assert gate["silence_is_not_approval"] is True
     assert gate["values_invented"] is False
-    assert gate["values_shown"] is False
+    assert gate["values_shown"] is True
     assert "paper_duration_threshold" in gate["unset_open_keys"]
-    assert "paper_success_threshold" in gate["unset_open_keys"]
-    assert "paper_duration_threshold" not in gate
-    assert "paper_success_threshold" not in gate
+    assert "paper_success_threshold" not in gate["unset_open_keys"]
+    assert "CLOSED paper trade" in gate["successful_trade_definition"]
+    assert gate["evaluation_auto_switch_live"] is False
     assert "PAPER" in gate["gate"]
     assert "EVALUATION" in gate["gate"]
-    blob = str(gate)
-    assert "days" not in blob.lower()
     assert gate.get("duration") is None
-    assert gate.get("success_threshold") is None
 
     post = client.post(
         "/observability",
@@ -485,7 +494,7 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert post.status_code == 403
     assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
     after = client.get("/observability", headers=BOARD_HEADERS).json()["paper_gate"]
-    assert after["paper_status"] == "not started"
+    assert after["paper_status"].startswith("not started")
     assert after["trading_mode"] == "LIVE_BLOCKED"
     assert after["execution"] is False
     live = client.post(

@@ -75,7 +75,12 @@ class OrderIn(BaseModel):
     symbol: str
     side: str = "buy"
     quantity: float = 0
+    notional_gbp: float | None = None
     execution_port: str = "SIMULATOR"
+
+
+class KillSwitchIn(BaseModel):
+    halt: bool = True
 
 
 def create_app() -> FastAPI:
@@ -156,6 +161,56 @@ def create_app() -> FastAPI:
         if not decision.allowed:
             raise HTTPException(403, decision.reason)
         return {"ok": True, "reason": decision.reason}
+
+    @app.post("/controls/kill-switch")
+    def kill_switch_halt(
+        payload: KillSwitchIn = Body(default_factory=KillSwitchIn),
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        from varma.controls.kill_switch import trip_kill_switch
+        from varma.ports.execution import BROKER_PAPER_LOADED as PAPER_LOADED
+        from varma.ports.execution import LIVE_PORT_LOADED
+
+        if payload.halt is False:
+            raise HTTPException(400, "USE_RESET_ENDPOINT")
+        result = trip_kill_switch(
+            session,
+            actor_id="board-member",
+            reason="BOARD_MEMBER_HALT",
+        )
+        snap = ControlEngine(session).snapshot()
+        result.update(
+            {
+                "ok": True,
+                "halted": True,
+                "trading_mode": snap["trading_mode"],
+                "trading_mode_unchanged": snap["trading_mode"] == "LIVE_BLOCKED",
+                "broker_paper_loaded": bool(PAPER_LOADED),
+                "live_adapter_loaded": bool(LIVE_PORT_LOADED) or bool(snap["live_adapter_loaded"]),
+                "ai_employee_not_required": True,
+            }
+        )
+        return result
+
+    @app.post("/controls/kill-switch/reset")
+    def kill_switch_reset_endpoint(
+        authorization: str | None = Header(default=None),
+        x_varma_actor: str | None = Header(default=None),
+        x_varma_employee: str | None = Header(default=None),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        from varma.controls.kill_switch import reset_kill_switch
+
+        actor = parse_actor(authorization, x_varma_actor, x_varma_employee)
+        decision = reset_kill_switch(
+            session,
+            actor_id=actor.identity,
+            actor_type=actor.actor_type,
+        )
+        if not decision.allowed:
+            raise HTTPException(403, decision.reason)
+        return {"ok": True, "halted": False, "reason": decision.reason}
 
     @app.get("/employees")
     def employees(session: Session = Depends(_session)) -> list[dict[str, Any]]:
@@ -388,7 +443,9 @@ def create_app() -> FastAPI:
             actor_type=actor_type,
             order=payload.model_dump(),
         )
-        raise HTTPException(403, detail={"reason": decision.reason, "allowed": False})
+        if not decision.allowed:
+            raise HTTPException(403, detail={"reason": decision.reason, "allowed": False})
+        return {"ok": True, "allowed": True, "reason": decision.reason, "details": decision.details}
 
     @app.get("/watchlist")
     def watchlist(session: Session = Depends(_session)) -> dict[str, Any]:
@@ -451,11 +508,15 @@ def create_app() -> FastAPI:
                     "status_bubbles",
                     "routines",
                     "missing_numeric_limits",
+                    "numeric_limits",
                     "controls",
                     "paper_gate",
                     "execution_ports",
                     "company_meeting",
                     "runnable_jobs",
+                    "kill_switch",
+                    "evaluation",
+                    "paper_ledger",
                 ],
             },
         }

@@ -13,7 +13,12 @@ def test_trading_mode_live_blocked(client):
     assert body["live_adapter_loaded"] is False
     assert body["broker_paper_loaded"] is False
     assert body["employees_cannot_write_this"] is True
-    assert "simulated_capital" in body["missing_numeric_limits"]
+    assert "simulated_capital" not in body["missing_numeric_limits"]
+    assert body["missing_numeric_limits"] == []
+    keys = [row["key"] for row in body["numeric_limits"]]
+    assert "simulated_capital" in keys
+    assert body["currency"] == "GBP"
+    assert body["addendum"]["label"] == "Board Addendum A 2026-08-27"
 
 
 def test_employee_cannot_write_controls(client):

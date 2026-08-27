@@ -14,8 +14,12 @@ from varma.clock import (
     describe_0730_company_meeting,
     describe_nightly_memory_filter,
 )
+from varma.controls.addendum_a import ADDENDUM_A_LABEL, CURRENCY, TIMEZONE, addendum_a_public
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
+from varma.controls.kill_switch import kill_switch_state
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
+from varma.paper.ledger import PaperLedger, evaluation_snapshot
+from varma.paper.simulator import simulator_assumptions
 from varma.ports.execution import execution_port_status
 from varma.db.models import (
     BoardApproval,
@@ -28,6 +32,10 @@ from varma.db.models import (
     IntelligenceBrief,
     MemoryFilterRun,
     MemoryOrg,
+    PaperAccount,
+    PaperFill,
+    PaperOrder,
+    PaperPosition,
     RiskDecision,
     Routine,
     SampleThesis,
@@ -106,7 +114,14 @@ class BoardObservability:
             "live_adapter_loaded": control_snap["live_adapter_loaded"],
             "broker_paper_loaded": control_snap.get("broker_paper_loaded", False),
             "employees_cannot_write_controls": True,
+            "currency": control_snap.get("currency", CURRENCY),
+            "timezone": control_snap.get("timezone", TIMEZONE),
+            "addendum": control_snap.get("addendum") or addendum_a_public(),
             "missing_numeric_limits": self._missing_numeric_limits(control_snap),
+            "numeric_limits": self._numeric_limits(control_snap),
+            "kill_switch": self._kill_switch(control_snap),
+            "evaluation": self._evaluation(),
+            "paper_ledger": self._paper_ledger(control_snap),
             "controls": self._control_snapshot(control_snap),
             "paper_gate": self._paper_gate(control_snap),
             "execution_ports": self._execution_ports(control_snap),
@@ -135,21 +150,98 @@ class BoardObservability:
         }
 
     def _missing_numeric_limits(self, control_snap: dict[str, Any]) -> dict[str, Any]:
-        """Keys only. Values are OPEN BOARD DECISIONS and must not be invented here."""
+        """Keys still unset. After Addendum A the required keys are Board-set."""
         unset_keys = list(control_snap.get("missing_numeric_limits") or self.controls.missing_limits())
         return {
             "read_only": True,
             "source": "database",
-            "open_board_decision": True,
+            "open_board_decision": False,
+            "board_set": True,
+            "addendum": ADDENDUM_A_LABEL,
             "values_invented": False,
-            "values_shown": False,
+            "values_shown": True,
             "required_keys": list(REQUIRED_LIMIT_KEYS),
             "unset_keys": unset_keys,
-            "all_unset": unset_keys == list(REQUIRED_LIMIT_KEYS),
+            "all_unset": len(unset_keys) == len(REQUIRED_LIMIT_KEYS) and bool(unset_keys),
             "deny_execution_when_missing": True,
             "note": (
-                "Keys that are unset. Numeric paper/live limit VALUES are OPEN BOARD "
-                "DECISIONS and are not invented here. Missing limits DENY execution."
+                "Numeric paper limits are Board Addendum A 2026-08-27 (Board-set). "
+                "Values are shown. Missing keys (if any) still DENY execution. "
+                "Not invented silent defaults."
+            ),
+        }
+
+    def _numeric_limits(self, control_snap: dict[str, Any]) -> dict[str, Any]:
+        items = list(control_snap.get("numeric_limits") or self.controls.limit_rows())
+        return {
+            "read_only": True,
+            "source": "database",
+            "board_set": True,
+            "values_invented": False,
+            "values_shown": True,
+            "addendum": ADDENDUM_A_LABEL,
+            "currency": CURRENCY,
+            "timezone": TIMEZONE,
+            "items": items,
+            "unset_keys": list(control_snap.get("missing_numeric_limits") or []),
+            "employees_cannot_write": True,
+            "note": (
+                "Board-set numeric limits (Board Addendum A 2026-08-27). "
+                "Employees cannot write limits. Empty allow-list still denies execution. "
+                "trading_mode stays LIVE_BLOCKED."
+            ),
+        }
+
+    def _kill_switch(self, control_snap: dict[str, Any]) -> dict[str, Any]:
+        state = dict(control_snap.get("kill_switch_state") or kill_switch_state(self.session))
+        state.update(
+            {
+                "read_only_status": True,
+                "source": "database",
+                "board_endpoint": "POST /controls/kill-switch",
+                "reset_endpoint": "POST /controls/kill-switch/reset",
+                "board_member_only": True,
+            }
+        )
+        return state
+
+    def _evaluation(self) -> dict[str, Any]:
+        return evaluation_snapshot(self.session)
+
+    def _paper_ledger(self, control_snap: dict[str, Any]) -> dict[str, Any]:
+        ledger = PaperLedger(self.session)
+        acc = self.session.get(PaperAccount, 1)
+        return {
+            "read_only": True,
+            "source": "database",
+            "kind": "INTERNAL_PAPER_FILL_SIMULATOR",
+            "broker": False,
+            "broker_paper_loaded": bool(control_snap.get("broker_paper_loaded", False)),
+            "live_loaded": bool(control_snap.get("live_adapter_loaded", False)),
+            "currency": CURRENCY,
+            "timezone": TIMEZONE,
+            "simulated_capital_gbp": acc.simulated_capital if acc else None,
+            "cash_gbp": acc.cash if acc else None,
+            "equity_gbp": ledger.equity() if acc else None,
+            "london_day": acc.london_day if acc else None,
+            "london_day_pnl_gbp": ledger.london_day_pnl() if acc else 0,
+            "open_positions": [
+                {
+                    "symbol": p.symbol,
+                    "quantity": p.quantity,
+                    "avg_cost_gbp": p.avg_cost_gbp,
+                }
+                for p in self.session.query(PaperPosition).all()
+            ],
+            "fills": self.session.query(PaperFill).count(),
+            "open_orders": self.session.query(PaperOrder).filter_by(status="OPEN").count(),
+            "assumptions": simulator_assumptions(),
+            "allow_list_empty": control_snap.get("allow_list_empty", True),
+            "trading_mode": control_snap["trading_mode"],
+            "does_not_switch_to_paper_mode": True,
+            "note": (
+                "Internal paper ledger. Not a broker. Empty allow-list ⇒ no orders. "
+                "trading_mode stays LIVE_BLOCKED."
             ),
         }
 
@@ -161,6 +253,10 @@ class BoardObservability:
             "employees_cannot_write_controls": True,
             "trading_mode": control_snap["trading_mode"],
             "kill_switch": control_snap["kill_switch"],
+            "currency": control_snap.get("currency", CURRENCY),
+            "timezone": control_snap.get("timezone", TIMEZONE),
+            "addendum": ADDENDUM_A_LABEL,
+            "numeric_limits_board_set": True,
             "allow_list": list(control_snap["allow_list"]),
             "allow_list_empty": control_snap["allow_list_empty"],
             "live_adapter_loaded": control_snap["live_adapter_loaded"],
@@ -174,7 +270,7 @@ class BoardObservability:
         }
 
     def _paper_gate(self, control_snap: dict[str, Any]) -> dict[str, Any]:
-        """PAPER not started. No paper/live execution. Do not invent duration/success numbers."""
+        """trading_mode stays LIVE_BLOCKED. Internal simulator exists. Empty allow-list ⇒ no orders."""
         live_approvals = (
             self.session.query(BoardApproval)
             .filter_by(action="transition_to_live")
@@ -185,14 +281,17 @@ class BoardObservability:
             .filter_by(action="start_paper")
             .count()
         )
+        evaluation = evaluation_snapshot(self.session)
         return {
             "read_only": True,
             "source": "database",
             "writes_controls": False,
-            "paper_status": "not started",
+            "paper_status": "not started (trading_mode LIVE_BLOCKED; empty allow-list)",
             "paper_started": False,
-            "paper_execution_implemented": False,
-            "evaluation_status": "not",
+            "paper_mode_switched": False,
+            "paper_execution_implemented": True,
+            "internal_simulator": True,
+            "evaluation_status": "ledger ready",
             "live_trading_recommendation": "not",
             "board_review": "not",
             "explicit_board_approval": "not",
@@ -204,17 +303,26 @@ class BoardObservability:
             "paper_start_approvals": paper_approvals,
             "gate": control_snap["live_gate"],
             "silence_is_not_approval": True,
-            "open_board_decision": True,
+            "open_board_decision": False,
             "values_invented": False,
-            "values_shown": False,
+            "values_shown": True,
+            "addendum": ADDENDUM_A_LABEL,
+            "successful_trade_definition": evaluation["successful_trade_definition"],
+            "evaluation_win_rate_threshold": evaluation["win_rate_threshold"],
+            "evaluation_requires_book_profitable": True,
+            "evaluation_auto_switch_live": False,
+            "evaluation_trigger_met": evaluation["evaluation_trigger_met"],
             "unset_open_keys": [
                 "paper_duration_threshold",
-                "paper_success_threshold",
             ],
             "note": (
-                "PAPER is not started. trading_mode=LIVE_BLOCKED. No paper/live execution "
-                "in this slice. Paper duration/success thresholds are OPEN BOARD DECISIONS "
-                "and are not invented here. Silence is not approval."
+                "trading_mode stays LIVE_BLOCKED. Do not switch to PAPER while the "
+                "execution allow-list is empty. Internal paper fill simulator is the "
+                "paper ledger. Empty allow-list ⇒ no orders. Success metric is Board "
+                "Addendum A: a successful trade is a CLOSED paper trade with profit > 0; "
+                "evaluation trigger is win rate > 50% AND book profitable. Do not "
+                "auto-switch LIVE. Paper duration remains an OPEN BOARD DECISION. "
+                "Silence is not approval."
             ),
         }
 
