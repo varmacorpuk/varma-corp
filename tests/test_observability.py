@@ -84,6 +84,7 @@ def test_board_observability_api_is_read_only(client):
     assert "controls" in office["board_observability"]["includes"]
     assert "paper_gate" in office["board_observability"]["includes"]
     assert "execution_ports" in office["board_observability"]["includes"]
+    assert "company_meeting" in office["board_observability"]["includes"]
 
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"

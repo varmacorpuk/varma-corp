@@ -5,6 +5,7 @@ from varma.meetings.handoff import (
     handoff_brief_to_ceo,
     handoff_to_dict,
 )
+from varma.meetings.company_meeting import CompanyMeetingRunner, meeting_to_dict
 
 __all__ = [
     "CEO_SLUG",
@@ -12,4 +13,6 @@ __all__ = [
     "RISK_SLUG",
     "handoff_brief_to_ceo",
     "handoff_to_dict",
+    "CompanyMeetingRunner",
+    "meeting_to_dict",
 ]

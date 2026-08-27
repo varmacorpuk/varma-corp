@@ -164,6 +164,8 @@
     const executionPorts = data.execution_ports || {};
     const brokerPaper = executionPorts.broker_paper || {};
     const livePort = executionPorts.live || {};
+    const companyMeeting = data.company_meeting || {};
+    const meetingRun = companyMeeting.run;
     const costRows = costs.length
       ? costs
           .map(
@@ -217,9 +219,11 @@
     const documented = routines.documented || {};
     const briefSched = documented.brief || {};
     const filterSched = documented.nightly_filter || {};
+    const meetingSched = documented.company_meeting || {};
     const dbRoutines = routines.items || [];
     const routineRows = `
       <div class="ledger-row">06:30 weekday brief · ${escapeHtml(briefSched.timezone || "Europe/London")} · daemon: ${briefSched.daemon === true} · ${escapeHtml(briefSched.cli || "python -m varma.routines.run_brief")}<br /><span class="meta">${escapeHtml(briefSched.description || "")}</span></div>
+      <div class="ledger-row">07:30 company meeting · ${escapeHtml(meetingSched.timezone || "Europe/London")} · daemon: ${meetingSched.daemon === true} · is_trade: ${meetingSched.is_trade === true} · ${escapeHtml(meetingSched.cli || "python -m varma.routines.run_0730_meeting")}<br /><span class="meta">${escapeHtml(meetingSched.description || "")}</span></div>
       <div class="ledger-row">Nightly memory filter · ${escapeHtml(filterSched.timezone || "Europe/London")} · daemon: ${filterSched.daemon === true} · writes_controls: ${filterSched.writes_controls === true} · ${escapeHtml(filterSched.cli || "")}<br /><span class="meta">${escapeHtml(filterSched.description || "")}</span></div>
       ${
         dbRoutines.length
@@ -268,6 +272,13 @@
       <p class="meta">${escapeHtml(thesis.label || "SAMPLE — not a live trade")}. Not an order.</p>
       <h3>07:30 meeting artefacts</h3>
       ${artefactRows}
+      <h3>07:30 company meeting record</h3>
+      <p class="meta">${escapeHtml(companyMeeting.meeting || "07:30 Europe/London company meeting")} · on-demand · daemon: ${companyMeeting.daemon === true} · is_trade: ${companyMeeting.is_trade === true} · LIVE approval: ${companyMeeting.is_live_approval === true} · cannot start LIVE: ${companyMeeting.cannot_start_live !== false}</p>
+      ${
+        meetingRun
+          ? `<div class="ledger-row">started_by: ${escapeHtml(meetingRun.started_by || "")} · CEO handoff: ${escapeHtml(meetingRun.ceo_handoff_status || "not")} · Challenge: ${escapeHtml(meetingRun.challenge_status || "not")} · Risk: ${escapeHtml(meetingRun.risk_status || "not")} · trading_mode: ${escapeHtml(meetingRun.trading_mode_at_run || "")}<br /><span class="meta">${escapeHtml(meetingRun.brief_headline || "no MI brief")} · ${escapeHtml(meetingRun.ran_at || "")} · live_started: ${meetingRun.live_started === true}</span></div>`
+          : `<p class="meta">${escapeHtml(companyMeeting.note || "No 07:30 company meeting stored yet.")}</p>`
+      }
       <h3>Documented routines</h3>
       <p class="meta">On-demand. Europe/London. No 24/7 daemon. Nightly filter has no invented clock hour. Does not write controls.</p>
       ${routineRows}

@@ -9,13 +9,18 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from varma.clock import describe_0630_weekday_routine, describe_nightly_memory_filter
+from varma.clock import (
+    describe_0630_weekday_routine,
+    describe_0730_company_meeting,
+    describe_nightly_memory_filter,
+)
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
 from varma.ports.execution import execution_port_status
 from varma.db.models import (
     BoardApproval,
     ChallengeReview,
+    CompanyMeeting,
     CostEntry,
     Employee,
     Evidence,
@@ -28,6 +33,8 @@ from varma.db.models import (
     SampleThesis,
 )
 from varma.meetings.handoff import CEO_SLUG
+from varma.meetings.company_meeting import latest_meeting_pack, meeting_to_dict
+from varma.memory.filter import filter_run_to_dict
 from varma.memory.filter import filter_run_to_dict
 from varma.memory.stores import MemoryStores
 
@@ -115,6 +122,7 @@ class BoardObservability:
             "organisation_memory": self._organisation_memory_titles(),
             "meeting_pack": self._meeting_pack(),
             "meeting_artefacts": self._meeting_artefacts(),
+            "company_meeting": self._company_meeting(),
             "status_bubbles": self._status_bubbles(),
             "routines": self._routine_schedules(),
             "note": READ_ONLY_NOTE,
@@ -250,39 +258,15 @@ class BoardObservability:
         ChallengeReview | None,
         RiskDecision | None,
     ]:
-        brief = (
-            self.session.query(IntelligenceBrief)
-            .order_by(IntelligenceBrief.produced_at.desc())
-            .first()
+        pack = latest_meeting_pack(self.session)
+        return (
+            pack["brief"],
+            pack["ceo"],
+            pack["handoff"],
+            pack["thesis"],
+            pack["review"],
+            pack["risk"],
         )
-        ceo = self.session.query(Employee).filter_by(slug=CEO_SLUG).one_or_none()
-        handoff = None
-        if brief is not None and ceo is not None:
-            handoff = (
-                self.session.query(Handoff)
-                .filter_by(
-                    to_employee_id=ceo.id,
-                    artefact_type="intelligence_brief",
-                    artefact_id=brief.id,
-                )
-                .order_by(Handoff.created_at.desc())
-                .first()
-            )
-        thesis = (
-            self.session.query(SampleThesis).order_by(SampleThesis.created_at.desc()).first()
-        )
-        review = None
-        if thesis is not None:
-            review = (
-                self.session.query(ChallengeReview)
-                .filter_by(thesis_id=thesis.id)
-                .order_by(ChallengeReview.produced_at.desc())
-                .first()
-            )
-        risk = (
-            self.session.query(RiskDecision).order_by(RiskDecision.produced_at.desc()).first()
-        )
-        return brief, ceo, handoff, thesis, review, risk
 
     def _meeting_pack(self) -> dict[str, Any]:
         brief, _ceo, handoff, thesis, review, risk = self._latest_meeting_rows()
@@ -384,6 +368,34 @@ class BoardObservability:
             ),
         }
 
+    def _company_meeting(self) -> dict[str, Any]:
+        row = self.session.query(CompanyMeeting).order_by(CompanyMeeting.ran_at.desc()).first()
+        data: dict[str, Any] = {
+            "read_only": True,
+            "source": "database",
+            "meeting": "07:30 Europe/London company meeting",
+            "timezone": "Europe/London",
+            "schedule": "07:30 weekdays",
+            "daemon": False,
+            "is_trade": False,
+            "is_live_approval": False,
+            "cannot_start_live": True,
+            "writes_controls": False,
+            "cli": "python -m varma.routines.run_0730_meeting",
+            "run": meeting_to_dict(row) if row else None,
+        }
+        if row is None:
+            data["note"] = (
+                "No 07:30 company meeting stored yet. "
+                "Board Member: POST /routines/run-0730-meeting or python -m varma.routines.run_0730_meeting"
+            )
+        else:
+            data["note"] = (
+                "Latest on-demand 07:30 company meeting from the database. "
+                "Not a trade. Not LIVE approval. Employees cannot start LIVE from a meeting."
+            )
+        return data
+
     def _status_bubbles(self) -> list[dict[str, Any]]:
         rows = self.session.query(Employee).order_by(Employee.slug.asc()).all()
         return [
@@ -431,6 +443,16 @@ class BoardObservability:
                     "writes_controls": False,
                     "cli": "python -m varma.routines.run_nightly_filter",
                     "description": describe_nightly_memory_filter(),
+                },
+                "company_meeting": {
+                    "schedule": "07:30 weekdays",
+                    "timezone": "Europe/London",
+                    "daemon": False,
+                    "is_trade": False,
+                    "is_live_approval": False,
+                    "cannot_start_live": True,
+                    "cli": "python -m varma.routines.run_0730_meeting",
+                    "description": describe_0730_company_meeting(),
                 },
             },
             "note": (
