@@ -49,13 +49,14 @@ Company Kernel
    Missing numeric-limit KEYS (unset OPEN BOARD DECISIONS; values not invented; missing ⇒ deny)
    Control snapshot (trading_mode=LIVE_BLOCKED, empty allow-list, employees cannot write)
    Paper-gate status (PAPER not started; no execution; duration/success thresholds unset)
+   Execution-port status (BROKER_PAPER and LIVE UNLOADED; status only; no fills)
         |
    LLMPort          DataPorts           ExecutionPort
-   (FakeLLM)    (fake delayed/news)    (LIVE adapter not loaded)
+   (FakeLLM)    (fake delayed/news)    (BROKER_PAPER and LIVE not loaded; no fills)
 ```
 
 The visual office is a projection. It is not the source of truth (Document 16).
 
 CEO, Challenge, and Risk are AI employees. They cannot approve LIVE, place orders, or write controls. Human = Board Member.
 
-Board Member observability (cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status and artefact list, status bubbles, documented routine schedules, missing numeric-limit keys, control snapshot, paper-gate status) is a read-only right-hand panel view of the database. It does not write controls. It does not invent Board-permanent numeric limit values or paper duration/success thresholds. It is not stored on the desktop disk.
+Board Member observability (cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status and artefact list, status bubbles, documented routine schedules, missing numeric-limit keys, control snapshot, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports) is a read-only right-hand panel view of the database. It does not write controls. It does not invent Board-permanent numeric limit values or paper duration/success thresholds. It is not stored on the desktop disk. Constructing or using BROKER_PAPER or LIVE is denied. No fills.

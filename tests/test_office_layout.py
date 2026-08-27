@@ -58,4 +58,8 @@ def test_office_click_opens_panel_logic():
     assert "Paper gate" in JS
     assert "not started" in JS
     assert "paper_status" in JS
+    assert "Execution ports" in JS
+    assert "BROKER_PAPER" in JS
+    assert "UNLOADED" in JS
+    assert "execution_ports" in JS
     assert "#chat-form[hidden]" in CSS

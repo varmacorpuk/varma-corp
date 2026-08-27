@@ -23,6 +23,7 @@ from varma.db.models import (
 )
 
 LIVE_ADAPTER_LOADED = False  # hard invariant for this slice and default environments
+BROKER_PAPER_LOADED = False  # hard invariant for this slice — no paper fills
 
 TRADING_MODES = ("PAPER", "EVALUATION", "LIVE_BLOCKED", "LIVE")
 REQUIRED_LIMIT_KEYS = (
@@ -70,6 +71,9 @@ class ControlEngine:
         )
         return bool(row and row.allowed)
 
+    def broker_paper_loaded(self) -> bool:
+        return BROKER_PAPER_LOADED
+
     def live_adapter_loaded(self) -> bool:
         state = self.state()
         if state.trading_mode != "LIVE":
@@ -97,6 +101,10 @@ class ControlEngine:
 
         if state.kill_switch:
             return self._deny("KILL_SWITCH", actor_id, order)
+
+        if execution_port == "BROKER_PAPER":
+            # Do not construct PaperBrokerAdapter. Port remains UNLOADED. No fills.
+            return self._deny("BROKER_PAPER_NOT_LOADED", actor_id, order)
 
         if execution_port == "LIVE" or state.trading_mode == "LIVE":
             if state.trading_mode != "LIVE":
@@ -154,6 +162,7 @@ class ControlEngine:
             "allow_list_empty": len(self.allow_list_symbols()) == 0,
             "missing_numeric_limits": self.missing_limits(),
             "live_adapter_loaded": self.live_adapter_loaded(),
+            "broker_paper_loaded": BROKER_PAPER_LOADED,
             "live_gate": "PAPER → EVALUATION → LIVE-TRADING RECOMMENDATION → BOARD REVIEW → EXPLICIT BOARD APPROVAL → LIVE",
             "note": "Silence, elapsed time, paper success, and employee confidence are not approval.",
         }

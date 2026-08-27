@@ -6,6 +6,7 @@ def test_health(client):
     assert body["timezone"] == "Europe/London"
     assert body["trading_mode"] == "LIVE_BLOCKED"
     assert body["live_adapter_loaded"] is False
+    assert body["broker_paper_loaded"] is False
     assert "DEVELOPMENT" in body["environment"]
 
 

@@ -103,6 +103,7 @@ def create_app() -> FastAPI:
             "now": now_london().isoformat(),
             "trading_mode": controls["trading_mode"],
             "live_adapter_loaded": controls["live_adapter_loaded"],
+            "broker_paper_loaded": controls["broker_paper_loaded"],
             "storage_backend": storage.backend_name(),
             "storage_temporary": storage.is_temporary_dev_store(),
             "storage_note": storage.persistence_note(),
@@ -430,6 +431,7 @@ def create_app() -> FastAPI:
                     "missing_numeric_limits",
                     "controls",
                     "paper_gate",
+                    "execution_ports",
                 ],
             },
         }
