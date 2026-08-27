@@ -211,7 +211,7 @@ def test_company_meeting_attendance_is_the_four_employees(session):
     assert session.query(CompanyMeetingAttendee).filter_by(meeting_id=meeting["id"]).count() == 4
     assert session.query(Employee).count() == 4
     names = {a["display_name"] for a in meeting["attendees"]}
-    assert names == {"Asha Patel", "CEO", "Challenge", "Risk"}
+    assert names == {"Research", "CEO", "Challenge", "Risk"}
     assert "board-member" not in slugs
     snap = BoardObservability(session).snapshot()["company_meeting"]
     assert [a["slug"] for a in snap["run"]["attendees"]] == slugs

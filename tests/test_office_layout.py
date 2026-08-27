@@ -87,6 +87,12 @@ def test_office_click_opens_panel_logic():
     assert 'method: "POST"' in JS or "method: \"POST\"" in JS or 'method: "POST"' in JS.replace(" ", "")
     assert "showBoardObservability" in JS
     assert "GET /observability does not run jobs" in JS
+    assert "Ask Research" in JS
+    assert 'display_name: "Research"' in JS
+    assert 'display_name: "Asha Patel"' not in JS
+    assert "Select Research" in HTML
+    assert "Select Asha Patel" not in HTML
+    assert "talk-disabled" in HTML
     assert "Approve LIVE" not in HTML
     assert 'id="approve-live"' not in HTML.lower()
     assert "approve-live-btn" not in JS

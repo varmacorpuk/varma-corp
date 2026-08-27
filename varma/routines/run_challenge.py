@@ -34,7 +34,7 @@ def run_challenge(session: Session) -> dict:
         note=(
             "TEMPORARY SAMPLE artefact from Market Intelligence for Challenge. "
             "Watchlist is not the allow-list. No execution authority. "
-            "Asha Patel continues to produce the intelligence brief separately."
+            "Research continues to produce the intelligence brief separately."
         ),
         evidence_kind="thesis_handoff",
         status_bubble="THESIS IN",
