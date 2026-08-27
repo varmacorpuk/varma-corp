@@ -42,6 +42,8 @@ Company Kernel
    Skills, Routines (on-demand via Board panel POST / CLI; no 24/7 daemon)
    Memory (employee / organisation / evidence)
    Nightly Europe/London working-context filter (archive working; evidence append-only; no control writes)
+   Durable employees (Document 03): identity, role knowledge, authority, memory pointers, skills, relationships. An LLM call is an invocation.
+   Four Document 08 stores: working, employee persistent lessons (loaded on the next job), governed org knowledge, append-only evidence. Learning never writes controls.
    Meeting handoffs (MI brief → CEO; SAMPLE thesis → Challenge; challenge → Risk)
    On-demand 07:30 company meeting record (from existing handoffs; four-employee attendance; internal staff artefact; no Board Member diary invite; not a trade; not LIVE)
    Control engine + Risk deny-path (never LIVE)

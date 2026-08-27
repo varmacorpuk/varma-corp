@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from varma.controls.risk import UNSAFE_DEMO_PATH
 from varma.db.engine import get_session_factory, init_db
 from varma.db.seed import seed_if_empty
+from varma.meetings.handoff import CHALLENGE_SLUG, get_employee
 from varma.skills.review_unsafe_path import (
     ReviewUnsafePath,
     get_risk,
@@ -22,11 +23,13 @@ from varma.skills.review_unsafe_path import (
 def run_risk_deny(session: Session) -> dict:
     risk = get_risk(session)
     review = latest_challenge_review(session)
+    originator = get_employee(session, CHALLENGE_SLUG) if review is not None else None
     decision = ReviewUnsafePath(session).run(
         risk,
         proposed=UNSAFE_DEMO_PATH,
         thesis_id=review.thesis_id if review else None,
         challenge_review_id=review.id if review else None,
+        originator=originator,
     )
     data = risk_decision_to_dict(decision)
     data["sample_not_a_live_trade"] = True

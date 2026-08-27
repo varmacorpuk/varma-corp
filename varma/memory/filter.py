@@ -15,10 +15,12 @@ from varma.clock import describe_nightly_memory_filter, now_london
 from varma.controls.engine import ControlEngine
 from varma.db.models import (
     AllowListInstrument,
+    ControlSetting,
     ControlState,
     Evidence,
     MemoryEmployee,
     MemoryFilterRun,
+    MemoryOrg,
     MemoryWorking,
     MemoryWorkingArchive,
     NumericLimit,
@@ -44,9 +46,15 @@ def _limit_fingerprint(session: Session) -> list[tuple[str, str | None]]:
     return [(r.key, r.value) for r in rows]
 
 
+def _org_fingerprint(session: Session) -> list[tuple[str, str, str]]:
+    rows = session.query(MemoryOrg).order_by(MemoryOrg.id).all()
+    return [(r.id, r.title, r.promoted_by) for r in rows]
+
+
 def _controls_guard(session: Session) -> dict[str, Any]:
     engine = ControlEngine(session)
     state = session.get(ControlState, 1)
+    paper = session.get(ControlSetting, "paper_execution")
     return {
         "snapshot": engine.snapshot(),
         "trading_mode": state.trading_mode if state else None,
@@ -54,6 +62,8 @@ def _controls_guard(session: Session) -> dict[str, Any]:
         "allow_list": sorted(r.symbol for r in session.query(AllowListInstrument).all()),
         "permissions": _permission_fingerprint(session),
         "limits": _limit_fingerprint(session),
+        "paper_execution": paper.value if paper is not None else None,
+        "org": _org_fingerprint(session),
     }
 
 
@@ -150,6 +160,10 @@ class NightlyMemoryFilter:
             raise RuntimeError("NIGHTLY_FILTER_MUST_NOT_WRITE_CONTROLS")
         if after["limits"] != before["limits"]:
             raise RuntimeError("NIGHTLY_FILTER_MUST_NOT_WRITE_CONTROLS")
+        if after["paper_execution"] != before["paper_execution"]:
+            raise RuntimeError("NIGHTLY_FILTER_MUST_NOT_WRITE_CONTROLS")
+        if after["org"] != before["org"]:
+            raise RuntimeError("NIGHTLY_FILTER_MUST_NOT_MUTATE_ORG_KNOWLEDGE")
 
         evidence_ids_after = [r.id for r in self.session.query(Evidence).all()]
         if not set(evidence_ids_before).issubset(set(evidence_ids_after)):

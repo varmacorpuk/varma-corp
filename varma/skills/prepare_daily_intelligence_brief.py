@@ -12,6 +12,7 @@ from varma.config import get_settings
 from varma.controls.engine import ControlEngine
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
 from varma.db.models import Employee, IntelligenceBrief, WatchlistItem
+from varma.employees.brain import EmployeeBrain
 from varma.memory.stores import MemoryStores
 from varma.meetings.handoff import CEO_SLUG, handoff_brief_to_ceo
 from varma.ports.data import DataPort, FakeMarketData
@@ -34,6 +35,7 @@ class PrepareDailyIntelligenceBrief:
         self.llm = llm or get_llm()
         self.data = data or FakeMarketData()
         self.memory = MemoryStores(session)
+        self.brain = EmployeeBrain(session)
         self.cost = CostLedger(session)
         self.controls = ControlEngine(session)
 
@@ -44,13 +46,14 @@ class PrepareDailyIntelligenceBrief:
         symbols = [w.symbol for w in watch]
         news = self.data.news(symbols)
         prices = self.data.delayed_prices(symbols)
-        lessons = [m.content for m in self.memory.employee_lessons(employee.id)]
+        invocation = self.brain.invocation(employee)
+        lessons = list(invocation.get("lessons") or [])
         state = self.controls.snapshot()
 
         context = {
+            **invocation,
             "employee": {
-                "id": employee.id,
-                "display_name": employee.display_name,
+                **invocation["identity"],
                 "role_title": employee.role_title,
                 "department": employee.department,
                 "authority_boundaries": employee.authority_boundaries,
@@ -140,6 +143,19 @@ class PrepareDailyIntelligenceBrief:
         employee.status = "PREPARING" if not brief.verification_passed else "AVAILABLE"
         employee.status_bubble = "BRIEF READY" if brief.verification_passed else "BRIEF FAILED"
         self.session.commit()
+        self.brain.record_invocation(
+            employee,
+            skill_name=SKILL_NAME,
+            artefact_id=brief.id,
+            invocation=invocation,
+        )
+        self.memory.add_lesson(
+            employee.id,
+            (
+                f"JOB_LESSON:{brief.id} Material claims need source and timestamp. "
+                f"Freshness was {brief.freshness_flag}. A brief is not a trade."
+            ),
+        )
         handoff_brief_to_ceo(self.session, brief, employee)
         return brief
 

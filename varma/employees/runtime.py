@@ -15,6 +15,7 @@ from varma.db.models import (
     RiskDecision,
     SampleThesis,
 )
+from varma.employees.brain import EmployeeBrain
 from varma.memory.stores import MemoryStores
 from varma.controls.addendum_f import ALL_STAFF_SLUGS
 from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG, handoff_to_dict
@@ -32,6 +33,7 @@ class EmployeeRuntime:
         self.session = session
         self.employee = employee
         self.memory = MemoryStores(session)
+        self.brain = EmployeeBrain(session)
         self.controls = ControlEngine(session)
         self.llm = get_llm()
 
@@ -108,29 +110,32 @@ class EmployeeRuntime:
         thesis = self.latest_thesis() if self.employee.slug in {CHALLENGE_SLUG, RISK_SLUG} else None
         review = self.latest_challenge_review() if self.employee.slug in {CHALLENGE_SLUG, RISK_SLUG} else None
         risk = self.latest_risk_decision() if self.employee.slug == RISK_SLUG else None
-        return {
-            "employee": {
-                "id": self.employee.id,
-                "slug": self.employee.slug,
-                "display_name": self.employee.display_name,
-                "person_name": self.employee.person_name or "",
-                "role_title": self.employee.role_title,
-                "department": self.employee.department,
-                "status": self.employee.status,
-                "status_bubble": self.employee.status_bubble,
-                "authority_boundaries": self.employee.authority_boundaries,
-            },
-            "lessons": [m.content for m in self.memory.employee_lessons(self.employee.id)],
-            "controls": self.controls.snapshot(),
-            "latest_brief": brief_to_dict(brief) if brief else None,
-            "produced_brief": brief_to_dict(produced) if produced else None,
-            "received_brief": brief_to_dict(received) if received else None,
-            "latest_thesis": thesis_to_dict(thesis) if thesis else None,
-            "latest_challenge_review": challenge_review_to_dict(review) if review else None,
-            "latest_risk_decision": risk_decision_to_dict(risk) if risk else None,
-            "inbox": [handoff_to_dict(h) for h in self.inbox()[:10]],
-            "cannot_approve_live_trading": self.employee.slug in NO_LIVE_APPROVAL_SLUGS,
+        packed = self.brain.invocation(self.employee)
+        packed["employee"] = {
+            **packed["identity"],
+            "slug": self.employee.slug,
+            "display_name": self.employee.display_name,
+            "person_name": self.employee.person_name or "",
+            "role_title": self.employee.role_title,
+            "department": self.employee.department,
+            "status": self.employee.status,
+            "status_bubble": self.employee.status_bubble,
+            "authority_boundaries": self.employee.authority_boundaries,
         }
+        packed.update(
+            {
+                "controls": self.controls.snapshot(),
+                "latest_brief": brief_to_dict(brief) if brief else None,
+                "produced_brief": brief_to_dict(produced) if produced else None,
+                "received_brief": brief_to_dict(received) if received else None,
+                "latest_thesis": thesis_to_dict(thesis) if thesis else None,
+                "latest_challenge_review": challenge_review_to_dict(review) if review else None,
+                "latest_risk_decision": risk_decision_to_dict(risk) if risk else None,
+                "inbox": [handoff_to_dict(h) for h in self.inbox()[:10]],
+                "cannot_approve_live_trading": self.employee.slug in NO_LIVE_APPROVAL_SLUGS,
+            }
+        )
+        return packed
 
     def chat(self, message: str, *, from_role: str = "board_member") -> ChatMessage:
         self.session.add(
