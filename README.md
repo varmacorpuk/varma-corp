@@ -17,6 +17,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 9. Desktop: 2D office, four employee sprites, click to right-hand panel; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. No Talk/voice.
 10. pytest without paid APIs. Execution in LIVE mode is denied. Empty allow-list cannot execute.
 11. TEMPORARY DEVELOPMENT DEFAULT watchlist of a few listed stocks. It is not the execution allow-list. No gold.
+12. Nightly Europe/London memory filter (on-demand): archives working context in the database; evidence stays append-only; filter does not write controls.
 
 ## System separation
 
@@ -43,6 +44,7 @@ From the repository root:
     python3 -m varma.routines.run_brief
     python3 -m varma.routines.run_challenge
     python3 -m varma.routines.run_risk_deny
+    python3 -m varma.routines.run_nightly_filter
     python3 -m varma
 
 Health: http://127.0.0.1:8000/health
@@ -105,9 +107,21 @@ On demand, not a 24/7 daemon:
 - Challenge writes a CHALLENGED review to the database and hands it to Risk.
 - Risk reviews an unsafe/out-of-policy path (LIVE execution of gold, treating the SAMPLE thesis as an order) and records DENIED. The control engine is consulted. Risk cannot approve LIVE.
 
+## Nightly Europe/London memory filter
+
+On demand, not a 24/7 daemon:
+
+    python3 -m varma.routines.run_nightly_filter
+
+- Cadence: nightly, timezone Europe/London (Document 08).
+- Working context is archived to `memory_working_archive` and cleared from `memory_working`.
+- Evidence is append-only and is never deleted or overwritten.
+- The filter does not write controls, `trading_mode`, allow-list, or permissions.
+- Filter run is a database artefact (`memory_filter_runs`), not a desktop file.
+
 ## Next slice
 
-Nightly Europe/London memory filter (archive working context; evidence stays append-only; must not write controls), still no paper/live execution and no 12-employee roster.
+Board Member read-only observability in the right-hand panel (cost ledger + recent evidence from the database). No new employees. Still no paper/live execution and no 12-employee roster.
 
 ## Specs
 
@@ -117,4 +131,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
+Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.

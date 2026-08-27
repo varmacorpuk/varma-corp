@@ -58,10 +58,13 @@ class MemoryStores:
         self.session.commit()
         return row
 
-    def nightly_filter_stub(self) -> dict[str, str]:
-        """Nightly Europe/London filter. Must not delete evidence. Must not write controls."""
-        return {
-            "status": "stub",
-            "timezone": "Europe/London",
-            "note": "Filter may archive working context later. Evidence is append-only.",
-        }
+    def delete_evidence(self, evidence_id: str) -> None:
+        raise RuntimeError("EVIDENCE_IS_APPEND_ONLY")
+
+    def overwrite_evidence(self, evidence_id: str, payload: str) -> None:
+        raise RuntimeError("EVIDENCE_IS_APPEND_ONLY")
+
+    def run_nightly_filter(self) -> dict[str, str]:
+        from varma.memory.filter import NightlyMemoryFilter
+
+        return NightlyMemoryFilter(self.session).run()

@@ -23,6 +23,16 @@ def is_weekday(dt: datetime | None = None) -> bool:
     return d.weekday() < 5
 
 
+def describe_nightly_memory_filter() -> str:
+    return (
+        "Nightly Europe/London working-context filter (Document 08). "
+        "On-demand via CLI or API. This slice does not start a daemon scheduler. "
+        "Working context is archived in the database. Evidence is append-only "
+        "and is never deleted. The filter does not write controls, trading_mode, "
+        "allow-list, or permissions."
+    )
+
+
 def describe_0630_weekday_routine() -> str:
     return (
         "Weekdays 06:30 Europe/London. Output due before the 07:30 "

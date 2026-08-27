@@ -41,6 +41,7 @@ Company Kernel
    Permissions, trading_mode=LIVE_BLOCKED, empty allow_list
    Skills, Routines (on-demand; no 24/7 daemon)
    Memory (employee / organisation / evidence)
+   Nightly Europe/London working-context filter (archive working; evidence append-only; no control writes)
    Meeting handoffs (MI brief → CEO; SAMPLE thesis → Challenge; challenge → Risk)
    Control engine + Risk deny-path (never LIVE)
    Observability, Cost ledger

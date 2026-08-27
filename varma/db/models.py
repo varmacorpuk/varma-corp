@@ -134,6 +134,39 @@ class MemoryWorking(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
+class MemoryWorkingArchive(Base):
+    """Archived working context. Nightly Europe/London filter writes here, not controls."""
+
+    __tablename__ = "memory_working_archive"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    filter_run_id: Mapped[str] = mapped_column(String(36), ForeignKey("memory_filter_runs.id"))
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"))
+    key: Mapped[str] = mapped_column(String(80), nullable=False)
+    value: Mapped[str] = mapped_column(Text, default="")
+    working_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    archived_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class MemoryFilterRun(Base):
+    """On-demand nightly Europe/London filter run. Database artefact. Not a daemon."""
+
+    __tablename__ = "memory_filter_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    ran_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    timezone: Mapped[str] = mapped_column(String(40), default="Europe/London")
+    cadence: Mapped[str] = mapped_column(String(40), default="nightly")
+    archived_count: Mapped[int] = mapped_column(Integer, default=0)
+    evidence_count_before: Mapped[int] = mapped_column(Integer, default=0)
+    evidence_count_after: Mapped[int] = mapped_column(Integer, default=0)
+    trading_mode_before: Mapped[str] = mapped_column(String(32), nullable=False)
+    trading_mode_after: Mapped[str] = mapped_column(String(32), nullable=False)
+    controls_written: Mapped[bool] = mapped_column(Boolean, default=False)
+    daemon: Mapped[bool] = mapped_column(Boolean, default=False)
+    notes: Mapped[str] = mapped_column(Text, default="")
+
+
 class MemoryEmployee(Base):
     __tablename__ = "memory_employee"
 

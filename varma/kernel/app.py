@@ -12,7 +12,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from varma import __version__
-from varma.clock import describe_0630_weekday_routine, now_london
+from varma.clock import describe_0630_weekday_routine, describe_nightly_memory_filter, now_london
 from varma.controls.engine import ControlEngine
 from varma.db.engine import get_session_factory, init_db, storage_from_url
 from varma.db.models import (
@@ -20,6 +20,9 @@ from varma.db.models import (
     ChatMessage,
     Employee,
     IntelligenceBrief,
+    MemoryFilterRun,
+    MemoryWorking,
+    MemoryWorkingArchive,
     RiskDecision,
     SampleThesis,
     WatchlistItem,
@@ -29,8 +32,10 @@ from varma.employees.runtime import NO_LIVE_APPROVAL_SLUGS, EmployeeRuntime
 from varma.kernel.auth import Actor, parse_actor, require_board_member
 from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG, handoff_to_dict
 from varma.ports.execution import ExecutionPort
+from varma.memory.filter import filter_run_to_dict
 from varma.routines.run_brief import run_brief
 from varma.routines.run_challenge import run_challenge
+from varma.routines.run_nightly_filter import run_nightly_filter
 from varma.routines.run_risk_deny import run_risk_deny
 from varma.skills.challenge_sample_thesis import challenge_review_to_dict
 from varma.skills.prepare_daily_intelligence_brief import brief_to_dict
@@ -101,6 +106,12 @@ def create_app() -> FastAPI:
             "storage_temporary": storage.is_temporary_dev_store(),
             "storage_note": storage.persistence_note(),
             "environment": "DEVELOPMENT — not production runtime",
+            "nightly_filter": {
+                "cadence": "nightly",
+                "timezone": "Europe/London",
+                "daemon": False,
+                "cli": "python -m varma.routines.run_nightly_filter",
+            },
         }
 
     @app.get("/auth/whoami")
@@ -275,6 +286,25 @@ def create_app() -> FastAPI:
     ) -> dict[str, Any]:
         return run_risk_deny(session)
 
+    @app.post("/routines/run-nightly-filter")
+    def api_run_nightly_filter(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return run_nightly_filter(session)
+
+    @app.get("/routines/nightly-filter-schedule")
+    def nightly_filter_schedule() -> dict[str, Any]:
+        return {
+            "schedule": "nightly",
+            "timezone": "Europe/London",
+            "daemon": False,
+            "description": describe_nightly_memory_filter(),
+            "cli": "python -m varma.routines.run_nightly_filter",
+            "writes_controls": False,
+            "deletes_evidence": False,
+        }
+
     @app.get("/routines/brief-schedule")
     def brief_schedule() -> dict[str, str]:
         return {
@@ -283,6 +313,26 @@ def create_app() -> FastAPI:
             "description": describe_0630_weekday_routine(),
             "cli": "python -m varma.routines.run_brief",
         }
+
+    @app.get("/memory/filter/latest")
+    def latest_memory_filter(session: Session = Depends(_session)) -> dict[str, Any]:
+        row = session.query(MemoryFilterRun).order_by(MemoryFilterRun.ran_at.desc()).first()
+        if row is None:
+            return {
+                "run": None,
+                "note": "No nightly filter run stored yet. python -m varma.routines.run_nightly_filter",
+            }
+        archived = (
+            session.query(MemoryWorkingArchive)
+            .filter_by(filter_run_id=row.id)
+            .all()
+        )
+        data = filter_run_to_dict(row)
+        data["archived_keys"] = [
+            {"employee_id": a.employee_id, "key": a.key} for a in archived
+        ]
+        data["working_remaining"] = session.query(MemoryWorking).count()
+        return {"run": data}
 
     @app.post("/execution/place-order")
     def place_order(
