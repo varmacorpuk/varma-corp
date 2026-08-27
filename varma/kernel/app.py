@@ -12,9 +12,11 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from varma import __version__
+from varma.backup.job import run_company_backup
 from varma.clock import (
     describe_0630_weekday_routine,
     describe_0730_company_meeting,
+    describe_company_backup,
     describe_flatten_us_close,
     describe_nightly_memory_filter,
     describe_paper_session,
@@ -48,6 +50,10 @@ from varma.routines.run_risk_deny import run_risk_deny
 from varma.routines.run_0730_meeting import run_0730_meeting
 from varma.routines.run_flatten_us_close import run_flatten_us_close
 from varma.routines.board_jobs import with_flatten_safety, with_job_safety
+from varma.controls.addendum_j import (
+    EMPLOYEE_CANNOT_DOWNLOAD_SECRETS_REASON,
+    SECRETS_ARE_NOT_DOWNLOADABLE_REASON,
+)
 from varma.skills.challenge_sample_thesis import challenge_review_to_dict
 from varma.skills.prepare_daily_intelligence_brief import brief_to_dict
 from varma.skills.prepare_sample_thesis import thesis_to_dict
@@ -380,6 +386,79 @@ def create_app() -> FastAPI:
             run_flatten_us_close(session, started_by="board-member"),
         )
 
+    @app.post("/routines/run-backup")
+    def api_run_backup(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return with_job_safety(
+            session,
+            run_company_backup(session, started_by="board-member"),
+        )
+
+    @app.get("/routines/backup-schedule")
+    def backup_schedule() -> dict[str, Any]:
+        return {
+            "schedule": "daily after US close / end of London evening",
+            "timezone": "Europe/London",
+            "after": "US_REGULAR_CASH_CLOSE",
+            "daemon": False,
+            "encrypted_at_rest": True,
+            "owner_display_name": "Owen Blake · Technology",
+            "owner_slug": "technology",
+            "github_is_code_only": True,
+            "on_board_member_laptop": False,
+            "system_of_record": "database",
+            "included": [
+                "paper_ledger",
+                "evidence",
+                "organisational_memory",
+                "control_snapshots",
+            ],
+            "excluded": ["secrets", "live_broker_credentials"],
+            "live_broker_credentials_exist": False,
+            "employees_cannot_download_secrets": True,
+            "description": describe_company_backup(),
+            "cli": "python -m varma.routines.run_backup",
+            "writes_controls": False,
+            "fills": False,
+            "paper_fills": False,
+        }
+
+    def _deny_secret_download(
+        authorization: str | None = Header(default=None),
+        x_varma_actor: str | None = Header(default=None),
+        x_varma_employee: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        actor = parse_actor(authorization, x_varma_actor, x_varma_employee)
+        if actor.actor_type != "board_member":
+            raise HTTPException(403, EMPLOYEE_CANNOT_DOWNLOAD_SECRETS_REASON)
+        raise HTTPException(403, SECRETS_ARE_NOT_DOWNLOADABLE_REASON)
+
+    @app.get("/backup/secrets")
+    def backup_secrets_denied(
+        authorization: str | None = Header(default=None),
+        x_varma_actor: str | None = Header(default=None),
+        x_varma_employee: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        return _deny_secret_download(authorization, x_varma_actor, x_varma_employee)
+
+    @app.get("/backup/key")
+    def backup_key_denied(
+        authorization: str | None = Header(default=None),
+        x_varma_actor: str | None = Header(default=None),
+        x_varma_employee: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        return _deny_secret_download(authorization, x_varma_actor, x_varma_employee)
+
+    @app.get("/backup/download")
+    def backup_download_denied(
+        authorization: str | None = Header(default=None),
+        x_varma_actor: str | None = Header(default=None),
+        x_varma_employee: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        return _deny_secret_download(authorization, x_varma_actor, x_varma_employee)
+
     @app.get("/routines/flatten-us-close-schedule")
     def flatten_us_close_schedule() -> dict[str, Any]:
         return {
@@ -564,6 +643,8 @@ def create_app() -> FastAPI:
                     "paper_ledger",
                     "paper_session",
                     "addendum_c",
+                    "addendum_j",
+                    "backup",
                 ],
             },
         }

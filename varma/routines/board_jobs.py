@@ -98,6 +98,26 @@ BOARD_JOBS: tuple[dict[str, Any], ...] = (
         "flatten_as_if_there_were_positions": False,
         "daemon": False,
     },
+    {
+        "id": "run-backup",
+        "label": "Run company backup now",
+        "method": "POST",
+        "path": "/routines/run-backup",
+        "cli": "python -m varma.routines.run_backup",
+        "sample": False,
+        "is_live_trade": False,
+        "is_live_approval": False,
+        "owner_slug": "technology",
+        "owner_display_name": "Owen Blake · Technology",
+        "encrypted_at_rest": True,
+        "git_committed": False,
+        "on_board_member_laptop": False,
+        "secrets_included": False,
+        "live_broker_credentials_exist": False,
+        "paper_fills": False,
+        "fills": False,
+        "daemon": False,
+    },
 )
 
 
@@ -115,6 +135,18 @@ def runnable_jobs_catalog() -> dict[str, Any]:
             item["flatten_as_if_there_were_positions"] = False
             item["flatten_at"] = "US_REGULAR_CASH_CLOSE"
             item["flatten_not_at"] = "LONDON_CASH_CLOSE"
+            item["daemon"] = False
+        if job["id"] == "run-backup":
+            item["paper_fills"] = False
+            item["fills"] = False
+            item["encrypted_at_rest"] = True
+            item["git_committed"] = False
+            item["on_board_member_laptop"] = False
+            item["in_github"] = False
+            item["secrets_included"] = False
+            item["live_broker_credentials_exist"] = False
+            item["owner_slug"] = "technology"
+            item["owner_display_name"] = "Owen Blake · Technology"
             item["daemon"] = False
         items.append(item)
     catalog = {

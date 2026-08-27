@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from varma.clock import (
     describe_0630_weekday_routine,
     describe_0730_company_meeting,
+    describe_company_backup,
     describe_flatten_us_close,
     describe_nightly_memory_filter,
     describe_paper_session,
@@ -21,6 +22,7 @@ from varma.controls.addendum_c import ADDENDUM_C_LABEL, addendum_c_public
 from varma.controls.addendum_e import ADDENDUM_E_LABEL, addendum_e_public
 from varma.controls.addendum_f import ADDENDUM_F_LABEL, addendum_f_public
 from varma.controls.addendum_i import ADDENDUM_I_LABEL, addendum_i_public
+from varma.controls.addendum_j import addendum_j_public
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
 from varma.controls.kill_switch import kill_switch_state
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
@@ -55,6 +57,7 @@ from varma.meetings.company_meeting import (
     latest_meeting_pack,
     meeting_to_dict,
 )
+from varma.backup.job import backup_status
 from varma.memory.filter import filter_run_to_dict
 from varma.memory.stores import MemoryStores
 from varma.routines.board_jobs import runnable_jobs_catalog
@@ -129,6 +132,7 @@ class BoardObservability:
             "addendum_e": control_snap.get("addendum_e") or addendum_e_public(),
             "addendum_f": control_snap.get("addendum_f") or addendum_f_public(),
             "addendum_i": control_snap.get("addendum_i") or addendum_i_public(),
+            "addendum_j": control_snap.get("addendum_j") or addendum_j_public(),
             "paper_session": self._paper_session(control_snap),
             "missing_numeric_limits": self._missing_numeric_limits(control_snap),
             "numeric_limits": self._numeric_limits(control_snap),
@@ -160,6 +164,7 @@ class BoardObservability:
             "status_bubbles": self._status_bubbles(),
             "routines": self._routine_schedules(),
             "runnable_jobs": self._runnable_jobs(),
+            "backup": self._backup(),
             "note": READ_ONLY_NOTE,
         }
 
@@ -701,6 +706,37 @@ class BoardObservability:
                     "broker": False,
                     "flatten_as_if_there_were_positions": False,
                 },
+                "backup": {
+                    "schedule": "daily after US close / end of London evening",
+                    "timezone": "Europe/London",
+                    "after": "US_REGULAR_CASH_CLOSE",
+                    "daemon": False,
+                    "encrypted_at_rest": True,
+                    "owner_display_name": "Owen Blake · Technology",
+                    "owner_slug": "technology",
+                    "owner_cannot_write_trading_mode": True,
+                    "owner_cannot_write_allow_list": True,
+                    "owner_cannot_open_the_firm": True,
+                    "github_is_code_only": True,
+                    "on_board_member_laptop": False,
+                    "system_of_record": "database",
+                    "included": [
+                        "paper_ledger",
+                        "evidence",
+                        "organisational_memory",
+                        "control_snapshots",
+                    ],
+                    "excluded": ["secrets", "live_broker_credentials"],
+                    "live_broker_credentials_exist": False,
+                    "employees_cannot_download_secrets": True,
+                    "method": "POST",
+                    "path": "/routines/run-backup",
+                    "cli": "python -m varma.routines.run_backup",
+                    "description": describe_company_backup(),
+                    "fills": False,
+                    "paper_fills": False,
+                    "get_observability_runs_backup": False,
+                },
             },
             "note": (
                 "Board-only read of documented schedules. On-demand. No 24/7 daemon. "
@@ -708,6 +744,10 @@ class BoardObservability:
                 "Board Member runs jobs via POST (right-hand panel), not GET /observability."
             ),
         }
+
+    def _backup(self) -> dict[str, Any]:
+        """Board-visible backup status. No ciphertext. No secrets."""
+        return backup_status(self.session)
 
     def _runnable_jobs(self) -> dict[str, Any]:
         """Listing only. GET /observability must not run these jobs."""

@@ -13,6 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("VARMA_LLM_PROVIDER", "fake")
 os.environ.setdefault("VARMA_BOARD_MEMBER_STUB_TOKEN", "dev-board-member")
+os.environ.setdefault(
+    "VARMA_BACKUP_ENCRYPTION_KEY",
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+)
 
 from varma.clock import LONDON
 from varma.db.engine import get_session_factory, init_db

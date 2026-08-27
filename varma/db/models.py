@@ -522,6 +522,44 @@ class ChallengeReview(Base):
     cost_units: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class BackupRun(Base):
+    """On-demand encrypted company backup. Database artefact. Not git. Not the laptop."""
+
+    __tablename__ = "backup_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    ran_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    timezone: Mapped[str] = mapped_column(String(40), default="Europe/London")
+    schedule: Mapped[str] = mapped_column(String(160), default="daily after US close / end of London evening")
+    after: Mapped[str] = mapped_column(String(40), default="US_REGULAR_CASH_CLOSE")
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    failure_reason: Mapped[str] = mapped_column(Text, default="")
+    included_json: Mapped[str] = mapped_column(Text, default="[]")
+    excluded_json: Mapped[str] = mapped_column(Text, default="[]")
+    ciphertext: Mapped[str] = mapped_column(Text, default="")
+    key_fingerprint: Mapped[str] = mapped_column(String(32), default="")
+    encrypted_at_rest: Mapped[bool] = mapped_column(Boolean, default=True)
+    owner_slug: Mapped[str] = mapped_column(String(80), default="technology")
+    owner_display_name: Mapped[str] = mapped_column(String(120), default="Owen Blake · Technology")
+    started_by: Mapped[str] = mapped_column(String(80), default="board-member")
+    daemon: Mapped[bool] = mapped_column(Boolean, default=False)
+    writes_controls: Mapped[bool] = mapped_column(Boolean, default=False)
+    fills: Mapped[bool] = mapped_column(Boolean, default=False)
+    paper_fills: Mapped[bool] = mapped_column(Boolean, default=False)
+    live_fills: Mapped[bool] = mapped_column(Boolean, default=False)
+    git_committed: Mapped[bool] = mapped_column(Boolean, default=False)
+    on_board_member_laptop: Mapped[bool] = mapped_column(Boolean, default=False)
+    in_github: Mapped[bool] = mapped_column(Boolean, default=False)
+    secrets_included: Mapped[bool] = mapped_column(Boolean, default=False)
+    live_broker_credentials_exist: Mapped[bool] = mapped_column(Boolean, default=False)
+    live_broker_credentials_included: Mapped[bool] = mapped_column(Boolean, default=False)
+    store: Mapped[str] = mapped_column(String(40), default="database")
+    trading_mode_before: Mapped[str] = mapped_column(String(32), nullable=False)
+    trading_mode_after: Mapped[str] = mapped_column(String(32), nullable=False)
+    artefact_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    notes: Mapped[str] = mapped_column(Text, default="")
+
+
 class RiskDecision(Base):
     """Risk review artefact. This slice is a deny-path demo. Risk cannot approve LIVE."""
 

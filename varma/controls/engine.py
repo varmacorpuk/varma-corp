@@ -40,6 +40,10 @@ from varma.controls.addendum_i import (
     addendum_i_public,
     paper_execution_is_closed,
 )
+from varma.controls.addendum_j import (
+    BACKUP_WRITE_FIELDS,
+    addendum_j_public,
+)
 from varma.db.models import (
     AllowListInstrument,
     BoardApproval,
@@ -71,8 +75,9 @@ LIMIT_WRITE_FIELDS = set(REQUIRED_LIMIT_KEYS) | {
     "paper_session",
     "addendum_c",
     "addendum_i",
+    "addendum_j",
     "control_settings",
-} | set(FIRM_OPEN_WRITE_FIELDS)
+} | set(FIRM_OPEN_WRITE_FIELDS) | set(BACKUP_WRITE_FIELDS)
 
 
 @dataclass
@@ -379,6 +384,7 @@ class ControlEngine:
             "addendum_e": addendum_e_public(),
             "addendum_f": addendum_f_public(),
             "addendum_i": addendum_i_public(),
+            "addendum_j": addendum_j_public(),
             "paper_execution": "CLOSED" if self.paper_execution_closed() else "OPEN",
             "paper_execution_closed": self.paper_execution_closed(),
             "paper_session": paper_session_status(),

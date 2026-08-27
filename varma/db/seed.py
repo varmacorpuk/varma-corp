@@ -5,6 +5,7 @@ Paper session is Board Addendum C 2026-08-27 (UK open through US close).
 PAPER allow-list is Board Addendum E 2026-08-27 (Board-set; no fills until open).
 Staff display is Board Addendum F 2026-08-27 (person · department).
 Company CLOSED until Grand Opening: Board Addendum I 2026-08-27.
+Encrypted company backup: Board Addendum J 2026-08-27 (database artefact; not git).
 trading_mode stays LIVE_BLOCKED. LIVE and BROKER_PAPER remain UNLOADED.
 """
 
@@ -46,6 +47,15 @@ from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
     ADDENDUM_I_SET_BY,
     ADDENDUM_I_SETTINGS,
+)
+from varma.controls.addendum_j import (
+    ADDENDUM_J_LABEL,
+    ADDENDUM_J_SET_BY,
+    ADDENDUM_J_SETTINGS,
+    BACKUP_ROUTINE_NAME,
+    BACKUP_SCHEDULE,
+    BACKUP_SKILL_NAME,
+    BACKUP_TIMEZONE,
 )
 from varma.db.models import (
     AllowListInstrument,
@@ -191,6 +201,22 @@ def seed_if_empty(session: Session) -> None:
                 allowed=False,
             )
         )
+        session.add(
+            Permission(
+                subject_type="employee",
+                subject_id=mi.id,
+                action="download_secrets",
+                allowed=False,
+            )
+        )
+        session.add(
+            Permission(
+                subject_type="employee",
+                subject_id=mi.id,
+                action="open_firm",
+                allowed=False,
+            )
+        )
 
     _seed_ceo(session)
     _seed_challenge(session)
@@ -216,6 +242,7 @@ def seed_if_empty(session: Session) -> None:
     seed_board_addendum_c(session)
     seed_board_addendum_e(session)
     seed_board_addendum_i(session)
+    seed_board_addendum_j(session)
     session.commit()
 
 
@@ -343,6 +370,108 @@ def seed_board_addendum_i(session: Session) -> None:
     session.flush()
 
 
+def seed_board_addendum_j(session: Session) -> None:
+    """Write Board Addendum J 2026-08-27 backup ownership and exclusions.
+
+    Encrypted artefact stays in the database. GitHub is code only.
+    Technology owns the job. Employees cannot download secrets.
+    Does not fill. Does not open the firm.
+    """
+    now = now_london()
+    for key, value, unit in ADDENDUM_J_SETTINGS:
+        row = session.get(ControlSetting, key)
+        if row is None:
+            session.add(
+                ControlSetting(
+                    key=key,
+                    value=value,
+                    unit=unit,
+                    set_by=ADDENDUM_J_SET_BY,
+                    set_at=now,
+                    source=ADDENDUM_J_LABEL,
+                )
+            )
+        elif row.value in (None, ""):
+            row.value = value
+            row.unit = unit
+            row.set_by = ADDENDUM_J_SET_BY
+            row.set_at = now
+            row.source = ADDENDUM_J_LABEL
+    tech = session.query(Employee).filter_by(slug=TECH_SLUG).one_or_none()
+    if tech is not None:
+        tech.responsibilities = (
+            "Technology and self-maintenance of the company kernel. "
+            "Owns the company backup job (Board Addendum J). "
+            "Cannot write control tables, allow-list, or trading_mode. "
+            "Cannot open the firm. Cannot download secrets. Cannot approve LIVE."
+        )
+        tech.authority_boundaries = (
+            "No live-trading approval — Board Member only (Document 11). "
+            "No execution. No control writes. Cannot write trading_mode or "
+            "allow-list. Cannot open the firm. Cannot download secrets. "
+            "No Mac installers in this slice."
+        )
+        if (
+            session.query(Skill)
+            .filter_by(employee_id=tech.id, name=BACKUP_SKILL_NAME)
+            .one_or_none()
+            is None
+        ):
+            session.add(
+                Skill(
+                    name=BACKUP_SKILL_NAME,
+                    version="0.1.0",
+                    employee_id=tech.id,
+                    description=(
+                        "Encrypted company backup into the database. "
+                        "Paper ledger, evidence, organisational memory, control snapshots. "
+                        "No secrets. No live broker credentials."
+                    ),
+                    active=True,
+                )
+            )
+        if (
+            session.query(Routine)
+            .filter_by(employee_id=tech.id, name=BACKUP_ROUTINE_NAME)
+            .one_or_none()
+            is None
+        ):
+            session.add(
+                Routine(
+                    name=BACKUP_ROUTINE_NAME,
+                    employee_id=tech.id,
+                    skill_name=BACKUP_SKILL_NAME,
+                    schedule=BACKUP_SCHEDULE,
+                    timezone=BACKUP_TIMEZONE,
+                    enabled=True,
+                    notes=(
+                        "Board Addendum J 2026-08-27. Daily after US close / end of "
+                        "London evening. On-demand via python -m varma.routines.run_backup. "
+                        "No daemon scheduler in this slice. Encrypted at rest in the "
+                        "database. Not in GitHub. Not on the Board Member laptop."
+                    ),
+                )
+            )
+        for action in ("download_secrets", "open_firm", "write_allow_list"):
+            perm = (
+                session.query(Permission)
+                .filter_by(subject_type="employee", subject_id=tech.id, action=action)
+                .one_or_none()
+            )
+            if perm is None:
+                session.add(
+                    Permission(
+                        subject_type="employee",
+                        subject_id=tech.id,
+                        action=action,
+                        allowed=False,
+                    )
+                )
+            else:
+                perm.allowed = False
+    session.flush()
+
+
 def seed_board_addendum_e(session: Session) -> None:
     """Write Board Addendum E 2026-08-27 PAPER execution allow-list.
 
@@ -453,6 +582,8 @@ def _deny_live_and_execution(session: Session, employee_id: str, extra: tuple[tu
         ("write_controls", False),
         ("approve_live", False),
         ("transition_to_live", False),
+        ("download_secrets", False),
+        ("open_firm", False),
         *extra,
     ):
         session.add(
@@ -700,11 +831,15 @@ def _seed_technology(session: Session) -> None:
         ),
         responsibilities=(
             "Technology and self-maintenance of the company kernel. "
-            "Cannot write control tables, allow-list, or trading_mode. Cannot approve LIVE."
+            "Owns the company backup job (Board Addendum J). "
+            "Cannot write control tables, allow-list, or trading_mode. "
+            "Cannot open the firm. Cannot download secrets. Cannot approve LIVE."
         ),
         authority_boundaries=(
             "No live-trading approval — Board Member only (Document 11). "
-            "No execution. No control writes. No Mac installers in this slice."
+            "No execution. No control writes. Cannot write trading_mode or "
+            "allow-list. Cannot open the firm. Cannot download secrets. "
+            "No Mac installers in this slice."
         ),
         status="AVAILABLE",
         status_bubble="AVAILABLE",
@@ -720,8 +855,10 @@ def _seed_technology(session: Session) -> None:
             employee_id=emp.id,
             kind="lesson",
             content=(
-                "Technology cannot write locks or approve LIVE. "
-                "The office is a projection. The database is the ledger."
+                "Technology owns the encrypted company backup. "
+                "Cannot write trading_mode, allow-list, or open the firm. "
+                "Cannot download secrets. The office is a projection. "
+                "The database is the ledger. GitHub is code only."
             ),
             created_at=now_london(),
         )

@@ -185,8 +185,10 @@ class FakeLLM:
             return {"text": reply, "cost_units": 1}
         if slug == "technology":
             reply = (
-                f"{name} ({role}). I cannot write locks or approve live trading. "
-                f"The office is a projection. The database is the ledger. "
+                f"{name} ({role}). I own the encrypted company backup job. "
+                f"I cannot write trading_mode, allow-list, or open the firm. "
+                f"I cannot download secrets. I cannot approve live trading. "
+                f"The office is a projection. The database is the ledger. GitHub is code only. "
                 f"You asked: {message[:280]}"
             )
             return {"text": reply, "cost_units": 1}

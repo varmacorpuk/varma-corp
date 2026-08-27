@@ -84,6 +84,11 @@ def test_office_click_opens_panel_logic():
     assert "/routines/run-0730-meeting" in JS
     assert "/routines/run-nightly-filter" in JS
     assert "/routines/run-flatten-us-close" in JS
+    assert "/routines/run-backup" in JS
+    assert "Board Addendum J" in JS
+    assert "Run company backup now" in JS
+    assert "last successful backup" in JS.lower()
+    assert "Owen Blake · Technology" in JS
     assert "Board Addendum C" in JS
     assert "US_REGULAR_CASH_CLOSE" in JS or "US cash close" in JS
     assert "not London close" in JS or "Do NOT flatten at London" in JS
