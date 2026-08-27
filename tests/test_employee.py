@@ -1,7 +1,7 @@
 from varma.clock import describe_0630_weekday_routine
 from varma.db.models import Employee, Routine, Skill
 from varma.db.seed import MI_SLUG
-from varma.meetings.handoff import CEO_SLUG
+from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG
 
 
 def test_persistent_market_intelligence_employee(session):
@@ -24,3 +24,5 @@ def test_employee_list(client):
     slugs = [e["slug"] for e in r.json()]
     assert MI_SLUG in slugs
     assert CEO_SLUG in slugs
+    assert CHALLENGE_SLUG in slugs
+    assert RISK_SLUG in slugs

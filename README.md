@@ -7,15 +7,16 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 ## What this slice proves
 
 1. FastAPI kernel: health, Board Member auth stub, control tables (permissions, empty allow-list, trading_mode=LIVE_BLOCKED). Employees cannot write those tables.
-2. Two persistent employees: Market Intelligence / Research Analyst (Asha Patel) and CEO (identity, role, memory, permissions). LLM calls are invocations, not the employee.
+2. Four persistent employees: Market Intelligence / Research Analyst (Asha Patel), CEO, Challenge, and Risk. LLM calls are invocations, not the employee.
 3. Skill prepare_daily_intelligence_brief. FakeLLM for tests. Optional LLM env is unused by default.
 4. On-demand brief plus a documented 06:30 Europe/London weekday routine.
 5. Independent verification of the brief (required fields, source+timestamp, freshness, TEMPORARY cost cap).
 6. Brief stored in the database, then handed off to the CEO as the 07:30 meeting recipient (Document 18). Handoff artefact lives in the database, not on a desktop disk.
-7. Desktop: 2D office, MI + CEO sprites, click to right-hand panel; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. No Talk/voice.
-8. CEO does not approve live trading. Chat to CEO uses the same runtime. Asha Patel (MI) still produces the brief.
-9. pytest without paid APIs. Execution in LIVE mode is denied. Empty allow-list cannot execute.
-10. TEMPORARY DEVELOPMENT DEFAULT watchlist of a few listed stocks. It is not the execution allow-list. No gold.
+7. Challenge reviews a SAMPLE thesis (not a live trade). Thesis and challenge review are database artefacts, handed to Risk.
+8. Risk deny-path demo: reviews an unsafe/out-of-policy LIVE-gold path and DENIES it. Risk cannot approve LIVE.
+9. Desktop: 2D office, four employee sprites, click to right-hand panel; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. No Talk/voice.
+10. pytest without paid APIs. Execution in LIVE mode is denied. Empty allow-list cannot execute.
+11. TEMPORARY DEVELOPMENT DEFAULT watchlist of a few listed stocks. It is not the execution allow-list. No gold.
 
 ## System separation
 
@@ -40,6 +41,8 @@ From the repository root:
     cp -n .env.example .env
     make test
     python3 -m varma.routines.run_brief
+    python3 -m varma.routines.run_challenge
+    python3 -m varma.routines.run_risk_deny
     python3 -m varma
 
 Health: http://127.0.0.1:8000/health
@@ -53,7 +56,7 @@ One client for Mac and Windows (Electron). Browser also works in development.
 
 Then open http://127.0.0.1:5173
 
-Click Asha Patel or the CEO. The right-hand panel shows work (produced brief and/or meeting inbox). Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO cannot approve LIVE.
+Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE.
 
 ## 06:30 Europe/London routine
 
@@ -72,7 +75,7 @@ A later slice can attach the same skill to a Europe/London scheduler.
 - Numeric limits: unset, so deny (OPEN BOARD DECISION, not invented here)
 - LIVE adapter: not loaded
 - Employees cannot write control tables
-- CEO cannot approve live trading (Board Member only)
+- CEO, Challenge, and Risk cannot approve live trading (Board Member only)
 - Paper and live trading are not implemented in this slice
 
 Gate: PAPER then EVALUATION then recommendation then Board review then explicit Board approval then LIVE. Silence is not approval.
@@ -91,9 +94,20 @@ These exist so development can run. They are not Board-approved universe members
 
 OPEN BOARD DECISIONS left unset (must not be invented): numeric paper limits; paper duration/success thresholds; Talk/voice required?; UK legal advice; exact authorised instrument list; material-cost approval thresholds.
 
+## Challenge and Risk (this slice)
+
+On demand, not a 24/7 daemon:
+
+    python3 -m varma.routines.run_challenge
+    python3 -m varma.routines.run_risk_deny
+
+- Challenge receives a SAMPLE thesis (AAPL from the TEMPORARY watchlist). It is labelled SAMPLE — not a live trade, not an order, not allow-list membership.
+- Challenge writes a CHALLENGED review to the database and hands it to Risk.
+- Risk reviews an unsafe/out-of-policy path (LIVE execution of gold, treating the SAMPLE thesis as an order) and records DENIED. The control engine is consulted. Risk cannot approve LIVE.
+
 ## Next slice
 
-Challenge on a sample thesis, then Risk as a deny-path demo.
+Nightly Europe/London memory filter (archive working context; evidence stays append-only; must not write controls), still no paper/live execution and no 12-employee roster.
 
 ## Specs
 
@@ -103,4 +117,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO cannot approve LIVE; brief verification and handoff to CEO; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
+Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.

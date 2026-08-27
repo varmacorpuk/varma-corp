@@ -15,14 +15,27 @@ from varma import __version__
 from varma.clock import describe_0630_weekday_routine, now_london
 from varma.controls.engine import ControlEngine
 from varma.db.engine import get_session_factory, init_db, storage_from_url
-from varma.db.models import ChatMessage, Employee, IntelligenceBrief, WatchlistItem
+from varma.db.models import (
+    ChallengeReview,
+    ChatMessage,
+    Employee,
+    IntelligenceBrief,
+    RiskDecision,
+    SampleThesis,
+    WatchlistItem,
+)
 from varma.db.seed import MI_SLUG, seed_if_empty
-from varma.employees.runtime import EmployeeRuntime
+from varma.employees.runtime import NO_LIVE_APPROVAL_SLUGS, EmployeeRuntime
 from varma.kernel.auth import Actor, parse_actor, require_board_member
-from varma.meetings.handoff import CEO_SLUG, handoff_to_dict
+from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG, handoff_to_dict
 from varma.ports.execution import ExecutionPort
 from varma.routines.run_brief import run_brief
+from varma.routines.run_challenge import run_challenge
+from varma.routines.run_risk_deny import run_risk_deny
+from varma.skills.challenge_sample_thesis import challenge_review_to_dict
 from varma.skills.prepare_daily_intelligence_brief import brief_to_dict
+from varma.skills.prepare_sample_thesis import thesis_to_dict
+from varma.skills.review_unsafe_path import risk_decision_to_dict
 
 
 def _session() -> Session:
@@ -167,16 +180,42 @@ def create_app() -> FastAPI:
         items: list[dict[str, Any]] = []
         for h in rt.inbox():
             item = handoff_to_dict(h)
-            if h.artefact_type == "intelligence_brief":
-                artefact = session.get(IntelligenceBrief, h.artefact_id)
-                item["brief"] = brief_to_dict(artefact) if artefact else None
+            item.update(_hydrate_handoff_artefact(session, h.artefact_type, h.artefact_id))
             items.append(item)
         return {
             "employee": emp.slug,
             "display_name": emp.display_name,
             "ceo_cannot_approve_live_trading": emp.slug == CEO_SLUG,
+            "cannot_approve_live_trading": emp.slug in NO_LIVE_APPROVAL_SLUGS,
             "items": items,
         }
+
+    @app.get("/employees/{slug}/work")
+    def employee_work(slug: str, session: Session = Depends(_session)) -> dict[str, Any]:
+        emp = _get_employee(session, slug)
+        rt = EmployeeRuntime(session, emp)
+        produced = rt.latest_brief()
+        received_brief = rt.latest_received_brief()
+        thesis = rt.latest_thesis() if emp.slug in {CHALLENGE_SLUG, RISK_SLUG} else None
+        review = rt.latest_challenge_review() if emp.slug in {CHALLENGE_SLUG, RISK_SLUG} else None
+        risk = rt.latest_risk_decision() if emp.slug == RISK_SLUG else None
+        inbox_items: list[dict[str, Any]] = []
+        for h in rt.inbox():
+            item = handoff_to_dict(h)
+            item.update(_hydrate_handoff_artefact(session, h.artefact_type, h.artefact_id))
+            inbox_items.append(item)
+        data = _employee_public(emp)
+        data.update(
+            {
+                "brief": brief_to_dict(produced) if produced else None,
+                "received_brief": brief_to_dict(received_brief) if received_brief else None,
+                "thesis": thesis_to_dict(thesis) if thesis else None,
+                "challenge_review": challenge_review_to_dict(review) if review else None,
+                "risk_decision": risk_decision_to_dict(risk) if risk else None,
+                "inbox": inbox_items,
+            }
+        )
+        return data
 
     @app.post("/employees/{slug}/chat")
     def chat(
@@ -221,6 +260,20 @@ def create_app() -> FastAPI:
     ) -> dict[str, Any]:
         result = run_brief(session)
         return result
+
+    @app.post("/routines/run-challenge")
+    def api_run_challenge(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return run_challenge(session)
+
+    @app.post("/routines/run-risk-deny")
+    def api_run_risk_deny(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return run_risk_deny(session)
 
     @app.get("/routines/brief-schedule")
     def brief_schedule() -> dict[str, str]:
@@ -301,11 +354,29 @@ def create_app() -> FastAPI:
                 "rooms": [
                     {"id": "research", "label": "Research desk"},
                     {"id": "ceo", "label": "CEO desk"},
+                    {"id": "challenge", "label": "Challenge desk"},
+                    {"id": "risk", "label": "Risk desk"},
                 ],
             },
         }
 
     return app
+
+
+def _hydrate_handoff_artefact(session: Session, artefact_type: str, artefact_id: str) -> dict[str, Any]:
+    if artefact_type == "intelligence_brief":
+        artefact = session.get(IntelligenceBrief, artefact_id)
+        return {"brief": brief_to_dict(artefact) if artefact else None}
+    if artefact_type == "sample_thesis":
+        artefact = session.get(SampleThesis, artefact_id)
+        return {"thesis": thesis_to_dict(artefact) if artefact else None}
+    if artefact_type == "challenge_review":
+        artefact = session.get(ChallengeReview, artefact_id)
+        return {"challenge_review": challenge_review_to_dict(artefact) if artefact else None}
+    if artefact_type == "risk_decision":
+        artefact = session.get(RiskDecision, artefact_id)
+        return {"risk_decision": risk_decision_to_dict(artefact) if artefact else None}
+    return {}
 
 
 def _resolve_employee_actor_id(session: Session, actor: Actor) -> str:
@@ -336,7 +407,7 @@ def _employee_public(e: Employee) -> dict[str, Any]:
         "office_x": e.office_x,
         "office_y": e.office_y,
         "is_primary_agent": bool(e.is_primary_agent),
-        "cannot_approve_live_trading": e.slug == CEO_SLUG,
+        "cannot_approve_live_trading": e.slug in NO_LIVE_APPROVAL_SLUGS,
         "is_meeting_brief_recipient": e.slug == CEO_SLUG,
     }
 

@@ -241,3 +241,65 @@ class WatchlistItem(Base):
     venue: Mapped[str] = mapped_column(String(32), nullable=False)
     asset_class: Mapped[str] = mapped_column(String(32), default="listed_equity")
     label: Mapped[str] = mapped_column(String(80), default="TEMPORARY DEVELOPMENT DEFAULT")
+
+
+class SampleThesis(Base):
+    """SAMPLE thesis for Challenge. Not a live trade. Not an order. Not allow-list membership."""
+
+    __tablename__ = "sample_theses"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    statement: Mapped[str] = mapped_column(Text, nullable=False)
+    symbol: Mapped[str] = mapped_column(String(32), default="")
+    venue: Mapped[str] = mapped_column(String(32), default="")
+    asset_class: Mapped[str] = mapped_column(String(32), default="listed_equity")
+    label: Mapped[str] = mapped_column(String(80), default="SAMPLE — not a live trade")
+    created_by: Mapped[str] = mapped_column(String(80), default="sample-demo")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    trading_mode_at_creation: Mapped[str] = mapped_column(String(32), nullable=False)
+    no_execution_authority: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_live_trade: Mapped[bool] = mapped_column(Boolean, default=False)
+    notes: Mapped[str] = mapped_column(Text, default="")
+
+
+class ChallengeReview(Base):
+    """Challenge output on a SAMPLE thesis. Not execution authority."""
+
+    __tablename__ = "challenge_reviews"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"))
+    thesis_id: Mapped[str] = mapped_column(String(36), ForeignKey("sample_theses.id"))
+    produced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    verdict: Mapped[str] = mapped_column(String(32), nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    objections_json: Mapped[str] = mapped_column(Text, nullable=False)
+    no_execution_authority: Mapped[bool] = mapped_column(Boolean, default=True)
+    does_not_approve_live: Mapped[bool] = mapped_column(Boolean, default=True)
+    skill_name: Mapped[str] = mapped_column(String(80), nullable=False)
+    skill_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    cost_units: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class RiskDecision(Base):
+    """Risk review artefact. This slice is a deny-path demo. Risk cannot approve LIVE."""
+
+    __tablename__ = "risk_decisions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"))
+    produced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    path_kind: Mapped[str] = mapped_column(String(80), nullable=False)
+    proposed_json: Mapped[str] = mapped_column(Text, nullable=False)
+    decision: Mapped[str] = mapped_column(String(32), nullable=False)
+    reasons_json: Mapped[str] = mapped_column(Text, nullable=False)
+    control_engine_reason: Mapped[str] = mapped_column(String(80), default="")
+    thesis_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    challenge_review_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    no_execution_authority: Mapped[bool] = mapped_column(Boolean, default=True)
+    cannot_approve_live: Mapped[bool] = mapped_column(Boolean, default=True)
+    skill_name: Mapped[str] = mapped_column(String(80), nullable=False)
+    skill_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    summary: Mapped[str] = mapped_column(Text, default="")
+    label: Mapped[str] = mapped_column(String(80), default="DENY-PATH DEMO")

@@ -39,31 +39,29 @@
         ctx.fillRect(x, y, 16, 16);
       }
     }
-    // research desk
-    ctx.fillStyle = "#6b4a2e";
-    ctx.fillRect(60, 150, 120, 40);
-    ctx.fillStyle = "#d8c39a";
-    ctx.fillRect(68, 142, 48, 12);
-    ctx.fillStyle = "#111";
-    ctx.font = "10px monospace";
-    ctx.fillText("RESEARCH", 72, 136);
-    // CEO desk
-    ctx.fillStyle = "#3d2b1f";
-    ctx.fillRect(400, 70, 120, 40);
-    ctx.fillStyle = "#d8c39a";
-    ctx.fillRect(408, 62, 48, 12);
-    ctx.fillStyle = "#111";
-    ctx.fillText("CEO", 412, 56);
+    desk(60, 150, "RESEARCH");
+    desk(400, 70, "CEO");
+    desk(30, 50, "CHALLENGE");
+    desk(480, 250, "RISK");
 
     employees.forEach((e) => {
       const x = (e.office_x || 96) * 2;
       const y = (e.office_y || 108) * 1.4;
-      const kind = e.slug === "ceo" ? "ceo" : "research";
-      drawSprite(x, y, selected && selected.slug === e.slug, kind);
+      drawSprite(x, y, selected && selected.slug === e.slug, e.slug);
       drawBubble(x, y, e.status_bubble || e.status || "OK");
       drawName(x, y, e.display_name || e.slug);
       e._hit = { x: x - 8, y: y - 40, w: 80, h: 90 };
     });
+  }
+
+  function desk(dx, dy, label) {
+    ctx.fillStyle = "#6b4a2e";
+    ctx.fillRect(dx, dy, 110, 36);
+    ctx.fillStyle = "#d8c39a";
+    ctx.fillRect(dx + 8, dy - 8, 48, 12);
+    ctx.fillStyle = "#111";
+    ctx.font = "10px monospace";
+    ctx.fillText(label, dx + 10, dy - 14);
   }
 
   function drawSprite(x, y, highlight, kind) {
@@ -76,19 +74,14 @@
       ctx.fillStyle = "rgba(255,255,180,0.5)";
       ctx.fillRect(x - 6, y - 6, 16 * s + 12, 24 * s + 12);
     }
-    if (kind === "ceo") {
-      px(4, 2, "#1a1a1a", 8, 6);
-      px(5, 4, "#d2b48c", 6, 6);
-      px(3, 10, "#1d3557", 10, 8);
-      px(4, 18, "#111", 3, 6);
-      px(9, 18, "#111", 3, 6);
-    } else {
-      px(4, 2, "#2b2118", 8, 6);
-      px(5, 4, "#e6c8a8", 6, 6);
-      px(3, 10, "#2f5d50", 10, 8);
-      px(4, 18, "#1d3557", 3, 6);
-      px(9, 18, "#1d3557", 3, 6);
-    }
+    const body =
+      kind === "ceo" ? "#1d3557" : kind === "challenge" ? "#6b3a2a" : kind === "risk" ? "#8b1e1e" : "#2f5d50";
+    const hair = kind === "ceo" ? "#1a1a1a" : "#2b2118";
+    px(4, 2, hair, 8, 6);
+    px(5, 4, "#e6c8a8", 6, 6);
+    px(3, 10, body, 10, 8);
+    px(4, 18, "#1d3557", 3, 6);
+    px(9, 18, "#1d3557", 3, 6);
   }
 
   function drawBubble(x, y, text) {
@@ -122,40 +115,84 @@
     if (hit) selectEmployee(hit);
   });
 
+  function chatPlaceholder(slug) {
+    if (slug === "ceo") return "Ask the CEO…";
+    if (slug === "challenge") return "Ask Challenge…";
+    if (slug === "risk") return "Ask Risk…";
+    return "Ask the analyst…";
+  }
+
   async function selectEmployee(emp) {
+    if (!rightPanel) return;
     selected = emp;
     draw();
     placeholder.hidden = true;
     panelBody.hidden = false;
     chatForm.hidden = false;
-    chatInput.placeholder = emp.slug === "ceo" ? "Ask the CEO…" : "Ask the analyst…";
-    const detail = await get("/employees/" + emp.slug);
-    const latest = await get("/employees/" + emp.slug + "/brief/latest");
-    const inbox = await get("/employees/" + emp.slug + "/inbox");
-    const brief = latest.brief;
-    const received = (inbox.items || []).find((it) => it.brief);
+    chatInput.placeholder = chatPlaceholder(emp.slug);
+    const work = await get("/employees/" + emp.slug + "/work");
+    const authorityNote = work.cannot_approve_live_trading
+      ? `<p class="meta"><strong>${escapeHtml(work.display_name)} does not approve live trading.</strong> Board Member is the human authority.</p>`
+      : "";
     panelBody.innerHTML = `
-      <h3>${escapeHtml(detail.display_name)}</h3>
-      <p class="meta">${escapeHtml(detail.role_title)} · ${escapeHtml(detail.department)}</p>
-      <p class="bubble-note">Status bubble: ${escapeHtml(detail.status_bubble)} (short). Detail belongs here, not as an overlay.</p>
+      <h3>${escapeHtml(work.display_name)}</h3>
+      <p class="meta">${escapeHtml(work.role_title)} · ${escapeHtml(work.department)}</p>
+      <p class="bubble-note">Status bubble: ${escapeHtml(work.status_bubble)} (short). Detail belongs here, not as an overlay.</p>
       <p class="meta">Click does not grant authority.</p>
-      ${
-        emp.slug === "ceo"
-          ? "<p class=\"meta\"><strong>CEO does not approve live trading.</strong> Board Member is the human authority. A meeting pack is not LIVE approval.</p>"
-          : ""
-      }
-      <h3>Latest produced brief</h3>
-      ${brief ? renderBrief(brief) : "<p>No brief produced by this employee.</p>"}
-      <h3>Meeting inbox</h3>
-      ${received ? renderInboxItem(received) : "<p>No handoff artefacts in this inbox.</p>"}
+      ${authorityNote}
+      ${work.brief ? "<h3>Latest produced brief</h3>" + renderBrief(work.brief) : ""}
+      ${work.received_brief && emp.slug === "ceo" ? "<h3>Meeting inbox</h3>" + renderBrief(work.received_brief) : ""}
+      ${work.thesis ? "<h3>SAMPLE thesis (not a live trade)</h3>" + renderThesis(work.thesis) : ""}
+      ${work.challenge_review ? "<h3>Challenge review</h3>" + renderChallenge(work.challenge_review) : ""}
+      ${work.risk_decision ? "<h3>Risk decision</h3>" + renderRisk(work.risk_decision) : ""}
+      <h3>Handoffs</h3>
+      ${renderInboxList(work.inbox || [])}
     `;
   }
 
-  function renderInboxItem(item) {
+  function renderInboxList(items) {
+    if (!items.length) return "<p>No handoff artefacts in this inbox.</p>";
+    return items
+      .map((item) => {
+        return `<div class="brief">
+          <p class="meta">Handoff ${escapeHtml(item.status || "")} · ${escapeHtml(item.purpose || "")}</p>
+          <p class="meta">${escapeHtml(item.note || "")}</p>
+          ${item.brief ? renderBrief(item.brief) : ""}
+          ${item.thesis ? renderThesis(item.thesis) : ""}
+          ${item.challenge_review ? renderChallenge(item.challenge_review) : ""}
+          ${item.risk_decision ? renderRisk(item.risk_decision) : ""}
+        </div>`;
+      })
+      .join("");
+  }
+
+  function renderThesis(t) {
     return `<div class="brief">
-      <p class="meta">Handoff ${escapeHtml(item.status || "")} · ${escapeHtml(item.purpose || "")}</p>
-      <p class="meta">${escapeHtml(item.note || "")}</p>
-      ${item.brief ? renderBrief(item.brief) : ""}
+      <strong>${escapeHtml(t.title || "")}</strong>
+      <p>${escapeHtml(t.statement || "")}</p>
+      <p>Label: ${escapeHtml(t.label || "")} · symbol: ${escapeHtml(t.symbol || "")} · live_trade: ${t.is_live_trade}</p>
+      <p>${escapeHtml(t.notes || "")}</p>
+    </div>`;
+  }
+
+  function renderChallenge(c) {
+    const objections = (c.objections || [])
+      .map((o) => `<li>${escapeHtml(o.claim || o.id || "")}</li>`)
+      .join("");
+    return `<div class="brief">
+      <p>Verdict: ${escapeHtml(c.verdict || "")} · ${escapeHtml(c.label || "")}</p>
+      <p>${escapeHtml(c.summary || "")}</p>
+      <ul>${objections}</ul>
+    </div>`;
+  }
+
+  function renderRisk(d) {
+    const reasons = (d.reasons || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("");
+    return `<div class="brief">
+      <p><strong>${escapeHtml(d.decision || "")}</strong> · ${escapeHtml(d.label || "")}</p>
+      <p>${escapeHtml(d.summary || "")}</p>
+      <p>Control engine: ${escapeHtml(d.control_engine_reason || "")}</p>
+      <ul>${reasons}</ul>
     </div>`;
   }
 
@@ -220,6 +257,20 @@
           status_bubble: "OFFLINE",
           office_x: 220,
           office_y: 70,
+        },
+        {
+          slug: "challenge",
+          display_name: "Challenge",
+          status_bubble: "OFFLINE",
+          office_x: 40,
+          office_y: 48,
+        },
+        {
+          slug: "risk",
+          display_name: "Risk",
+          status_bubble: "OFFLINE",
+          office_x: 255,
+          office_y: 175,
         },
       ];
       draw();

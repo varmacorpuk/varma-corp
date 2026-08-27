@@ -37,11 +37,12 @@ Board Member UI  (office canvas + RIGHT-HAND PANEL + approvals)
    Chat  -->  same employee runtime   (Talk is an OPEN BOARD DECISION; off in this slice)
         |
 Company Kernel
-   Identity, Employees (MI + CEO), Permissions, trading_mode, allow_list
-   Skills, Routines, Scheduler (Europe/London)
+   Identity, Employees (MI, CEO, Challenge, Risk)
+   Permissions, trading_mode=LIVE_BLOCKED, empty allow_list
+   Skills, Routines (on-demand; no 24/7 daemon)
    Memory (employee / organisation / evidence)
-   Meeting handoffs (MI brief → CEO; artefact in the database)
-   Control engine
+   Meeting handoffs (MI brief → CEO; SAMPLE thesis → Challenge; challenge → Risk)
+   Control engine + Risk deny-path (never LIVE)
    Observability, Cost ledger
         |
    LLMPort          DataPorts           ExecutionPort
@@ -49,3 +50,5 @@ Company Kernel
 ```
 
 The visual office is a projection. It is not the source of truth (Document 16).
+
+CEO, Challenge, and Risk are AI employees. They cannot approve LIVE, place orders, or write controls. Human = Board Member.

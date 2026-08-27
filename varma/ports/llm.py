@@ -21,6 +21,10 @@ class FakeLLM:
     def complete(self, *, task: str, context: dict[str, Any]) -> dict[str, Any]:
         if task == "prepare_daily_intelligence_brief":
             return self._brief(context)
+        if task == "challenge_sample_thesis":
+            return self._challenge(context)
+        if task == "review_unsafe_path":
+            return self._risk(context)
         if task == "chat":
             return self._chat(context)
         return {"text": "Unsupported task for FakeLLM.", "cost_units": 1}
@@ -71,6 +75,55 @@ class FakeLLM:
             "cost_units": 2,
         }
 
+    def _challenge(self, context: dict[str, Any]) -> dict[str, Any]:
+        thesis = context.get("thesis") or {}
+        return {
+            "verdict": "CHALLENGED",
+            "summary": (
+                "SAMPLE thesis challenged. It is not an order. Watchlist is not the allow-list. "
+                "Delayed fake data is not an execution quote. trading_mode is LIVE_BLOCKED. "
+                "Challenge cannot approve live trading."
+            ),
+            "objections": [
+                {
+                    "id": "not_an_order",
+                    "claim": "This is a SAMPLE thesis, not a live trade and not an order.",
+                },
+                {
+                    "id": "watchlist_is_not_allow_list",
+                    "claim": (
+                        f"Symbol {thesis.get('symbol') or 'AAPL'} is a TEMPORARY DEVELOPMENT DEFAULT "
+                        "watchlist item, not execution-allow-list membership."
+                    ),
+                },
+                {
+                    "id": "live_blocked",
+                    "claim": "trading_mode is LIVE_BLOCKED. No numeric limits are set. Empty allow-list cannot execute.",
+                },
+                {
+                    "id": "no_gold",
+                    "claim": "Gold is FUTURE SCOPE ONLY and is not an execution universe.",
+                },
+            ],
+            "no_execution_authority": True,
+            "does_not_approve_live": True,
+            "cost_units": 1,
+        }
+
+    def _risk(self, context: dict[str, Any]) -> dict[str, Any]:
+        policy = context.get("policy") or {}
+        reasons = policy.get("reasons") or [policy.get("reason") or "RISK_DENIED"]
+        return {
+            "decision": "DENIED",
+            "summary": (
+                "DENIED. Unsafe/out-of-policy path. LIVE gold execution treating a SAMPLE thesis "
+                f"as an order is refused. Reasons: {', '.join(str(r) for r in reasons)}. "
+                "Risk cannot approve live trading. Board Member is the human authority."
+            ),
+            "cannot_approve_live": True,
+            "cost_units": 1,
+        }
+
     def _chat(self, context: dict[str, Any]) -> dict[str, Any]:
         employee = context.get("employee") or {}
         message = (context.get("message") or "").strip()
@@ -78,8 +131,7 @@ class FakeLLM:
         name = employee.get("display_name", "Employee")
         role = employee.get("role_title", "")
         slug = employee.get("slug") or ""
-        ceo = slug == "ceo" or context.get("cannot_approve_live_trading")
-        if ceo:
+        if slug == "ceo":
             if brief:
                 reply = (
                     f"{name} ({role}). I am the meeting recipient of the Market Intelligence brief. "
@@ -95,6 +147,26 @@ class FakeLLM:
                     f"I cannot approve live trading. I cannot place orders. "
                     f"You asked: {message[:280]}"
                 )
+            return {"text": reply, "cost_units": 1}
+        if slug == "challenge":
+            thesis = context.get("latest_thesis") or {}
+            review = context.get("latest_challenge_review") or {}
+            reply = (
+                f"{name} ({role}). I challenge SAMPLE theses, not live trades. "
+                f"Latest thesis: {thesis.get('title') or 'none yet'}. "
+                f"Verdict: {review.get('verdict') or 'none yet'}. "
+                f"A SAMPLE thesis is not an order. I cannot approve live trading. "
+                f"I cannot place orders or write controls. You asked: {message[:280]}"
+            )
+            return {"text": reply, "cost_units": 1}
+        if slug == "risk":
+            decision = context.get("latest_risk_decision") or {}
+            reply = (
+                f"{name} ({role}). Deny-path: {decision.get('decision') or 'no decision yet'}. "
+                f"I deny unsafe and out-of-policy paths. I cannot approve live trading. "
+                f"LIVE is blocked. Empty allow-list cannot execute. Gold is not authorised. "
+                f"A SAMPLE thesis is not an order. You asked: {message[:280]}"
+            )
             return {"text": reply, "cost_units": 1}
         if brief:
             reply = (

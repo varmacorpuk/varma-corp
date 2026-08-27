@@ -1,4 +1,4 @@
-.PHONY: test api brief desktop install
+.PHONY: test api brief challenge risk-deny desktop install
 
 install:
 	python3 -m pip install -r requirements.txt
@@ -11,6 +11,12 @@ api:
 
 brief:
 	python3 -m varma.routines.run_brief
+
+challenge:
+	python3 -m varma.routines.run_challenge
+
+risk-deny:
+	python3 -m varma.routines.run_risk_deny
 
 desktop:
 	cd desktop && python3 -m http.server 5173 --bind 127.0.0.1

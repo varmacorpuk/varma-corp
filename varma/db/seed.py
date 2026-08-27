@@ -14,7 +14,7 @@ from varma.db.models import (
     Skill,
     WatchlistItem,
 )
-from varma.meetings.handoff import CEO_SLUG
+from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG
 
 MI_SLUG = "market-intelligence-research"
 
@@ -133,6 +133,8 @@ def seed_if_empty(session: Session) -> None:
         )
 
     _seed_ceo(session)
+    _seed_challenge(session)
+    _seed_risk(session)
 
     if session.query(WatchlistItem).count() == 0:
         for symbol, name, venue in TEMPORARY_WATCHLIST:
@@ -208,3 +210,142 @@ def _seed_ceo(session: Session) -> None:
                 allowed=allowed,
             )
         )
+
+
+def _deny_live_and_execution(session: Session, employee_id: str, extra: tuple[tuple[str, bool], ...] = ()) -> None:
+    for action, allowed in (
+        ("place_order", False),
+        ("write_controls", False),
+        ("approve_live", False),
+        ("transition_to_live", False),
+        *extra,
+    ):
+        session.add(
+            Permission(
+                subject_type="employee",
+                subject_id=employee_id,
+                action=action,
+                allowed=allowed,
+            )
+        )
+
+
+def _seed_challenge(session: Session) -> None:
+    """Persistent Challenge identity. Challenges a SAMPLE thesis. Not a live trade."""
+    emp = session.query(Employee).filter_by(slug=CHALLENGE_SLUG).one_or_none()
+    if emp is not None:
+        return
+    emp = Employee(
+        slug=CHALLENGE_SLUG,
+        display_name="Challenge",
+        role_title="Challenge",
+        department="Challenge / Research Quality",
+        personality=(
+            "Sceptical, assumption-hunting, distinguishes a SAMPLE thesis from an order. "
+            "Does not approve live trading. Personality never overrides controls."
+        ),
+        responsibilities=(
+            "Challenge a SAMPLE thesis (not a live trade). "
+            "Surface invalidating assumptions. Cannot place orders. "
+            "Cannot write control tables. Cannot approve LIVE."
+        ),
+        authority_boundaries=(
+            "No live-trading approval — Board Member only (Document 11). "
+            "No execution. A challenged SAMPLE thesis is not an order. "
+            "Watchlist membership is not allow-list membership."
+        ),
+        status="AVAILABLE",
+        status_bubble="AVAILABLE",
+        office_x=40,
+        office_y=48,
+        is_primary_agent=1,
+        created_at=now_london(),
+    )
+    session.add(emp)
+    session.flush()
+    session.add(
+        Skill(
+            name="challenge_sample_thesis",
+            version="0.1.0",
+            employee_id=emp.id,
+            description="Challenge a SAMPLE thesis. Not a live trade.",
+            active=True,
+        )
+    )
+    session.add(
+        MemoryEmployee(
+            employee_id=emp.id,
+            kind="lesson",
+            content=(
+                "A SAMPLE thesis is an exercise, not an order. "
+                "Challenge does not grant execution authority. "
+                "Challenge cannot approve live trading."
+            ),
+            created_at=now_london(),
+        )
+    )
+    _deny_live_and_execution(
+        session,
+        emp.id,
+        extra=(("run_skill:challenge_sample_thesis", True),),
+    )
+
+
+def _seed_risk(session: Session) -> None:
+    """Persistent Risk identity. Deny-path demo. Cannot approve LIVE."""
+    emp = session.query(Employee).filter_by(slug=RISK_SLUG).one_or_none()
+    if emp is not None:
+        return
+    emp = Employee(
+        slug=RISK_SLUG,
+        display_name="Risk",
+        role_title="Risk",
+        department="Risk / Controls",
+        personality=(
+            "Policy-first, deny unsafe paths, does not treat a SAMPLE thesis as an order. "
+            "Does not approve live trading. Personality never overrides controls."
+        ),
+        responsibilities=(
+            "Review proposed paths against controls. Deny unsafe or out-of-policy paths. "
+            "Cannot place orders. Cannot write control tables. Cannot approve LIVE."
+        ),
+        authority_boundaries=(
+            "No live-trading approval — Board Member only (Document 11). "
+            "No execution. Empty allow-list cannot execute. Gold is not an execution universe. "
+            "A Risk DENY is recorded in the database. Silence is not approval."
+        ),
+        status="AVAILABLE",
+        status_bubble="AVAILABLE",
+        office_x=255,
+        office_y=175,
+        is_primary_agent=1,
+        created_at=now_london(),
+    )
+    session.add(emp)
+    session.flush()
+    session.add(
+        Skill(
+            name="review_unsafe_path",
+            version="0.1.0",
+            employee_id=emp.id,
+            description="Deny-path demo: review an unsafe/out-of-policy proposal and DENY it.",
+            active=True,
+        )
+    )
+    session.add(
+        MemoryEmployee(
+            employee_id=emp.id,
+            kind="lesson",
+            content=(
+                "Unsafe paths are denied. LIVE is blocked. The allow-list is empty. "
+                "Gold is FUTURE SCOPE ONLY. A SAMPLE thesis is not an order. "
+                "Risk cannot approve live trading."
+            ),
+            created_at=now_london(),
+        )
+    )
+    _deny_live_and_execution(
+        session,
+        emp.id,
+        extra=(("run_skill:review_unsafe_path", True),),
+    )
