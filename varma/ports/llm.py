@@ -171,7 +171,9 @@ class FakeLLM:
             return {"text": reply, "cost_units": 1}
         if slug == "trader":
             reply = (
-                f"{name} ({role}). I cannot write locks or approve live trading. "
+                f"{name} ({role}). I may propose paper tickets. "
+                f"The engine denies fills while PAPER execution is CLOSED. "
+                f"I cannot write locks or approve live trading. "
                 f"Risk stays independent of Trader. LIVE and BROKER_PAPER remain UNLOADED. "
                 f"You asked: {message[:280]}"
             )

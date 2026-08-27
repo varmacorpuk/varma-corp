@@ -27,7 +27,7 @@ def test_unknown_ticker_cannot_execute(session):
         order={"symbol": "ZZQQ", "execution_port": "SIMULATOR", "quantity": 1},
     )
     assert d.allowed is False
-    assert d.reason in {"NO_PERMISSION", "SYMBOL_NOT_ON_ALLOW_LIST"}
+    assert d.reason == "SYMBOL_NOT_ON_ALLOW_LIST"
 
 
 def test_unknown_ticker_denies_even_if_permission_granted(session):

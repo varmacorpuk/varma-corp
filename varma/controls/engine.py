@@ -34,6 +34,7 @@ from varma.controls.addendum_e import addendum_e_public
 from varma.controls.addendum_f import addendum_f_public
 from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
+    FIRM_CLOSED_REASON,
     FIRM_OPEN_WRITE_FIELDS,
     GRAND_OPENING_NOT_IMPLEMENTED_REASON,
     PAPER_EXECUTION_CLOSED_REASON,
@@ -190,8 +191,10 @@ class ControlEngine:
 
         Board Addendum I: PAPER execution is CLOSED until Grand Opening.
         Simulator DENY all fills while closed, even for allow-listed tickers.
-        Allow-list E still exists. Addendum A numbers are stored but unused
-        until open. BROKER_PAPER and LIVE remain UNLOADED.
+        Deny reason is PAPER_EXECUTION_CLOSED (FIRM_CLOSED alias), not only
+        NO_PERMISSION. Allow-list E still exists. Addendum A numbers are stored
+        but unused until open. BROKER_PAPER and LIVE remain UNLOADED.
+        Trader may propose paper tickets; the engine still denies the fill.
         """
         now = at or now_london()
         state = self.state()
@@ -200,9 +203,6 @@ class ControlEngine:
 
         if actor_type != "employee" and actor_type != "board_member":
             return self._deny("UNKNOWN_ACTOR", actor_id, order)
-
-        if actor_type == "employee" and not self.has_permission(actor_id, "place_order"):
-            return self._deny("NO_PERMISSION", actor_id, order)
 
         if execution_port == "BROKER_PAPER":
             # Do not construct PaperBrokerAdapter. Port remains UNLOADED. No broker fills.
@@ -233,31 +233,18 @@ class ControlEngine:
         if symbol.upper() in {"XAU", "XAUUSD", "GOLD", "GC"}:
             return self._deny("GOLD_NOT_AUTHORISED", actor_id, order)
 
-        # Allow-list E still exists but cannot be used for fills until open.
         allow = self.allow_list_symbols()
-        if not allow:
-            return self._deny("EMPTY_ALLOW_LIST", actor_id, order)
-
-        if symbol not in allow:
+        if allow and symbol not in allow:
             return self._deny("SYMBOL_NOT_ON_ALLOW_LIST", actor_id, order)
 
         if closed:
-            return self._deny(
-                PAPER_EXECUTION_CLOSED_REASON,
-                actor_id,
-                order,
-                {
-                    "paper_execution": "CLOSED",
-                    "firm_open": False,
-                    "grand_opening_paper": "not",
-                    "grand_opening_live": "not",
-                    "allow_list_cannot_fill_until_open": True,
-                    "addendum_a_unused_until_open": True,
-                    "simulated_capital_status": "FUTURE_PAPER_STARTING_BOOK_ONLY",
-                    "first_paper_trade_path_implemented": False,
-                    "source": ADDENDUM_I_LABEL,
-                },
-            )
+            return self._deny_paper_closed(actor_id, order)
+
+        if actor_type == "employee" and not self.has_permission(actor_id, "place_order"):
+            return self._deny("NO_PERMISSION", actor_id, order)
+
+        if not allow:
+            return self._deny("EMPTY_ALLOW_LIST", actor_id, order)
 
         missing = self.missing_limits()
         if missing:
@@ -404,6 +391,27 @@ class ControlEngine:
         details = {"order": order, **(extra or {})}
         self._evidence("order_denied", actor_id, {"reason": reason, **details})
         return Decision(False, reason, details)
+
+    def _deny_paper_closed(self, actor_id: str, order: dict[str, Any]) -> Decision:
+        """PAPER_EXECUTION_CLOSED; FIRM_CLOSED is an alias, not a second reason."""
+        return self._deny(
+            PAPER_EXECUTION_CLOSED_REASON,
+            actor_id,
+            order,
+            {
+                "paper_execution": "CLOSED",
+                "firm_closed": True,
+                "firm_open": False,
+                "alias": FIRM_CLOSED_REASON,
+                "grand_opening_paper": "not",
+                "grand_opening_live": "not",
+                "allow_list_cannot_fill_until_open": True,
+                "addendum_a_unused_until_open": True,
+                "simulated_capital_status": "FUTURE_PAPER_STARTING_BOOK_ONLY",
+                "first_paper_trade_path_implemented": False,
+                "source": ADDENDUM_I_LABEL,
+            },
+        )
 
     def _evidence(self, kind: str, actor: str, payload: dict[str, Any]) -> None:
         import json
