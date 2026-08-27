@@ -29,6 +29,16 @@ def test_company_meeting_records_existing_handoffs(session):
     assert empty["risk_status"] == "not"
     assert empty["trading_mode_at_run"] == "LIVE_BLOCKED"
     assert empty["brief_id"] is None
+    assert empty["attendee_count"] == 4
+    assert [a["slug"] for a in empty["attendees"]] == [
+        "market-intelligence-research",
+        "ceo",
+        "challenge",
+        "risk",
+    ]
+    assert all(a["is_board_member"] is False for a in empty["attendees"])
+    assert all(a["cannot_approve_live"] is True for a in empty["attendees"])
+    assert empty["not_a_twelve_employee_roster"] is True
     assert session.query(CompanyMeeting).count() == 1
 
     brief = run_brief(session)
@@ -152,6 +162,13 @@ def test_observability_latest_company_meeting_board_only(client):
     assert run["started_by"] == "board-member"
     assert run["is_trade"] is False
     assert run["live_started"] is False
+    assert after["company_meeting"]["not_a_twelve_employee_roster"] is True
+    slugs = [a["slug"] for a in run["attendees"]]
+    assert slugs == ["market-intelligence-research", "ceo", "challenge", "risk"]
+    assert run["attendee_count"] == 4
+    assert len(run["attendees"]) != 12
+    assert all(a["is_board_member"] is False for a in run["attendees"])
+    assert all(a["cannot_approve_live"] is True for a in run["attendees"])
     assert after["routines"]["documented"]["company_meeting"]["schedule"] == "07:30 weekdays"
     assert after["routines"]["documented"]["company_meeting"]["daemon"] is False
     assert after["routines"]["documented"]["company_meeting"]["is_trade"] is False
@@ -177,3 +194,26 @@ def test_company_meeting_runner_does_not_write_controls(session):
     assert snap["broker_paper_loaded"] is False
     assert snap["execution_ports"]["broker_paper"]["status"] == "UNLOADED"
     assert snap["execution_ports"]["live"]["status"] == "UNLOADED"
+
+
+def test_company_meeting_attendance_is_the_four_employees(session):
+    from varma.db.models import CompanyMeetingAttendee, Employee
+    from varma.db.seed import MI_SLUG
+    from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG
+
+    assert session.query(Employee).count() == 4
+    meeting = run_0730_meeting(session, started_by="cli")
+    slugs = [a["slug"] for a in meeting["attendees"]]
+    assert slugs == [MI_SLUG, CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG]
+    assert meeting["attendee_count"] == 4
+    assert meeting["roster_size"] == 4
+    assert meeting["not_a_twelve_employee_roster"] is True
+    assert session.query(CompanyMeetingAttendee).filter_by(meeting_id=meeting["id"]).count() == 4
+    assert session.query(Employee).count() == 4
+    names = {a["display_name"] for a in meeting["attendees"]}
+    assert names == {"Asha Patel", "CEO", "Challenge", "Risk"}
+    assert "board-member" not in slugs
+    snap = BoardObservability(session).snapshot()["company_meeting"]
+    assert [a["slug"] for a in snap["run"]["attendees"]] == slugs
+    assert snap["not_a_twelve_employee_roster"] is True
+    assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"

@@ -42,6 +42,8 @@ def main() -> None:
         print("is_live_approval:", result["is_live_approval"])
         print("cannot_start_live:", result["cannot_start_live"])
         print("live_started:", result["live_started"])
+        print("attendees:", [a["slug"] for a in result.get("attendees") or []])
+        print("attendee_count:", result.get("attendee_count"))
         print("trading_mode:", result["trading_mode_at_run"])
         print("stored_in: database table company_meetings")
     finally:
