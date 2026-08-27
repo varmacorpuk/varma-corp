@@ -39,6 +39,7 @@ from varma.routines.run_challenge import run_challenge
 from varma.routines.run_nightly_filter import run_nightly_filter
 from varma.routines.run_risk_deny import run_risk_deny
 from varma.routines.run_0730_meeting import run_0730_meeting
+from varma.routines.board_jobs import with_job_safety
 from varma.skills.challenge_sample_thesis import challenge_review_to_dict
 from varma.skills.prepare_daily_intelligence_brief import brief_to_dict
 from varma.skills.prepare_sample_thesis import thesis_to_dict
@@ -276,36 +277,35 @@ def create_app() -> FastAPI:
         _board: Actor = Depends(require_board_member),
         session: Session = Depends(_session),
     ) -> dict[str, Any]:
-        result = run_brief(session)
-        return result
+        return with_job_safety(session, run_brief(session))
 
     @app.post("/routines/run-challenge")
     def api_run_challenge(
         _board: Actor = Depends(require_board_member),
         session: Session = Depends(_session),
     ) -> dict[str, Any]:
-        return run_challenge(session)
+        return with_job_safety(session, run_challenge(session))
 
     @app.post("/routines/run-risk-deny")
     def api_run_risk_deny(
         _board: Actor = Depends(require_board_member),
         session: Session = Depends(_session),
     ) -> dict[str, Any]:
-        return run_risk_deny(session)
+        return with_job_safety(session, run_risk_deny(session))
 
     @app.post("/routines/run-nightly-filter")
     def api_run_nightly_filter(
         _board: Actor = Depends(require_board_member),
         session: Session = Depends(_session),
     ) -> dict[str, Any]:
-        return run_nightly_filter(session)
+        return with_job_safety(session, run_nightly_filter(session))
 
     @app.post("/routines/run-0730-meeting")
     def api_run_0730_meeting(
         _board: Actor = Depends(require_board_member),
         session: Session = Depends(_session),
     ) -> dict[str, Any]:
-        return run_0730_meeting(session, started_by="board-member")
+        return with_job_safety(session, run_0730_meeting(session, started_by="board-member"))
 
     @app.get("/routines/0730-meeting-schedule")
     def company_meeting_schedule() -> dict[str, Any]:
@@ -455,6 +455,7 @@ def create_app() -> FastAPI:
                     "paper_gate",
                     "execution_ports",
                     "company_meeting",
+                    "runnable_jobs",
                 ],
             },
         }

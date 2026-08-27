@@ -40,8 +40,8 @@ from varma.meetings.company_meeting import (
     meeting_to_dict,
 )
 from varma.memory.filter import filter_run_to_dict
-from varma.memory.filter import filter_run_to_dict
 from varma.memory.stores import MemoryStores
+from varma.routines.board_jobs import runnable_jobs_catalog
 
 DEFAULT_RECENT_LIMIT = 20
 
@@ -130,6 +130,7 @@ class BoardObservability:
             "company_meeting": self._company_meeting(),
             "status_bubbles": self._status_bubbles(),
             "routines": self._routine_schedules(),
+            "runnable_jobs": self._runnable_jobs(),
             "note": READ_ONLY_NOTE,
         }
 
@@ -440,6 +441,8 @@ class BoardObservability:
                     "schedule": "06:30 weekdays",
                     "timezone": "Europe/London",
                     "daemon": False,
+                    "method": "POST",
+                    "path": "/routines/run-brief",
                     "cli": "python -m varma.routines.run_brief",
                     "description": describe_0630_weekday_routine(),
                 },
@@ -448,6 +451,8 @@ class BoardObservability:
                     "timezone": "Europe/London",
                     "daemon": False,
                     "writes_controls": False,
+                    "method": "POST",
+                    "path": "/routines/run-nightly-filter",
                     "cli": "python -m varma.routines.run_nightly_filter",
                     "description": describe_nightly_memory_filter(),
                 },
@@ -458,12 +463,23 @@ class BoardObservability:
                     "is_trade": False,
                     "is_live_approval": False,
                     "cannot_start_live": True,
+                    "method": "POST",
+                    "path": "/routines/run-0730-meeting",
                     "cli": "python -m varma.routines.run_0730_meeting",
                     "description": describe_0730_company_meeting(),
                 },
             },
             "note": (
                 "Board-only read of documented schedules. On-demand. No 24/7 daemon. "
-                "Nightly filter has no invented clock hour. This view does not write controls."
+                "Nightly filter has no invented clock hour. This view does not write controls. "
+                "Board Member runs jobs via POST (right-hand panel), not GET /observability."
             ),
         }
+
+    def _runnable_jobs(self) -> dict[str, Any]:
+        """Listing only. GET /observability must not run these jobs."""
+        catalog = runnable_jobs_catalog()
+        catalog["read_only"] = True
+        catalog["run_via"] = "POST"
+        catalog["get_observability_runs_jobs"] = False
+        return catalog

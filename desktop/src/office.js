@@ -14,6 +14,8 @@
 
   let employees = [];
   let selected = null;
+  let lastJobNote = "";
+  let jobRunning = false;
   const sprite = { w: 16, h: 24, scale: 4 };
 
   function headers(json) {
@@ -251,7 +253,11 @@
       : "<p class=\"meta\">Allow-list is empty. Empty allow-list cannot execute.</p>";
     return `
       <h3>Board observability</h3>
-      <p class="meta">Read-only. Source: ${escapeHtml(data.source || "database")}. This view does not write controls, trading_mode, allow-list, or permissions.</p>
+      <p class="meta">Read-only. Source: ${escapeHtml(data.source || "database")}. This view does not write controls, trading_mode, allow-list, or permissions. GET /observability does not run jobs.</p>
+      <h3>On-demand jobs</h3>
+      <p class="meta">Board Member only. POST, not GET /observability. Employees are denied. Does not load broker ports, change trading_mode, or fill paper/live orders. CLI still works. After a run this panel refreshes from the database.</p>
+      ${renderJobButtons(data)}
+      ${lastJobNote ? `<p class="meta" id="job-run-status">${escapeHtml(lastJobNote)}</p>` : '<p class="meta" id="job-run-status"></p>'}
       <h3>Control snapshot</h3>
       <p class="meta">trading_mode: ${escapeHtml(controls.trading_mode || data.trading_mode || "")} · allow-list empty: ${controls.allow_list_empty === undefined ? data.allow_list_empty : controls.allow_list_empty} · LIVE adapter: ${controls.live_adapter_loaded === undefined ? data.live_adapter_loaded : controls.live_adapter_loaded}</p>
       <p class="meta">Employees cannot write controls: ${controls.employees_cannot_write_controls !== false}. Board Member is the human authority. This view is read-only.</p>
@@ -306,6 +312,26 @@
       <p class="meta">Append-only evidence store. Originals are not overwritten.</p>
       ${evidenceRows}
     `;
+  }
+
+  function renderJobButtons(data) {
+    const jobs = (data && data.runnable_jobs && data.runnable_jobs.items) || [
+      { id: "run-brief", label: "Run morning intelligence brief", path: "/routines/run-brief" },
+      { id: "run-challenge", label: "Run SAMPLE challenge", path: "/routines/run-challenge" },
+      { id: "run-risk-deny", label: "Run Risk deny-path", path: "/routines/run-risk-deny" },
+      { id: "run-0730-meeting", label: "Run 07:30 meeting record", path: "/routines/run-0730-meeting" },
+      { id: "run-nightly-filter", label: "Run nightly memory filter", path: "/routines/run-nightly-filter" },
+    ];
+    return (
+      '<div class="job-runs">' +
+      jobs
+        .map(
+          (job) =>
+            `<button type="button" class="job-run" data-job-path="${escapeHtml(job.path || "")}" data-job-id="${escapeHtml(job.id || "")}" ${jobRunning ? "disabled" : ""}>${escapeHtml(job.label || job.id || "")}</button>`
+        )
+        .join("") +
+      "</div>"
+    );
   }
 
   function chatPlaceholder(slug) {
@@ -365,11 +391,48 @@
 
   if (panelBody) {
     panelBody.addEventListener("click", (ev) => {
+      const jobBtn = ev.target.closest("[data-job-path]");
+      if (jobBtn) {
+        const path = jobBtn.getAttribute("data-job-path") || "";
+        if (path.indexOf("/routines/") === 0) {
+          runBoardJob(path, jobBtn.textContent || path);
+        }
+        return;
+      }
       const btn = ev.target.closest("[data-employee-slug]");
       if (!btn) return;
       const emp = employees.find((e) => e.slug === btn.getAttribute("data-employee-slug"));
       if (emp) selectEmployee(emp);
     });
+  }
+
+  async function runBoardJob(path, label) {
+    if (jobRunning) return;
+    jobRunning = true;
+    lastJobNote = "Running " + label + "…";
+    const status = document.getElementById("job-run-status");
+    if (status) status.textContent = lastJobNote;
+    document.querySelectorAll(".job-run").forEach((b) => {
+      b.disabled = true;
+    });
+    try {
+      const r = await fetch(API + path, { method: "POST", headers: headers() });
+      if (!r.ok) {
+        lastJobNote = label + " denied (" + r.status + "). Board Member only. Employees cannot run jobs.";
+        jobRunning = false;
+        await showBoardObservability();
+        return;
+      }
+      lastJobNote =
+        label +
+        " finished. Panel refreshed from the database. trading_mode unchanged. BROKER_PAPER and LIVE remain UNLOADED. No fills.";
+      jobRunning = false;
+      await showBoardObservability();
+    } catch (err) {
+      lastJobNote = "Job failed. Kernel unreachable or Board identity missing. This panel does not write controls.";
+      jobRunning = false;
+      await showBoardObservability();
+    }
   }
 
   function renderInboxList(items) {

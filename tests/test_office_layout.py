@@ -69,3 +69,18 @@ def test_office_click_opens_panel_logic():
     assert "not a 12-employee roster" in JS
     assert "attendees" in JS
     assert "#chat-form[hidden]" in CSS
+    assert "On-demand jobs" in JS
+    assert "data-job-path" in JS
+    assert "/routines/run-brief" in JS
+    assert "/routines/run-challenge" in JS
+    assert "/routines/run-risk-deny" in JS
+    assert "/routines/run-0730-meeting" in JS
+    assert "/routines/run-nightly-filter" in JS
+    assert "runBoardJob" in JS
+    assert 'method: "POST"' in JS or "method: \"POST\"" in JS or 'method: "POST"' in JS.replace(" ", "")
+    assert "showBoardObservability" in JS
+    assert "GET /observability does not run jobs" in JS
+    assert "Approve LIVE" not in HTML
+    assert 'id="approve-live"' not in HTML.lower()
+    assert "approve-live-btn" not in JS
+    assert "job-runs" in CSS

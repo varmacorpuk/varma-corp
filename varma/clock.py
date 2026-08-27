@@ -26,7 +26,8 @@ def is_weekday(dt: datetime | None = None) -> bool:
 def describe_nightly_memory_filter() -> str:
     return (
         "Nightly Europe/London working-context filter (Document 08). "
-        "On-demand via CLI or API. This slice does not start a daemon scheduler. "
+        "On-demand via Board Member right-hand panel, API, or documented CLI. "
+        "This slice does not start a daemon scheduler. "
         "Working context is archived in the database. Evidence is append-only "
         "and is never deleted. The filter does not write controls, trading_mode, "
         "allow-list, or permissions."
@@ -38,14 +39,14 @@ def describe_0630_weekday_routine() -> str:
         "Weekdays 06:30 Europe/London. Output due before the 07:30 "
         "Europe/London company meeting (parameterisable; Documents 02, 09, 18). "
         "On-demand runs use the same skill. This slice does not start a "
-        "daemon scheduler; invoke via CLI or API."
+        "daemon scheduler; invoke via the Board Member right-hand panel, API, or CLI."
     )
 
 
 def describe_0730_company_meeting() -> str:
     return (
         "07:30 Europe/London company meeting (Documents 02, 09, 18). "
-        "On-demand via Board Member API or documented CLI. "
+        "On-demand via Board Member right-hand panel, API, or documented CLI. "
         "Writes a meeting artefact to the database from existing handoffs "
         "(MI brief, CEO pack, Challenge SAMPLE, Risk DENY). "
         "Not a trade. Not LIVE approval. Not a daemon. "
