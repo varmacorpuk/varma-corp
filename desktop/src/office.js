@@ -248,6 +248,12 @@
     chatForm.hidden = false;
     chatInput.placeholder = chatPlaceholder(emp.slug);
     const work = await get("/employees/" + emp.slug + "/work");
+    let history = [];
+    try {
+      history = await get("/employees/" + emp.slug + "/chat");
+    } catch (err) {
+      history = [];
+    }
     const authorityNote = work.cannot_approve_live_trading
       ? `<p class="meta"><strong>${escapeHtml(work.display_name)} does not approve live trading.</strong> Board Member is the human authority.</p>`
       : "";
@@ -264,7 +270,21 @@
       ${work.risk_decision ? "<h3>Risk decision</h3>" + renderRisk(work.risk_decision) : ""}
       <h3>Handoffs</h3>
       ${renderInboxList(work.inbox || [])}
+      ${renderChatHistory(history)}
     `;
+  }
+
+  function renderChatHistory(rows) {
+    if (!rows || !rows.length) {
+      return "<h3>Chat history</h3><p class=\"meta\">No chat stored in the database yet.</p>";
+    }
+    const items = rows
+      .map(
+        (row) =>
+          `<div class="ledger-row">${escapeHtml(row.from_role || "")}: ${escapeHtml(String(row.body || "").slice(0, 400))}</div>`
+      )
+      .join("");
+    return `<h3>Chat history</h3><p class="meta">From the database. Same employee runtime. Talk is disabled.</p>${items}`;
   }
 
   if (panelBody) {

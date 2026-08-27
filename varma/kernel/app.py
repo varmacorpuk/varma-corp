@@ -247,7 +247,11 @@ def create_app() -> FastAPI:
         }
 
     @app.get("/employees/{slug}/chat")
-    def chat_history(slug: str, session: Session = Depends(_session)) -> list[dict[str, Any]]:
+    def chat_history(
+        slug: str,
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> list[dict[str, Any]]:
         emp = _get_employee(session, slug)
         rows = (
             session.query(ChatMessage)
