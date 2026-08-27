@@ -22,6 +22,8 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 14. Same Board observability panel also shows: latest nightly memory-filter run; organisation-memory titles; 07:30 meeting pack status (MI brief headline, CEO handoff DELIVERED/not, Challenge SAMPLE thesis status, Risk DENIED/not); Board-only employee status bubbles. Click still opens the person in the right-hand panel. Chat stays hidden on observability.
 15. Same panel lists 07:30 meeting artefacts from the database (brief, CEO handoff, SAMPLE thesis, challenge review, Risk decision). Read-only. SAMPLE is not a live trade. Risk cannot approve LIVE.
 16. Board-only documented routine schedules in the same panel (06:30 weekday brief; nightly Europe/London filter). On-demand. No 24/7 daemon. No invented nightly clock hour.
+17. Same panel: Board-only read of missing numeric-limit KEYS (OPEN BOARD DECISIONS, values unset and not invented). Missing limits still DENY execution.
+18. Same panel: Board-only control snapshot (trading_mode=LIVE_BLOCKED, empty allow-list, employees cannot write controls). Read-only.
 
 ## System separation
 
@@ -62,7 +64,7 @@ One client for Mac and Windows (Electron). Browser also works in development.
 
 Then open http://127.0.0.1:5173
 
-Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. Observability is read-only.
+Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (control snapshot, missing numeric-limit keys, cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. Observability is read-only.
 
 ## 06:30 Europe/London routine
 
@@ -132,6 +134,8 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 - 07:30 meeting pack status: latest MI brief headline, CEO handoff DELIVERED/not, Challenge SAMPLE thesis status, Risk DENIED/not.
 - 07:30 meeting artefact list (read-only): latest brief, CEO handoff, SAMPLE thesis, challenge review, Risk decision.
 - Board-only documented routine schedules: 06:30 weekday brief and nightly Europe/London filter (on-demand, no daemon, no invented nightly clock hour).
+- Board-only missing numeric-limit KEYS. Values remain unset OPEN BOARD DECISIONS and are not invented. Missing limits DENY execution.
+- Board-only control snapshot: `trading_mode=LIVE_BLOCKED`, empty allow-list, employees cannot write controls. Read-only.
 - Board-only employee status bubbles. Click an employee (floor or bubble name) to open that person in the same right-hand panel.
 - Visible without clicking an employee. A Board observability entry returns to this view.
 - Read-only. It does not write controls, `trading_mode`, allow-list, or permissions. Chat is hidden on this view.
@@ -140,7 +144,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 
 ## Next slice
 
-Board-only read of missing numeric limits (keys only, values remain unset OPEN BOARD DECISIONS) in the same observability panel. No new employees. Still no paper/live execution and no 12-employee roster.
+Board-only paper-gate status in the same observability panel: PAPER not started / LIVE_BLOCKED, no execution. No new employees. Still no paper/live execution and no 12-employee roster.
 
 ## Specs
 
@@ -150,4 +154,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, status bubbles, documented routine schedules, and employee chat history; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
+Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, status bubbles, documented routine schedules, missing numeric-limit keys, control snapshot, and employee chat history; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.

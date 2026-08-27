@@ -10,7 +10,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from varma.clock import describe_0630_weekday_routine, describe_nightly_memory_filter
-from varma.controls.engine import ControlEngine
+from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
 from varma.db.models import (
     ChallengeReview,
@@ -90,6 +90,9 @@ class BoardObservability:
             "trading_mode": control_snap["trading_mode"],
             "allow_list_empty": control_snap["allow_list_empty"],
             "live_adapter_loaded": control_snap["live_adapter_loaded"],
+            "employees_cannot_write_controls": True,
+            "missing_numeric_limits": self._missing_numeric_limits(control_snap),
+            "controls": self._control_snapshot(control_snap),
             "cost_cap_units": self.costs.cap,
             "cost_cap_label": TEMPORARY_BRIEF_COST_CAP_LABEL,
             "cost_cap_is_board_budget": False,
@@ -110,6 +113,44 @@ class BoardObservability:
             "status_bubbles": self._status_bubbles(),
             "routines": self._routine_schedules(),
             "note": READ_ONLY_NOTE,
+        }
+
+    def _missing_numeric_limits(self, control_snap: dict[str, Any]) -> dict[str, Any]:
+        """Keys only. Values are OPEN BOARD DECISIONS and must not be invented here."""
+        unset_keys = list(control_snap.get("missing_numeric_limits") or self.controls.missing_limits())
+        return {
+            "read_only": True,
+            "source": "database",
+            "open_board_decision": True,
+            "values_invented": False,
+            "values_shown": False,
+            "required_keys": list(REQUIRED_LIMIT_KEYS),
+            "unset_keys": unset_keys,
+            "all_unset": unset_keys == list(REQUIRED_LIMIT_KEYS),
+            "deny_execution_when_missing": True,
+            "note": (
+                "Keys that are unset. Numeric paper/live limit VALUES are OPEN BOARD "
+                "DECISIONS and are not invented here. Missing limits DENY execution."
+            ),
+        }
+
+    def _control_snapshot(self, control_snap: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "read_only": True,
+            "source": "database",
+            "writes_controls": False,
+            "employees_cannot_write_controls": True,
+            "trading_mode": control_snap["trading_mode"],
+            "kill_switch": control_snap["kill_switch"],
+            "allow_list": list(control_snap["allow_list"]),
+            "allow_list_empty": control_snap["allow_list_empty"],
+            "live_adapter_loaded": control_snap["live_adapter_loaded"],
+            "live_gate": control_snap["live_gate"],
+            "note": (
+                "Board-only control snapshot. Employees cannot write controls. "
+                "Empty allow-list cannot execute. LIVE adapter is not loaded. "
+                "This view does not write trading_mode, allow-list, or permissions."
+            ),
         }
 
     def _nightly_filter(self) -> dict[str, Any]:
