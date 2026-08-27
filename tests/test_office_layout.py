@@ -44,4 +44,6 @@ def test_office_click_opens_panel_logic():
     assert "organisation memory" in JS.lower() or "organisation_memory" in JS
     assert "status_bubbles" in JS or "status bubbles" in JS.lower()
     assert "data-employee-slug" in JS
+    assert "/employees/" in JS and "/chat" in JS
+    assert "Chat history" in JS or "chat history" in JS.lower()
     assert "#chat-form[hidden]" in CSS

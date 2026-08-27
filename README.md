@@ -14,7 +14,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 6. Brief stored in the database, then handed off to the CEO as the 07:30 meeting recipient (Document 18). Handoff artefact lives in the database, not on a desktop disk.
 7. Challenge reviews a SAMPLE thesis (not a live trade). Thesis and challenge review are database artefacts, handed to Risk.
 8. Risk deny-path demo: reviews an unsafe/out-of-policy LIVE-gold path and DENIES it. Risk cannot approve LIVE.
-9. Desktop: 2D office, four employee sprites, click to right-hand panel; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. No Talk/voice.
+9. Desktop: 2D office, four employee sprites, click to right-hand panel; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. Chat history is loaded from the database. No Talk/voice.
 10. pytest without paid APIs. Execution in LIVE mode is denied. Empty allow-list cannot execute.
 11. TEMPORARY DEVELOPMENT DEFAULT watchlist of a few listed stocks. It is not the execution allow-list. No gold.
 12. Nightly Europe/London memory filter (on-demand): archives working context in the database; evidence stays append-only; filter does not write controls.
@@ -138,7 +138,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 
 ## Next slice
 
-Load selected-employee chat history from the database into the right-hand panel when an employee is opened (GET already exists; desktop currently does not load it). No new employees. Still no paper/live execution and no 12-employee roster.
+Board-only read of documented routine schedules (06:30 weekday brief and nightly Europe/London filter) in the same observability panel. No new employees. Still no paper/live execution and no 12-employee roster.
 
 ## Specs
 
