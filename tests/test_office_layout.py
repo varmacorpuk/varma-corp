@@ -38,3 +38,9 @@ def test_office_click_opens_panel_logic():
     assert "board-observability-btn" in JS
     assert "writes controls" in JS.lower() or "does not write controls" in JS.lower()
     assert "chatForm.hidden = true" in JS.replace(" ", "") or "chatForm.hidden=true" in JS.replace(" ", "")
+    assert "nightly" in JS.lower()
+    assert "07:30" in JS
+    assert "organisation memory" in JS.lower() or "organisation_memory" in JS
+    assert "status_bubbles" in JS or "status bubbles" in JS.lower()
+    assert "data-employee-slug" in JS
+    assert "#chat-form[hidden]" in CSS

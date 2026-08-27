@@ -148,6 +148,12 @@
   function renderObservability(data) {
     const costs = (data.costs && data.costs.entries) || [];
     const evidence = (data.evidence && data.evidence.entries) || [];
+    const filter = data.nightly_filter || {};
+    const run = filter.run;
+    const titles = (data.organisation_memory && data.organisation_memory.titles) || [];
+    const pack = data.meeting_pack || {};
+    const thesis = pack.challenge_sample_thesis || {};
+    const bubbles = data.status_bubbles || [];
     const costRows = costs.length
       ? costs
           .map(
@@ -164,11 +170,38 @@
           )
           .join("")
       : "<p class=\"meta\">No evidence rows in the database yet.</p>";
+    const filterBlock = run
+      ? `<div class="ledger-row">cadence: ${escapeHtml(run.cadence || filter.cadence || "nightly")} · timezone: ${escapeHtml(run.timezone || "Europe/London")} · archived: ${escapeHtml(String(run.archived_count))} · controls_written: ${run.controls_written} · daemon: ${run.daemon}<br /><span class="meta">${escapeHtml(run.ran_at || "")}</span></div>`
+      : `<p class="meta">${escapeHtml(filter.note || "No nightly filter run stored yet.")}</p>`;
+    const titleRows = titles.length
+      ? titles
+          .map((row) => `<div class="ledger-row">${escapeHtml(row.title || "")}</div>`)
+          .join("")
+      : "<p class=\"meta\">No organisation-memory titles in the database yet.</p>";
+    const bubbleRows = bubbles.length
+      ? bubbles
+          .map(
+            (row) =>
+              `<button type="button" class="bubble-link" data-employee-slug="${escapeHtml(row.slug || "")}">${escapeHtml(row.display_name || row.slug || "")}: ${escapeHtml(row.status_bubble || row.status || "")}</button>`
+          )
+          .join("")
+      : "<p class=\"meta\">No employee status bubbles.</p>";
     return `
       <h3>Board observability</h3>
       <p class="meta">Read-only. Source: ${escapeHtml(data.source || "database")}. This view does not write controls, trading_mode, allow-list, or permissions.</p>
       <p class="meta">trading_mode: ${escapeHtml(data.trading_mode || "")} · allow-list empty: ${data.allow_list_empty} · LIVE adapter: ${data.live_adapter_loaded}</p>
       <p class="meta">${escapeHtml(data.cost_cap_label || "TEMPORARY DEVELOPMENT DEFAULT cost cap. Not a Board-approved budget.")}</p>
+      <h3>07:30 meeting pack</h3>
+      <p class="meta">${escapeHtml(pack.meeting || "07:30 Europe/London company meeting")} · MI brief: ${escapeHtml(pack.brief_headline || "not")} · CEO handoff: ${escapeHtml(pack.ceo_handoff_status || "not")} · Challenge SAMPLE thesis: ${escapeHtml(thesis.status || "not")} · Risk: ${escapeHtml(pack.risk_status || "not")}</p>
+      <p class="meta">${escapeHtml(thesis.label || "SAMPLE — not a live trade")}. Not an order.</p>
+      <h3>Nightly memory filter</h3>
+      <p class="meta">On-demand. Europe/London. Evidence append-only. Does not write controls.</p>
+      ${filterBlock}
+      <h3>Organisation memory titles</h3>
+      ${titleRows}
+      <h3>Employee status bubbles</h3>
+      <p class="meta">Board-only read from the kernel. Click a name to open that person in this panel. Office stays visible.</p>
+      ${bubbleRows}
       <h3>Cost ledger</h3>
       <p class="meta">Total units: ${escapeHtml(String((data.costs && data.costs.total_units) || 0))} · TEMPORARY cap ${escapeHtml(String(data.cost_cap_units || ""))} (not a Board budget)</p>
       ${costRows}
@@ -211,6 +244,15 @@
       <h3>Handoffs</h3>
       ${renderInboxList(work.inbox || [])}
     `;
+  }
+
+  if (panelBody) {
+    panelBody.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("[data-employee-slug]");
+      if (!btn) return;
+      const emp = employees.find((e) => e.slug === btn.getAttribute("data-employee-slug"));
+      if (emp) selectEmployee(emp);
+    });
   }
 
   function renderInboxList(items) {

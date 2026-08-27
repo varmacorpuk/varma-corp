@@ -52,6 +52,9 @@ class MemoryStores:
     def org_knowledge(self) -> list[MemoryOrg]:
         return self.session.query(MemoryOrg).all()
 
+    def org_titles(self) -> list[MemoryOrg]:
+        return self.session.query(MemoryOrg).order_by(MemoryOrg.created_at.desc()).all()
+
     def append_evidence(self, kind: str, actor: str, payload: str) -> Evidence:
         row = Evidence(kind=kind, actor=actor, payload=payload, created_at=now_london())
         self.session.add(row)
