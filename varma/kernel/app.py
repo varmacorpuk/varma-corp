@@ -420,6 +420,7 @@ def create_app() -> FastAPI:
                     "nightly_filter",
                     "organisation_memory",
                     "meeting_pack",
+                    "meeting_artefacts",
                     "status_bubbles",
                 ],
             },

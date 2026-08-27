@@ -77,6 +77,7 @@ def test_board_observability_api_is_read_only(client):
     assert office["office_is_source_of_truth"] is False
     assert "nightly_filter" in office["board_observability"]["includes"]
     assert "meeting_pack" in office["board_observability"]["includes"]
+    assert "meeting_artefacts" in office["board_observability"]["includes"]
     assert "status_bubbles" in office["board_observability"]["includes"]
 
     controls = client.get("/controls").json()
@@ -236,4 +237,38 @@ def test_observability_status_bubbles_board_only(client):
     assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
     assert client.get("/controls").json()["trading_mode"] == "LIVE_BLOCKED"
     assert LIVE_ADAPTER_LOADED is False
+
+
+def test_observability_meeting_artefact_list(session):
+    empty = BoardObservability(session).snapshot()["meeting_artefacts"]
+    assert empty["read_only"] is True
+    assert empty["source"] == "database"
+    assert empty["items"] == []
+    assert empty["meeting"] == "07:30 Europe/London company meeting"
+
+    run_brief(session)
+    run_challenge(session)
+    run_risk_deny(session)
+    data = BoardObservability(session).snapshot()
+    kinds = [row["kind"] for row in data["meeting_artefacts"]["items"]]
+    assert kinds == [
+        "intelligence_brief",
+        "handoff",
+        "sample_thesis",
+        "challenge_review",
+        "risk_decision",
+    ]
+    by_kind = {row["kind"]: row for row in data["meeting_artefacts"]["items"]}
+    assert by_kind["handoff"]["status"] == "DELIVERED"
+    assert by_kind["handoff"]["to"] == CEO_SLUG
+    assert by_kind["sample_thesis"]["is_live_trade"] is False
+    assert "SAMPLE" in by_kind["sample_thesis"]["label"]
+    assert by_kind["challenge_review"]["does_not_approve_live"] is True
+    assert by_kind["risk_decision"]["decision"] == "DENIED"
+    assert by_kind["risk_decision"]["cannot_approve_live"] is True
+    assert by_kind["intelligence_brief"]["no_execution_authority"] is True
+    assert data["trading_mode"] == "LIVE_BLOCKED"
+    assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
+    assert data["writes_controls"] is False
+
 
