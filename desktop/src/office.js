@@ -160,6 +160,7 @@
     const unsetKeys = missing.unset_keys || [];
     const controls = data.controls || {};
     const allowList = controls.allow_list || [];
+    const paperGate = data.paper_gate || {};
     const costRows = costs.length
       ? costs
           .map(
@@ -248,6 +249,10 @@
       <p class="meta">trading_mode: ${escapeHtml(controls.trading_mode || data.trading_mode || "")} · allow-list empty: ${controls.allow_list_empty === undefined ? data.allow_list_empty : controls.allow_list_empty} · LIVE adapter: ${controls.live_adapter_loaded === undefined ? data.live_adapter_loaded : controls.live_adapter_loaded}</p>
       <p class="meta">Employees cannot write controls: ${controls.employees_cannot_write_controls !== false}. Board Member is the human authority. This view is read-only.</p>
       ${allowRows}
+      <h3>Paper gate</h3>
+      <p class="meta">PAPER: ${escapeHtml(paperGate.paper_status || "not started")} · trading_mode: ${escapeHtml(paperGate.trading_mode || data.trading_mode || "")} · execution: ${paperGate.execution === true} · paper execution implemented: ${paperGate.paper_execution_implemented === true}</p>
+      <p class="meta">EVALUATION: ${escapeHtml(paperGate.evaluation_status || "not")} · LIVE-trading recommendation: ${escapeHtml(paperGate.live_trading_recommendation || "not")} · Board review: ${escapeHtml(paperGate.board_review || "not")} · explicit Board approval: ${escapeHtml(paperGate.explicit_board_approval || "not")}</p>
+      <p class="meta">${escapeHtml(paperGate.gate || "PAPER → EVALUATION → LIVE-TRADING RECOMMENDATION → BOARD REVIEW → EXPLICIT BOARD APPROVAL → LIVE")}. Silence is not approval. Paper duration/success thresholds are OPEN BOARD DECISIONS and are not invented here.</p>
       <h3>Missing numeric limits</h3>
       <p class="meta">OPEN BOARD DECISIONS. Keys only — values are not invented here. Missing limits DENY execution.</p>
       ${missingRows}
