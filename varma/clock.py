@@ -54,8 +54,9 @@ def describe_0730_company_meeting() -> str:
         "On-demand via Board Member right-hand panel, API, or documented CLI. "
         "Writes a meeting artefact to the database from existing handoffs "
         "(MI brief, CEO pack, Challenge SAMPLE, Risk DENY). "
-        "Not a trade. Not LIVE approval. Not a daemon. "
-        "Employees cannot start LIVE from a meeting."
+        "Internal staff artefact only. No 07:30 diary invite to the Board Member. "
+        "Must not email or calendar-invite Hari. Not a trade. Not LIVE approval. "
+        "Not a daemon. Employees cannot start LIVE from a meeting."
     )
 
 
@@ -78,5 +79,6 @@ def describe_flatten_us_close() -> str:
         "This slice does not start a daemon scheduler. Flatten uses the internal "
         "paper fill simulator, not a broker. Empty allow-list still denies new "
         "orders; flatten of existing paper is session hygiene (no-op if none). "
-        "GET /observability does not flatten."
+        "GET /observability does not flatten. Board Addendum I: do not run "
+        "flatten-as-if-there-were-positions while PAPER execution is CLOSED."
     )

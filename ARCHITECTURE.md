@@ -38,12 +38,12 @@ Board Member UI  (office canvas + RIGHT-HAND PANEL + approvals)
         |
 Company Kernel
    Identity, Employees (person · department: Asha Patel · Research, Jordan Hale · CEO, Sam Okeke · Challenge, Elena Voss · Risk, Chris Adeyemi · Trader, Nina Kapoor · Quant, Owen Blake · Technology)
-   Permissions, trading_mode=LIVE_BLOCKED, Board Addendum E PAPER allow_list
+   Permissions, trading_mode=LIVE_BLOCKED, Board Addendum E PAPER allow_list (cannot fill), Board Addendum I PAPER execution CLOSED
    Skills, Routines (on-demand via Board panel POST / CLI; no 24/7 daemon)
    Memory (employee / organisation / evidence)
    Nightly Europe/London working-context filter (archive working; evidence append-only; no control writes)
    Meeting handoffs (MI brief → CEO; SAMPLE thesis → Challenge; challenge → Risk)
-   On-demand 07:30 company meeting record (from existing handoffs; four-employee attendance; not a trade; not LIVE)
+   On-demand 07:30 company meeting record (from existing handoffs; four-employee attendance; internal staff artefact; no Board Member diary invite; not a trade; not LIVE)
    Control engine + Risk deny-path (never LIVE)
    Observability, Cost ledger (Board GET /observability is read-only; database is the ledger)
    Board-only POST job runs from the right-hand panel (brief, SAMPLE challenge, Risk deny-path, 07:30 meeting, nightly filter; not GET /observability)
@@ -51,7 +51,7 @@ Company Kernel
    Board Addendum A 2026-08-27 numeric limits (Board-set VALUES shown; missing ⇒ deny)
    Control snapshot (trading_mode=LIVE_BLOCKED, empty allow-list, employees cannot write)
    Kill switch (Board Member POST halt/reset; employees cannot reset; cancel open PAPER only)
-   Paper-gate status (LIVE_BLOCKED; internal simulator ledger; empty allow-list ⇒ no orders)
+   Paper-gate status (CLOSED until Grand Opening; PAPER execution CLOSED; £1000 FUTURE starting book only; no fills)
    Evaluation ledger (closed trades, P&L, win rate; zero fills valid; no auto-LIVE)
    Execution-port status (BROKER_PAPER and LIVE UNLOADED; internal simulator is the paper ledger)
         |
@@ -63,4 +63,4 @@ The visual office is a projection. It is not the source of truth (Document 16).
 
 CEO, Challenge, and Risk are AI employees. They cannot approve LIVE, place orders, or write controls. Human = Board Member.
 
-Board Member observability (cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status and artefact list, latest 07:30 company meeting record, status bubbles, documented routine schedules, Board Addendum A numeric-limit VALUES, kill-switch state, evaluation ledger, control snapshot, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, internal paper ledger) is a right-hand panel view of the database. GET /observability is read-only and does not run jobs. Board Member runs existing on-demand jobs via POST from that panel (brief, SAMPLE challenge, Risk deny-path, 07:30 meeting, nightly filter) and can halt/reset the kill switch. Employees are denied. Running a job does not load broker ports, change trading_mode, or fill paper/live orders. After a run the panel refreshes from the database. CLI entry points still work. Numeric limits are Board Addendum A 2026-08-27 (Board-set, not invented silent defaults). trading_mode stays LIVE_BLOCKED. Empty allow-list ⇒ no orders. It is not stored on the desktop disk. Constructing or using BROKER_PAPER or LIVE is denied. The 07:30 meeting record is not a trade and cannot start LIVE.
+Board Member observability (cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status and artefact list, latest 07:30 company meeting record, status bubbles, documented routine schedules, Board Addendum I CLOSED-until-Grand-Opening, Board Addendum A numeric-limit VALUES unused until open, kill-switch state, evaluation ledger, control snapshot, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, internal paper ledger) is a right-hand panel view of the database. GET /observability is read-only and does not run jobs. Board Member runs existing on-demand jobs via POST from that panel (brief, SAMPLE challenge, Risk deny-path, 07:30 meeting, nightly filter) and can halt/reset the kill switch. Employees are denied. Running a job does not load broker ports, change trading_mode, or fill paper/live orders. After a run the panel refreshes from the database. CLI entry points still work. Numeric limits are Board Addendum A 2026-08-27 (Board-set, stored, unused until open). PAPER execution is CLOSED (Board Addendum I). trading_mode stays LIVE_BLOCKED. Allow-list E cannot fill until Grand Opening PAPER. It is not stored on the desktop disk. Constructing or using BROKER_PAPER or LIVE is denied. The 07:30 meeting record is an internal staff artefact: no Board Member diary/calendar invite, not a trade, and cannot start LIVE.

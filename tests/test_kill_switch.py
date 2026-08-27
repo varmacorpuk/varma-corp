@@ -108,6 +108,6 @@ def test_auto_trip_on_equity_floor(session):
         order={"symbol": "AAPL", "side": "buy", "notional_gbp": 50, "execution_port": "SIMULATOR"},
     )
     assert d.allowed is False
-    assert d.reason == "KILL_SWITCH"
-    assert session.get(ControlState, 1).kill_switch is True
+    assert d.reason == "PAPER_EXECUTION_CLOSED"
+    assert session.get(ControlState, 1).kill_switch is False
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"

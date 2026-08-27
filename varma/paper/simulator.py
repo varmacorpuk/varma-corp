@@ -4,11 +4,18 @@ This is not a broker. BROKER_PAPER and LIVE adapters remain UNLOADED.
 No gold execution. No live/paper fills against a broker.
 
 The simulator still DENIES when:
+- PAPER execution is CLOSED (Board Addendum I — firm not open)
 - the execution allow-list is empty
 - trading_mode is LIVE or the order asks for LIVE
 - the kill switch is on
 - numeric limits are exceeded (max_position, max_orders_per_day, max_daily_loss)
 - missing Board-set limits (should not happen after Addendum A)
+
+Board Addendum I: the firm is CLOSED until Grand Opening. Simulator DENY all
+fills because the firm is not open, even for allow-listed tickers. Allow-list
+E still exists. £1000 is the FUTURE paper starting book only. Addendum A
+numbers are stored but unused until open. Do not implement the first paper
+trade path.
 
 Empty allow-list ⇒ no orders, so production seed records zero fills. Evaluation
 ledger tables still exist (closed trades, pnl, win rate of profitable closes).
@@ -33,6 +40,11 @@ from sqlalchemy.orm import Session
 
 from varma.clock import london_day, now_london
 from varma.controls.addendum_a import ADDENDUM_A_LABEL, CURRENCY, TIMEZONE
+from varma.controls.addendum_i import (
+    ADDENDUM_I_LABEL,
+    PAPER_EXECUTION_CLOSED_REASON,
+    paper_execution_is_closed,
+)
 from varma.controls.engine import Decision
 from varma.db.models import ClosedPaperTrade, Evidence, PaperFill, PaperOrder, PaperPosition
 from varma.paper.ledger import PaperLedger
@@ -65,6 +77,10 @@ def simulator_assumptions() -> dict[str, Any]:
         "adverse_bps_vs_mid": ADVERSE_BPS,
         "fx": "none — FakeMarketData last treated as GBP (INTERNAL ASSUMPTION)",
         "source": ADDENDUM_A_LABEL,
+        "paper_execution": "CLOSED",
+        "firm_open": False,
+        "first_paper_trade_path_implemented": False,
+        "addendum_i": ADDENDUM_I_LABEL,
         "note": ASSUMPTIONS_NOTE,
     }
 
@@ -83,10 +99,19 @@ class PaperFillSimulator:
     def fill(self, *, actor_id: str, order: dict[str, Any], at=None, is_flatten: bool = False) -> Decision:
         """Simulate a paper fill. Caller has already passed control gates.
 
-        Flatten close-outs call this directly (session hygiene). They do not
-        require allow-list membership. New risk orders still go through ControlEngine.
+        Board Addendum I: DENY all fills while PAPER execution is CLOSED,
+        including flatten close-outs. Do not run flatten-as-if-there-were-positions.
+        Flatten close-outs call this directly (session hygiene) only after
+        Grand Opening PAPER. They do not require allow-list membership.
+        New risk orders still go through ControlEngine.
         """
         now = at or now_london()
+        if paper_execution_is_closed(self.session):
+            return self._deny(
+                PAPER_EXECUTION_CLOSED_REASON,
+                actor_id,
+                {**dict(order), "is_flatten": is_flatten},
+            )
         self.ledger.ensure_account(at=now)
         symbol = str(order.get("symbol") or "")
         side = str(order.get("side") or "buy").lower()
