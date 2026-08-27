@@ -53,6 +53,8 @@ GRAND_OPENING_LIVE = "not"
 SIMULATED_CAPITAL_STATUS = "FUTURE_PAPER_STARTING_BOOK_ONLY"
 
 PAPER_EXECUTION_CLOSED_REASON = "PAPER_EXECUTION_CLOSED"
+FIRM_CLOSED_REASON = "FIRM_CLOSED"  # alias of PAPER_EXECUTION_CLOSED
+CLOSED_FILL_REASONS = frozenset({PAPER_EXECUTION_CLOSED_REASON, FIRM_CLOSED_REASON})
 FIRM_NOT_OPEN_NOTE = (
     "The company is CLOSED until Grand Opening. PAPER execution is CLOSED. "
     "Nothing is trading. Not paper, not live. Allow-list E exists but cannot "
@@ -109,6 +111,7 @@ def addendum_i_public() -> dict[str, Any]:
         "company_closed_until_grand_opening": True,
         "paper_execution": PAPER_EXECUTION_CLOSED,
         "paper_execution_closed": True,
+        "firm_closed": True,
         "grand_opening_paper": GRAND_OPENING_PAPER,
         "grand_opening_live": GRAND_OPENING_LIVE,
         "silence_is_not_approval": True,

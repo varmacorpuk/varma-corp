@@ -6,6 +6,7 @@ PAPER allow-list is Board Addendum E 2026-08-27 (Board-set; no fills until open)
 Staff display is Board Addendum F 2026-08-27 (person · department).
 Company CLOSED until Grand Opening: Board Addendum I 2026-08-27.
 Encrypted company backup: Board Addendum J 2026-08-27 (database artefact; not git).
+seed_if_empty reconciles those Board-encoded rows onto a stale SQLite copy.
 trading_mode stays LIVE_BLOCKED. LIVE and BROKER_PAPER remain UNLOADED.
 """
 
@@ -98,16 +99,29 @@ TEMPORARY_WATCHLIST = (
 
 
 def seed_if_empty(session: Session) -> None:
-    if session.get(ControlState, 1) is None:
+    """Reconcile Board-encoded defaults. Safe on a stale SQLite copy.
+
+    Always applies Addenda A/C/E/F/I/J and the seven named employees, even when
+    control_state already exists. Does not start a 24/7 daemon. trading_mode
+    stays LIVE_BLOCKED. Kill switch is not reset. Trader may propose paper
+    tickets; fills stay denied while PAPER execution is CLOSED.
+    """
+    now = now_london()
+    state = session.get(ControlState, 1)
+    if state is None:
         session.add(
             ControlState(
                 id=1,
                 trading_mode="LIVE_BLOCKED",
                 kill_switch=False,
-                updated_at=now_london(),
+                updated_at=now,
                 updated_by="system-seed",
             )
         )
+    elif state.trading_mode != "LIVE_BLOCKED":
+        state.trading_mode = "LIVE_BLOCKED"
+        state.updated_at = now
+        state.updated_by = "board-reconcile"
 
     mi = session.query(Employee).filter_by(slug=MI_SLUG).one_or_none()
     if mi is None:
@@ -243,6 +257,7 @@ def seed_if_empty(session: Session) -> None:
     seed_board_addendum_e(session)
     seed_board_addendum_i(session)
     seed_board_addendum_j(session)
+    _reconcile_employee_locks(session)
     session.commit()
 
 
@@ -361,7 +376,7 @@ def seed_board_addendum_i(session: Session) -> None:
                     source=ADDENDUM_I_LABEL,
                 )
             )
-        elif row.value in (None, ""):
+        else:
             row.value = value
             row.unit = unit
             row.set_by = ADDENDUM_I_SET_BY
@@ -576,16 +591,13 @@ def _seed_ceo(session: Session) -> None:
         )
 
 
-def _deny_live_and_execution(session: Session, employee_id: str, extra: tuple[tuple[str, bool], ...] = ()) -> None:
-    for action, allowed in (
-        ("place_order", False),
-        ("write_controls", False),
-        ("approve_live", False),
-        ("transition_to_live", False),
-        ("download_secrets", False),
-        ("open_firm", False),
-        *extra,
-    ):
+def _upsert_permission(session: Session, employee_id: str, action: str, allowed: bool) -> None:
+    row = (
+        session.query(Permission)
+        .filter_by(subject_type="employee", subject_id=employee_id, action=action)
+        .one_or_none()
+    )
+    if row is None:
         session.add(
             Permission(
                 subject_type="employee",
@@ -594,6 +606,31 @@ def _deny_live_and_execution(session: Session, employee_id: str, extra: tuple[tu
                 allowed=allowed,
             )
         )
+    else:
+        row.allowed = allowed
+
+
+def _deny_live_and_execution(session: Session, employee_id: str, extra: tuple[tuple[str, bool], ...] = ()) -> None:
+    actions = {
+        "place_order": False,
+        "write_controls": False,
+        "approve_live": False,
+        "transition_to_live": False,
+        "download_secrets": False,
+        "open_firm": False,
+    }
+    actions.update(dict(extra))
+    for action, allowed in actions.items():
+        _upsert_permission(session, employee_id, action, allowed)
+
+
+def _reconcile_employee_locks(session: Session) -> None:
+    """Trader may propose paper tickets. Nobody writes locks or opens the firm."""
+    for emp in session.query(Employee).all():
+        may_propose = emp.slug == TRADER_SLUG
+        _upsert_permission(session, emp.id, "place_order", may_propose)
+        for action in ("write_controls", "approve_live", "transition_to_live", "open_firm", "download_secrets"):
+            _upsert_permission(session, emp.id, action, False)
 
 
 def _seed_challenge(session: Session) -> None:
@@ -720,51 +757,67 @@ def _seed_risk(session: Session) -> None:
 
 
 def _seed_trader(session: Session) -> None:
-    """Persistent Trader identity. Cannot write locks or approve LIVE. Risk stays independent."""
+    """Persistent Trader identity. May propose paper tickets. Cannot write locks or approve LIVE."""
     emp = session.query(Employee).filter_by(slug=TRADER_SLUG).one_or_none()
-    if emp is not None:
-        return
-    emp = Employee(
-        slug=TRADER_SLUG,
-        display_name=staff_display_for_slug(TRADER_SLUG),
-        person_name="Chris Adeyemi",
-        role_title="Trader",
-        department="Trader",
-        personality=(
-            "Execution-minded, stays inside Board locks. Does not approve live trading. "
-            "Personality never overrides controls."
-        ),
-        responsibilities=(
-            "Paper-desk execution proposals inside Board locks. "
-            "Cannot write control tables, allow-list, limits, or trading_mode. "
-            "Cannot approve LIVE. Risk stays independent of Trader."
-        ),
-        authority_boundaries=(
-            "No live-trading approval — Board Member only (Document 11). "
-            "No control writes. No allow-list writes. Risk is independent of Trader. "
-            "LIVE and BROKER_PAPER remain UNLOADED."
-        ),
-        status="AVAILABLE",
-        status_bubble="AVAILABLE",
-        office_x=160,
-        office_y=160,
-        is_primary_agent=1,
-        created_at=now_london(),
-    )
-    session.add(emp)
-    session.flush()
-    session.add(
-        MemoryEmployee(
-            employee_id=emp.id,
-            kind="lesson",
-            content=(
-                "Trader cannot write locks or approve LIVE. "
-                "Risk is independent of Trader. Paper allow-list is Board Addendum E."
+    if emp is None:
+        emp = Employee(
+            slug=TRADER_SLUG,
+            display_name=staff_display_for_slug(TRADER_SLUG),
+            person_name="Chris Adeyemi",
+            role_title="Trader",
+            department="Trader",
+            personality=(
+                "Execution-minded, stays inside Board locks. Does not approve live trading. "
+                "Personality never overrides controls."
             ),
+            responsibilities=(
+                "Paper-desk execution proposals inside Board locks. "
+                "May propose paper tickets. Engine denies fills while PAPER execution "
+                "is CLOSED. Cannot write control tables, allow-list, limits, or trading_mode. "
+                "Cannot approve LIVE. Cannot open the firm. Risk stays independent of Trader."
+            ),
+            authority_boundaries=(
+                "No live-trading approval — Board Member only (Document 11). "
+                "No control writes. No allow-list writes. Cannot open the firm. "
+                "Risk is independent of Trader. LIVE and BROKER_PAPER remain UNLOADED. "
+                "Proposing a paper ticket is not a fill while PAPER_EXECUTION_CLOSED."
+            ),
+            status="AVAILABLE",
+            status_bubble="AVAILABLE",
+            office_x=160,
+            office_y=160,
+            is_primary_agent=1,
             created_at=now_london(),
         )
-    )
-    _deny_live_and_execution(session, emp.id)
+        session.add(emp)
+        session.flush()
+        session.add(
+            MemoryEmployee(
+                employee_id=emp.id,
+                kind="lesson",
+                content=(
+                    "Trader may propose paper tickets. Engine denies fills while "
+                    "PAPER execution is CLOSED (FIRM_CLOSED). Cannot write locks or "
+                    "approve LIVE. Risk is independent of Trader. Paper allow-list is "
+                    "Board Addendum E."
+                ),
+                created_at=now_london(),
+            )
+        )
+    else:
+        emp.responsibilities = (
+            "Paper-desk execution proposals inside Board locks. "
+            "May propose paper tickets. Engine denies fills while PAPER execution "
+            "is CLOSED. Cannot write control tables, allow-list, limits, or trading_mode. "
+            "Cannot approve LIVE. Cannot open the firm. Risk stays independent of Trader."
+        )
+        emp.authority_boundaries = (
+            "No live-trading approval — Board Member only (Document 11). "
+            "No control writes. No allow-list writes. Cannot open the firm. "
+            "Risk is independent of Trader. LIVE and BROKER_PAPER remain UNLOADED. "
+            "Proposing a paper ticket is not a fill while PAPER_EXECUTION_CLOSED."
+        )
+    _deny_live_and_execution(session, emp.id, extra=(("place_order", True),))
 
 
 def _seed_quant(session: Session) -> None:

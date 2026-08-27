@@ -37,7 +37,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 ## System separation
 
 - GitHub (varmacorpuk/varma-corp): source code only. Never commit .env, DB volumes, memories, keys.
-- This box: DEVELOPMENT. Persistent org data in a database.
+- This box: DEVELOPMENT. Persistent org data in a database. Kernel startup reconciles Board-encoded seed (seven named employees, Addendum A numbers, Addendum E allow-list, Addendum I PAPER_EXECUTION_CLOSED) onto a stale SQLite copy. Does not start a 24/7 daemon.
 - Board Member Mac/Windows: desktop client only. Local storage = cache/settings. Not the company ledger.
 - Production 24/7: backend is designed so it can later run off the Board Member PC. Not deployed now.
 

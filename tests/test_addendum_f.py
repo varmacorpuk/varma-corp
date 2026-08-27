@@ -64,7 +64,10 @@ def test_new_three_exist_and_cannot_write_or_approve_live(session, client):
                 .filter_by(subject_id=emp.id, action=action)
                 .one()
             )
-            assert perm.allowed is False
+            if slug == TRADER_SLUG and action == "place_order":
+                assert perm.allowed is True
+            else:
+                assert perm.allowed is False
         denied = client.post(
             "/controls/write",
             headers=headers,
@@ -95,4 +98,4 @@ def test_challenge_independent_of_quant_risk_independent_of_trader(session):
         order={"symbol": "AAPL", "execution_port": "LIVE", "quantity": 1},
     )
     assert d.allowed is False
-    assert d.reason in {"NO_PERMISSION", "LIVE_BLOCKED", "LIVE_ADAPTER_NOT_LOADED"}
+    assert d.reason == "LIVE_BLOCKED"
