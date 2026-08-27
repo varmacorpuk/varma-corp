@@ -23,6 +23,11 @@ def is_weekday(dt: datetime | None = None) -> bool:
     return d.weekday() < 5
 
 
+def london_day(dt: datetime | None = None) -> str:
+    """Calendar day in Europe/London (ISO date). Used for daily paper P&L and order caps."""
+    return as_london(dt or now_london()).date().isoformat()
+
+
 def describe_nightly_memory_filter() -> str:
     return (
         "Nightly Europe/London working-context filter (Document 08). "

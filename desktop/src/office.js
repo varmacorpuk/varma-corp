@@ -160,6 +160,12 @@
     const routines = data.routines || {};
     const missing = data.missing_numeric_limits || {};
     const unsetKeys = missing.unset_keys || [];
+    const numericLimits = data.numeric_limits || {};
+    const limitItems = numericLimits.items || [];
+    const killSwitch = data.kill_switch || {};
+    const evaluation = data.evaluation || {};
+    const paperLedger = data.paper_ledger || {};
+    const assumptions = paperLedger.assumptions || {};
     const controls = data.controls || {};
     const allowList = controls.allow_list || [];
     const paperGate = data.paper_gate || {};
@@ -242,10 +248,18 @@
       ? unsetKeys
           .map(
             (key) =>
-              `<div class="ledger-row">${escapeHtml(key)} — unset (OPEN BOARD DECISION)</div>`
+              `<div class="ledger-row">${escapeHtml(key)} — unset (still DENY)</div>`
           )
           .join("")
-      : "<p class=\"meta\">No missing numeric-limit keys.</p>";
+      : "<p class=\"meta\">No missing numeric-limit keys. Board Addendum A values are set.</p>";
+    const limitRows = limitItems.length
+      ? limitItems
+          .map(
+            (row) =>
+              `<div class="ledger-row">${escapeHtml(row.key || "")}: ${escapeHtml(String(row.value))} ${escapeHtml(row.unit || "")} · ${escapeHtml(row.source || "Board Addendum A 2026-08-27")}</div>`
+          )
+          .join("")
+      : missingRows;
     const allowRows = allowList.length
       ? allowList
           .map((symbol) => `<div class="ledger-row">${escapeHtml(symbol)}</div>`)
@@ -259,18 +273,35 @@
       ${renderJobButtons(data)}
       ${lastJobNote ? `<p class="meta" id="job-run-status">${escapeHtml(lastJobNote)}</p>` : '<p class="meta" id="job-run-status"></p>'}
       <h3>Control snapshot</h3>
-      <p class="meta">trading_mode: ${escapeHtml(controls.trading_mode || data.trading_mode || "")} · allow-list empty: ${controls.allow_list_empty === undefined ? data.allow_list_empty : controls.allow_list_empty} · LIVE adapter: ${controls.live_adapter_loaded === undefined ? data.live_adapter_loaded : controls.live_adapter_loaded}</p>
-      <p class="meta">Employees cannot write controls: ${controls.employees_cannot_write_controls !== false}. Board Member is the human authority. This view is read-only.</p>
+      <p class="meta">trading_mode: ${escapeHtml(controls.trading_mode || data.trading_mode || "")} · allow-list empty: ${controls.allow_list_empty === undefined ? data.allow_list_empty : controls.allow_list_empty} · LIVE adapter: ${controls.live_adapter_loaded === undefined ? data.live_adapter_loaded : controls.live_adapter_loaded} · kill switch halted: ${killSwitch.halted === true}</p>
+      <p class="meta">Employees cannot write controls: ${controls.employees_cannot_write_controls !== false}. Board Member is the human authority. This view is read-only except Board-only job runs and the kill switch.</p>
       ${allowRows}
+      <h3>Board Addendum A 2026-08-27 (Board-set)</h3>
+      <p class="meta">Currency: GBP · Timezone: Europe/London. These VALUES are Board-set, not invented silent defaults. Employees cannot write limits. Empty allow-list still denies execution. trading_mode stays LIVE_BLOCKED.</p>
+      ${limitRows}
+      <h3>Kill switch</h3>
+      <p class="meta">Halted: ${killSwitch.halted === true} · paper equity: ${escapeHtml(String(killSwitch.paper_equity_gbp ?? paperLedger.equity_gbp ?? ""))} GBP · London-day P&amp;L: ${escapeHtml(String(killSwitch.london_day_pnl_gbp ?? paperLedger.london_day_pnl_gbp ?? ""))} GBP</p>
+      <p class="meta">${escapeHtml(killSwitch.halt_if || "halt if paper equity &lt;= 800 GBP OR London-day P&amp;L &lt;= -50 GBP")}. Board Member can halt without an AI employee. On halt: cancel open PAPER orders only; never load LIVE; never flatten live.</p>
+      <div class="kill-switch-actions">
+        <button type="button" class="kill-halt" data-kill-action="halt">Halt paper</button>
+        <button type="button" class="kill-reset" data-kill-action="reset">Reset kill switch</button>
+      </div>
+      <p class="meta">Employees cannot reset the kill switch.</p>
       <h3>Paper gate</h3>
-      <p class="meta">PAPER: ${escapeHtml(paperGate.paper_status || "not started")} · trading_mode: ${escapeHtml(paperGate.trading_mode || data.trading_mode || "")} · execution: ${paperGate.execution === true} · paper execution implemented: ${paperGate.paper_execution_implemented === true}</p>
+      <p class="meta">PAPER: ${escapeHtml(paperGate.paper_status || "not started")} · trading_mode: ${escapeHtml(paperGate.trading_mode || data.trading_mode || "")} · execution: ${paperGate.execution === true} · internal simulator: ${paperGate.internal_simulator === true}</p>
       <p class="meta">EVALUATION: ${escapeHtml(paperGate.evaluation_status || "not")} · LIVE-trading recommendation: ${escapeHtml(paperGate.live_trading_recommendation || "not")} · Board review: ${escapeHtml(paperGate.board_review || "not")} · explicit Board approval: ${escapeHtml(paperGate.explicit_board_approval || "not")}</p>
-      <p class="meta">${escapeHtml(paperGate.gate || "PAPER → EVALUATION → LIVE-TRADING RECOMMENDATION → BOARD REVIEW → EXPLICIT BOARD APPROVAL → LIVE")}. Silence is not approval. Paper duration/success thresholds are OPEN BOARD DECISIONS and are not invented here.</p>
+      <p class="meta">Success: ${escapeHtml(paperGate.successful_trade_definition || evaluation.successful_trade_definition || "CLOSED paper trade with profit &gt; 0")}. Trigger: win rate &gt; 50% AND book profitable. Auto-switch LIVE: ${paperGate.evaluation_auto_switch_live === true}. Paper duration remains an OPEN BOARD DECISION. Silence is not approval.</p>
+      <h3>Paper ledger (internal simulator)</h3>
+      <p class="meta">Not a broker. BROKER_PAPER and LIVE remain UNLOADED. Empty allow-list ⇒ no orders. Simulated capital: ${escapeHtml(String(paperLedger.simulated_capital_gbp ?? "1000"))} GBP · cash: ${escapeHtml(String(paperLedger.cash_gbp ?? ""))} · equity: ${escapeHtml(String(paperLedger.equity_gbp ?? ""))} · fills: ${escapeHtml(String(paperLedger.fills ?? 0))}</p>
+      <p class="meta">Assumptions: spread ${escapeHtml(String(assumptions.spread_bps ?? 10))} bps · slippage ${escapeHtml(String(assumptions.slippage_bps ?? 5))} bps · commission ${escapeHtml(String(assumptions.commission_bps ?? 5))} bps. Fake delayed last treated as GBP (INTERNAL ASSUMPTION, no FX vendor).</p>
+      <h3>Evaluation ledger</h3>
+      <p class="meta">Closed trades: ${escapeHtml(String(evaluation.closed_trades ?? 0))} · profitable closes: ${escapeHtml(String(evaluation.profitable_closes ?? 0))} · win rate: ${escapeHtml(String(evaluation.win_rate ?? 0))} · book P&amp;L: ${escapeHtml(String(evaluation.book_pnl_gbp ?? 0))} GBP · trigger met: ${evaluation.evaluation_trigger_met === true} · auto-switch LIVE: ${evaluation.evaluation_auto_switch_live === true}</p>
+      <p class="meta">Zero fills is valid while the allow-list is empty. Paper continues until the Board explicitly approves moving on.</p>
       <h3>Execution ports</h3>
       <p class="meta">Status only. No fills. BROKER_PAPER: ${escapeHtml(brokerPaper.status || "UNLOADED")} (loaded: ${brokerPaper.loaded === true}) · LIVE: ${escapeHtml(livePort.status || "UNLOADED")} (loaded: ${livePort.loaded === true})</p>
       <p class="meta">fills: ${executionPorts.fills === true} · paper fills: ${executionPorts.paper_fills === true} · live fills: ${executionPorts.live_fills === true}. Constructing or using BROKER_PAPER or LIVE is denied. This view does not load those ports.</p>
       <h3>Missing numeric limits</h3>
-      <p class="meta">OPEN BOARD DECISIONS. Keys only — values are not invented here. Missing limits DENY execution.</p>
+      <p class="meta">Board Addendum A 2026-08-27 set the required keys. Missing keys (if any) still DENY execution. Values are shown above.</p>
       ${missingRows}
       <p class="meta">${escapeHtml(data.cost_cap_label || "TEMPORARY DEVELOPMENT DEFAULT cost cap. Not a Board-approved budget.")}</p>
       <h3>07:30 meeting pack</h3>
@@ -399,11 +430,52 @@
         }
         return;
       }
+      const killBtn = ev.target.closest("[data-kill-action]");
+      if (killBtn) {
+        runKillSwitch(killBtn.getAttribute("data-kill-action") || "");
+        return;
+      }
       const btn = ev.target.closest("[data-employee-slug]");
       if (!btn) return;
       const emp = employees.find((e) => e.slug === btn.getAttribute("data-employee-slug"));
       if (emp) selectEmployee(emp);
     });
+  }
+
+  async function runKillSwitch(action) {
+    if (jobRunning) return;
+    jobRunning = true;
+    const halt = action === "halt";
+    const path = halt ? "/controls/kill-switch" : "/controls/kill-switch/reset";
+    lastJobNote = halt ? "Halting paper…" : "Resetting kill switch…";
+    const status = document.getElementById("job-run-status");
+    if (status) status.textContent = lastJobNote;
+    try {
+      const r = await fetch(API + path, {
+        method: "POST",
+        headers: headers(true),
+        body: halt ? JSON.stringify({ halt: true }) : undefined,
+      });
+      if (!r.ok) {
+        lastJobNote =
+          (halt ? "Halt" : "Reset") +
+          " denied (" +
+          r.status +
+          "). Board Member only. Employees cannot reset the kill switch. LIVE was not loaded.";
+        jobRunning = false;
+        await showBoardObservability();
+        return;
+      }
+      lastJobNote = halt
+        ? "Kill switch halted. Open PAPER orders cancelled only. LIVE not loaded. No live flatten."
+        : "Kill switch reset by Board Member. trading_mode still LIVE_BLOCKED.";
+      jobRunning = false;
+      await showBoardObservability();
+    } catch (err) {
+      lastJobNote = "Kill switch request failed. Kernel unreachable or Board identity missing.";
+      jobRunning = false;
+      await showBoardObservability();
+    }
   }
 
   async function runBoardJob(path, label) {

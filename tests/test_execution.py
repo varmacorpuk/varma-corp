@@ -163,7 +163,7 @@ def test_gold_cannot_execute(session):
 
 def test_missing_limits_deny_after_allow_list(session):
     from varma.clock import now_london
-    from varma.db.models import AllowListInstrument, Permission
+    from varma.db.models import AllowListInstrument, NumericLimit, Permission
 
     emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     session.query(Permission).filter_by(subject_id=emp.id, action="place_order").one().allowed = True
@@ -175,6 +175,8 @@ def test_missing_limits_deny_after_allow_list(session):
             approved_at=now_london(),
         )
     )
+    for row in session.query(NumericLimit).all():
+        session.delete(row)
     session.commit()
     d = ControlEngine(session).place_order(
         actor_id=emp.id,

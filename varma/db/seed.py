@@ -1,14 +1,33 @@
-"""Seed persistent identities and TEMPORARY development defaults. Does not invent Board-permanent numbers."""
+"""Seed persistent identities, TEMPORARY watchlist, and Board Addendum A 2026-08-27.
+
+Numeric limits are Board-set (labelled), not invented silent defaults.
+Does not seed an execution allow-list. trading_mode stays LIVE_BLOCKED.
+"""
 
 from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from varma.clock import now_london
+from varma.clock import london_day, now_london
+from varma.controls.addendum_a import (
+    ADDENDUM_A_LABEL,
+    ADDENDUM_A_LIMITS,
+    ADDENDUM_A_SET_BY,
+    CURRENCY,
+    EVALUATION_AUTO_SWITCH_LIVE,
+    EVALUATION_REQUIRES_BOOK_PROFITABLE,
+    EVALUATION_WIN_RATE_THRESHOLD,
+    SIMULATED_CAPITAL,
+    SUCCESSFUL_TRADE_DEFINITION,
+    TIMEZONE,
+)
 from varma.db.models import (
     ControlState,
     Employee,
+    EvaluationPolicy,
     MemoryEmployee,
+    NumericLimit,
+    PaperAccount,
     Permission,
     Routine,
     Skill,
@@ -148,7 +167,73 @@ def seed_if_empty(session: Session) -> None:
                 )
             )
 
+    seed_board_addendum_a(session)
     session.commit()
+
+
+def seed_board_addendum_a(session: Session) -> None:
+    """Write Board Addendum A 2026-08-27 into control tables.
+
+    These are Board-set values, labelled as such. Not invented silent defaults.
+    Does not write an execution allow-list. Does not switch trading_mode to PAPER
+    or LIVE. Empty allow-list still denies orders.
+    """
+    now = now_london()
+    for key, value, unit in ADDENDUM_A_LIMITS:
+        row = session.get(NumericLimit, key)
+        if row is None:
+            session.add(
+                NumericLimit(
+                    key=key,
+                    value=value,
+                    unit=unit,
+                    set_by=ADDENDUM_A_SET_BY,
+                    set_at=now,
+                    source=ADDENDUM_A_LABEL,
+                )
+            )
+        elif row.value in (None, ""):
+            row.value = value
+            row.unit = unit
+            row.set_by = ADDENDUM_A_SET_BY
+            row.set_at = now
+            row.source = ADDENDUM_A_LABEL
+
+    policy = session.get(EvaluationPolicy, 1)
+    if policy is None:
+        session.add(
+            EvaluationPolicy(
+                id=1,
+                currency=CURRENCY,
+                timezone=TIMEZONE,
+                successful_trade_definition=SUCCESSFUL_TRADE_DEFINITION,
+                win_rate_threshold=str(EVALUATION_WIN_RATE_THRESHOLD),
+                requires_book_profitable=EVALUATION_REQUIRES_BOOK_PROFITABLE,
+                auto_switch_live=EVALUATION_AUTO_SWITCH_LIVE,
+                paper_continues_until_board_approval=True,
+                source=ADDENDUM_A_LABEL,
+                set_by=ADDENDUM_A_SET_BY,
+                set_at=now,
+            )
+        )
+
+    account = session.get(PaperAccount, 1)
+    if account is None:
+        session.add(
+            PaperAccount(
+                id=1,
+                currency=CURRENCY,
+                timezone=TIMEZONE,
+                simulated_capital=SIMULATED_CAPITAL,
+                cash=SIMULATED_CAPITAL,
+                equity_at_day_start=SIMULATED_CAPITAL,
+                london_day=london_day(),
+                source=ADDENDUM_A_LABEL,
+                updated_at=now,
+            )
+        )
+
+    session.flush()
 
 
 def _seed_ceo(session: Session) -> None:

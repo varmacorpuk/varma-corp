@@ -1,7 +1,8 @@
-"""ExecutionPort. BROKER_PAPER and LIVE remain UNLOADED. No brokerage. No fills.
+"""ExecutionPort. BROKER_PAPER and LIVE remain UNLOADED. No brokerage.
 
-Employees propose; the control engine denies. This slice never constructs
-paper or live adapters, never places fills, and never loads those ports.
+The internal PAPER FILL SIMULATOR is the paper ledger (Document 12).
+Empty allow-list ⇒ no orders. This slice never constructs paper or live
+broker adapters and never loads those ports.
 """
 
 from __future__ import annotations
@@ -62,7 +63,7 @@ def construct_execution_port(name: str) -> Any:
         return PaperBrokerAdapter()
     if port == "LIVE":
         return LiveBrokerAdapter()
-    raise RuntimeError(f"execution port {port!r} has no fill adapter in this slice")
+    raise RuntimeError(f"execution port {port!r} is not a broker adapter; use the internal simulator")
 
 
 def execution_port_status() -> dict[str, Any]:
@@ -90,13 +91,20 @@ def execution_port_status() -> dict[str, Any]:
         },
         "simulator": {
             "port": "SIMULATOR",
-            "status": "NO_FILLS",
+            "status": "INTERNAL_PAPER_LEDGER",
             "loaded": True,
-            "fills": False,
+            "broker": False,
+            "fills_against_broker": False,
+            "fills_when_allow_list_empty": False,
+            "note": (
+                "Internal paper fill simulator is the paper ledger (Document 12). "
+                "Not BROKER_PAPER. Not LIVE. Empty allow-list ⇒ no orders."
+            ),
         },
         "note": (
             "BROKER_PAPER and LIVE execution ports remain UNLOADED. Status only. "
-            "No paper/live fills in this slice. Constructing or using those ports is denied."
+            "No paper/live fills against a broker. Constructing or using those ports "
+            "is denied. The internal simulator still denies when the allow-list is empty."
         ),
     }
 

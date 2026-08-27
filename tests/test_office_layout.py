@@ -58,6 +58,13 @@ def test_office_click_opens_panel_logic():
     assert "Paper gate" in JS
     assert "not started" in JS
     assert "paper_status" in JS
+    assert "Board Addendum A" in JS
+    assert "Halt paper" in JS
+    assert "data-kill-action" in JS
+    assert "runKillSwitch" in JS
+    assert "Evaluation ledger" in JS
+    assert "Paper ledger" in JS
+    assert "kill-halt" in CSS
     assert "Execution ports" in JS
     assert "BROKER_PAPER" in JS
     assert "UNLOADED" in JS

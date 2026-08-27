@@ -2,7 +2,11 @@
 
 LIVE adapter is not loaded unless trading_mode is LIVE and a Board approval exists.
 This slice never loads a live adapter. Empty allow-list cannot execute.
-Missing numeric limits deny. Employees cannot write control tables.
+Numeric limits are Board Addendum A 2026-08-27 (Board-set). Missing limits deny.
+Employees cannot write control tables.
+
+trading_mode stays LIVE_BLOCKED. This slice does not switch to PAPER because
+the execution allow-list is still empty. Empty allow-list ⇒ no orders.
 """
 
 from __future__ import annotations
@@ -13,6 +17,12 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from varma.clock import now_london
+from varma.controls.addendum_a import (
+    ADDENDUM_A_LABEL,
+    CURRENCY,
+    TIMEZONE,
+    addendum_a_public,
+)
 from varma.db.models import (
     AllowListInstrument,
     BoardApproval,
@@ -23,7 +33,7 @@ from varma.db.models import (
 )
 
 LIVE_ADAPTER_LOADED = False  # hard invariant for this slice and default environments
-BROKER_PAPER_LOADED = False  # hard invariant for this slice — no paper fills
+BROKER_PAPER_LOADED = False  # hard invariant — BROKER_PAPER remains UNLOADED. No broker fills.
 
 TRADING_MODES = ("PAPER", "EVALUATION", "LIVE_BLOCKED", "LIVE")
 REQUIRED_LIMIT_KEYS = (
@@ -31,8 +41,16 @@ REQUIRED_LIMIT_KEYS = (
     "max_position",
     "max_daily_loss",
     "max_orders_per_day",
-    "kill_switch_threshold",
+    "kill_switch_equity_floor",
+    "kill_switch_daily_pnl_floor",
 )
+
+LIMIT_WRITE_FIELDS = set(REQUIRED_LIMIT_KEYS) | {
+    "numeric_limits",
+    "allow_list",
+    "kill_switch",
+    "evaluation_policy",
+}
 
 
 @dataclass
@@ -63,6 +81,32 @@ class ControlEngine:
                 missing.append(key)
         return missing
 
+    def limit_value(self, key: str) -> float | None:
+        row = self.session.get(NumericLimit, key)
+        if row is None or row.value in (None, ""):
+            return None
+        return float(row.value)
+
+    def limit_rows(self) -> list[dict[str, Any]]:
+        items: list[dict[str, Any]] = []
+        for key in REQUIRED_LIMIT_KEYS:
+            row = self.session.get(NumericLimit, key)
+            if row is None:
+                continue
+            items.append(
+                {
+                    "key": key,
+                    "value": row.value,
+                    "numeric_value": float(row.value) if row.value not in (None, "") else None,
+                    "unit": row.unit or "",
+                    "set_by": row.set_by,
+                    "set_at": row.set_at.isoformat() if row.set_at else None,
+                    "source": row.source or ADDENDUM_A_LABEL,
+                    "board_set": True,
+                }
+            )
+        return items
+
     def has_permission(self, subject_id: str, action: str) -> bool:
         row = (
             self.session.query(Permission)
@@ -88,7 +132,11 @@ class ControlEngine:
         return LIVE_ADAPTER_LOADED
 
     def place_order(self, *, actor_id: str, actor_type: str, order: dict[str, Any]) -> Decision:
-        """Employees propose. Engine denies in this slice. Never executes live."""
+        """Employees propose. Empty allow-list, LIVE, kill switch, and limits deny.
+
+        When all gates pass, the internal paper fill simulator is the paper ledger.
+        BROKER_PAPER and LIVE remain UNLOADED. trading_mode stays LIVE_BLOCKED.
+        """
         state = self.state()
         symbol = str(order.get("symbol") or "")
         execution_port = str(order.get("execution_port") or "SIMULATOR")
@@ -99,23 +147,30 @@ class ControlEngine:
         if actor_type == "employee" and not self.has_permission(actor_id, "place_order"):
             return self._deny("NO_PERMISSION", actor_id, order)
 
-        if state.kill_switch:
-            return self._deny("KILL_SWITCH", actor_id, order)
-
         if execution_port == "BROKER_PAPER":
-            # Do not construct PaperBrokerAdapter. Port remains UNLOADED. No fills.
+            # Do not construct PaperBrokerAdapter. Port remains UNLOADED. No broker fills.
             return self._deny("BROKER_PAPER_NOT_LOADED", actor_id, order)
 
-        if execution_port == "LIVE" or state.trading_mode == "LIVE":
+        if execution_port == "LIVE":
             if state.trading_mode != "LIVE":
                 return self._deny("LIVE_BLOCKED", actor_id, order)
             if not self.live_adapter_loaded():
                 return self._deny("LIVE_ADAPTER_NOT_LOADED", actor_id, order)
 
+        if state.trading_mode == "LIVE":
+            return self._deny("SIMULATOR_DENIED_WHEN_LIVE", actor_id, order)
+
         if state.trading_mode == "LIVE_BLOCKED" and execution_port != "SIMULATOR":
             return self._deny("LIVE_BLOCKED", actor_id, order)
 
-        # Even paper/simulator execution requires a Board-set allow-list and limits.
+        from varma.controls.kill_switch import maybe_auto_trip
+
+        maybe_auto_trip(self.session, actor_id=actor_id)
+        state = self.state()
+        if state.kill_switch:
+            return self._deny("KILL_SWITCH", actor_id, order)
+
+        # Even the internal simulator requires a Board-set allow-list and limits.
         allow = self.allow_list_symbols()
         if not allow:
             return self._deny("EMPTY_ALLOW_LIST", actor_id, order)
@@ -130,8 +185,58 @@ class ControlEngine:
         if missing:
             return self._deny("MISSING_NUMERIC_LIMITS", actor_id, order, {"missing": missing})
 
-        # This slice has no fill path. Reaching here still does not execute.
-        return self._deny("EXECUTION_NOT_IMPLEMENTED_IN_THIS_SLICE", actor_id, order)
+        notional = self._requested_notional_gbp(order)
+        max_position = self.limit_value("max_position")
+        if max_position is not None and notional > max_position:
+            return self._deny(
+                "MAX_POSITION_EXCEEDED",
+                actor_id,
+                order,
+                {"notional_gbp": notional, "max_position": max_position, "currency": CURRENCY},
+            )
+
+        from varma.paper.ledger import PaperLedger
+
+        ledger = PaperLedger(self.session)
+        ledger.ensure_account()
+        max_orders = self.limit_value("max_orders_per_day")
+        if max_orders is not None and ledger.orders_today() >= int(max_orders):
+            return self._deny(
+                "MAX_ORDERS_PER_DAY",
+                actor_id,
+                order,
+                {"orders_today": ledger.orders_today(), "max_orders_per_day": int(max_orders)},
+            )
+
+        max_daily_loss = self.limit_value("max_daily_loss")
+        pnl = ledger.london_day_pnl()
+        if max_daily_loss is not None and pnl <= -abs(max_daily_loss):
+            maybe_auto_trip(self.session, actor_id=actor_id)
+            return self._deny(
+                "MAX_DAILY_LOSS",
+                actor_id,
+                order,
+                {"london_day_pnl_gbp": pnl, "max_daily_loss": max_daily_loss},
+            )
+
+        if execution_port != "SIMULATOR":
+            return self._deny("EXECUTION_PORT_NOT_SIMULATOR", actor_id, order)
+
+        from varma.paper.simulator import PaperFillSimulator
+
+        decision = PaperFillSimulator(self.session).fill(actor_id=actor_id, order=order)
+        maybe_auto_trip(self.session, actor_id=actor_id)
+        return decision
+
+    def _requested_notional_gbp(self, order: dict[str, Any]) -> float:
+        raw = order.get("notional_gbp")
+        if raw not in (None, ""):
+            return abs(float(raw))
+        quantity = abs(float(order.get("quantity") or 0))
+        from varma.paper.simulator import PaperFillSimulator
+
+        mid = PaperFillSimulator(self.session).mid_gbp(str(order.get("symbol") or ""))
+        return quantity * mid
 
     def write_control(
         self,
@@ -151,16 +256,32 @@ class ControlEngine:
         # Board writes are reserved actions; this slice does not implement LIVE transition.
         if field == "trading_mode" and value == "LIVE":
             return Decision(False, "LIVE_TRANSITION_NOT_IMPLEMENTED_REQUIRES_BOARD_APPROVAL_ROW")
+        if field == "trading_mode" and value == "PAPER":
+            return Decision(
+                False,
+                "TRADING_MODE_STAYS_LIVE_BLOCKED_EMPTY_ALLOW_LIST",
+            )
+        if field in LIMIT_WRITE_FIELDS:
+            # Board Addendum A already wrote the numeric limits. Generic write is not
+            # the kill-switch endpoint. Employees never reach here.
+            return Decision(False, "USE_BOARD_ADDENDUM_OR_KILL_SWITCH_ENDPOINT")
         return Decision(False, "CONTROL_MUTATION_NOT_ENABLED_IN_THIS_SLICE")
 
     def snapshot(self) -> dict[str, Any]:
         state = self.state()
+        from varma.controls.kill_switch import kill_switch_state
+
         return {
             "trading_mode": state.trading_mode,
             "kill_switch": state.kill_switch,
+            "kill_switch_state": kill_switch_state(self.session),
             "allow_list": self.allow_list_symbols(),
             "allow_list_empty": len(self.allow_list_symbols()) == 0,
             "missing_numeric_limits": self.missing_limits(),
+            "numeric_limits": self.limit_rows(),
+            "currency": CURRENCY,
+            "timezone": TIMEZONE,
+            "addendum": addendum_a_public(),
             "live_adapter_loaded": self.live_adapter_loaded(),
             "broker_paper_loaded": BROKER_PAPER_LOADED,
             "live_gate": "PAPER → EVALUATION → LIVE-TRADING RECOMMENDATION → BOARD REVIEW → EXPLICIT BOARD APPROVAL → LIVE",

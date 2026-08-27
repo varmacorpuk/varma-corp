@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -76,14 +76,129 @@ class AllowListInstrument(Base):
 
 
 class NumericLimit(Base):
-    """Numeric paper/live limits. Missing ⇒ deny. Values are an OPEN BOARD DECISION."""
+    """Numeric paper/live limits. Missing ⇒ deny.
+
+    Values in this slice are Board Addendum A 2026-08-27 (Board-set), not invented
+    silent defaults. Employees cannot write this table.
+    """
 
     __tablename__ = "numeric_limits"
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    unit: Mapped[str] = mapped_column(String(16), default="")
     set_by: Mapped[str | None] = mapped_column(String(80), nullable=True)
     set_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    source: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+
+class EvaluationPolicy(Base):
+    """Board Addendum A evaluation rules. Do not auto-switch LIVE."""
+
+    __tablename__ = "evaluation_policy"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    currency: Mapped[str] = mapped_column(String(8), default="GBP")
+    timezone: Mapped[str] = mapped_column(String(40), default="Europe/London")
+    successful_trade_definition: Mapped[str] = mapped_column(Text, default="")
+    win_rate_threshold: Mapped[str] = mapped_column(String(16), default="0.5")
+    requires_book_profitable: Mapped[bool] = mapped_column(Boolean, default=True)
+    auto_switch_live: Mapped[bool] = mapped_column(Boolean, default=False)
+    paper_continues_until_board_approval: Mapped[bool] = mapped_column(Boolean, default=True)
+    source: Mapped[str] = mapped_column(String(120), default="")
+    set_by: Mapped[str] = mapped_column(String(80), default="board-member")
+    set_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class PaperAccount(Base):
+    """Internal paper ledger singleton. Not a broker account. Currency GBP."""
+
+    __tablename__ = "paper_accounts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    currency: Mapped[str] = mapped_column(String(8), default="GBP")
+    timezone: Mapped[str] = mapped_column(String(40), default="Europe/London")
+    simulated_capital: Mapped[float] = mapped_column(Float, default=0)
+    cash: Mapped[float] = mapped_column(Float, default=0)
+    equity_at_day_start: Mapped[float] = mapped_column(Float, default=0)
+    london_day: Mapped[str] = mapped_column(String(16), default="")
+    source: Mapped[str] = mapped_column(String(120), default="")
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class PaperOrder(Base):
+    """Internal simulator paper order. Not BROKER_PAPER. Not LIVE."""
+
+    __tablename__ = "paper_orders"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    symbol: Mapped[str] = mapped_column(String(32), nullable=False)
+    side: Mapped[str] = mapped_column(String(8), nullable=False)
+    quantity: Mapped[float] = mapped_column(Float, default=0)
+    notional_gbp: Mapped[float] = mapped_column(Float, default=0)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    london_day: Mapped[str] = mapped_column(String(16), nullable=False)
+    mid_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fill_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    spread_bps: Mapped[float] = mapped_column(Float, default=0)
+    slippage_bps: Mapped[float] = mapped_column(Float, default=0)
+    commission_gbp: Mapped[float] = mapped_column(Float, default=0)
+    actor_id: Mapped[str] = mapped_column(String(80), default="")
+    execution_port: Mapped[str] = mapped_column(String(32), default="SIMULATOR")
+    is_paper: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_live: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    filled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    cancel_reason: Mapped[str] = mapped_column(Text, default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+
+
+class PaperFill(Base):
+    """Internal simulator fill. Never a broker fill."""
+
+    __tablename__ = "paper_fills"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    order_id: Mapped[str] = mapped_column(String(36), ForeignKey("paper_orders.id"), nullable=False)
+    symbol: Mapped[str] = mapped_column(String(32), nullable=False)
+    side: Mapped[str] = mapped_column(String(8), nullable=False)
+    quantity: Mapped[float] = mapped_column(Float, default=0)
+    price: Mapped[float] = mapped_column(Float, default=0)
+    notional_gbp: Mapped[float] = mapped_column(Float, default=0)
+    commission_gbp: Mapped[float] = mapped_column(Float, default=0)
+    london_day: Mapped[str] = mapped_column(String(16), nullable=False)
+    filled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    is_live: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class PaperPosition(Base):
+    """Open paper position on the internal simulator ledger."""
+
+    __tablename__ = "paper_positions"
+
+    symbol: Mapped[str] = mapped_column(String(32), primary_key=True)
+    quantity: Mapped[float] = mapped_column(Float, default=0)
+    avg_cost_gbp: Mapped[float] = mapped_column(Float, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ClosedPaperTrade(Base):
+    """A CLOSED paper trade. Successful iff profit > 0 (Board Addendum A)."""
+
+    __tablename__ = "closed_paper_trades"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    symbol: Mapped[str] = mapped_column(String(32), nullable=False)
+    quantity: Mapped[float] = mapped_column(Float, default=0)
+    entry_price: Mapped[float] = mapped_column(Float, default=0)
+    exit_price: Mapped[float] = mapped_column(Float, default=0)
+    pnl_gbp: Mapped[float] = mapped_column(Float, default=0)
+    profit_positive: Mapped[bool] = mapped_column(Boolean, default=False)
+    london_day: Mapped[str] = mapped_column(String(16), nullable=False)
+    closed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    is_paper: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_live: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class BoardApproval(Base):
