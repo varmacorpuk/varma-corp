@@ -58,6 +58,11 @@ from varma.controls.addendum_j import (
     BACKUP_SKILL_NAME,
     BACKUP_TIMEZONE,
 )
+from varma.controls.lse_session import (
+    LSE_HOLD_LABEL,
+    LSE_HOLD_SET_BY,
+    LSE_HOLD_SETTINGS,
+)
 from varma.db.models import (
     AllowListInstrument,
     ControlSetting,
@@ -256,6 +261,7 @@ def seed_if_empty(session: Session) -> None:
     seed_board_addendum_a(session)
     seed_board_addendum_c(session)
     seed_board_addendum_e(session)
+    seed_lse_session_hold(session)
     seed_board_addendum_i(session)
     seed_board_addendum_j(session)
     seed_employee_brains(session)
@@ -355,6 +361,35 @@ def seed_board_addendum_c(session: Session) -> None:
             row.set_by = ADDENDUM_C_SET_BY
             row.set_at = now
             row.source = ADDENDUM_C_LABEL
+    session.flush()
+
+
+def seed_lse_session_hold(session: Session) -> None:
+    """Fail-closed hold on SHEL.L / AZN.L / ULVR.L until Board picks a session rule.
+
+    Does not rewrite Addendum C flatten. Does not invent US listings.
+    Employees cannot write this. Distinct from PAPER_EXECUTION_CLOSED.
+    """
+    now = now_london()
+    for key, value, unit in LSE_HOLD_SETTINGS:
+        row = session.get(ControlSetting, key)
+        if row is None:
+            session.add(
+                ControlSetting(
+                    key=key,
+                    value=value,
+                    unit=unit,
+                    set_by=LSE_HOLD_SET_BY,
+                    set_at=now,
+                    source=LSE_HOLD_LABEL,
+                )
+            )
+        else:
+            row.value = value
+            row.unit = unit
+            row.set_by = LSE_HOLD_SET_BY
+            row.set_at = now
+            row.source = LSE_HOLD_LABEL
     session.flush()
 
 

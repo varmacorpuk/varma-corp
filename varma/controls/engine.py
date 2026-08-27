@@ -45,6 +45,12 @@ from varma.controls.addendum_j import (
     BACKUP_WRITE_FIELDS,
     addendum_j_public,
 )
+from varma.controls.lse_session import (
+    LSE_SESSION_RULE_REASON,
+    LSE_WRITE_FIELDS,
+    lse_hold_blocks,
+    lse_session_public,
+)
 from varma.db.models import (
     AllowListInstrument,
     BoardApproval,
@@ -78,7 +84,7 @@ LIMIT_WRITE_FIELDS = set(REQUIRED_LIMIT_KEYS) | {
     "addendum_i",
     "addendum_j",
     "control_settings",
-} | set(FIRM_OPEN_WRITE_FIELDS) | set(BACKUP_WRITE_FIELDS)
+} | set(FIRM_OPEN_WRITE_FIELDS) | set(BACKUP_WRITE_FIELDS) | set(LSE_WRITE_FIELDS)
 
 
 @dataclass
@@ -237,6 +243,11 @@ class ControlEngine:
         if allow and symbol not in allow:
             return self._deny("SYMBOL_NOT_ON_ALLOW_LIST", actor_id, order)
 
+        # Distinct from PAPER_EXECUTION_CLOSED so these three cannot silently
+        # fill at Grand Opening. Addendum C flatten is unchanged.
+        if lse_hold_blocks(self.session, symbol):
+            return self._deny_lse_session_unset(actor_id, order)
+
         if closed:
             return self._deny_paper_closed(actor_id, order)
 
@@ -372,6 +383,7 @@ class ControlEngine:
             "addendum_f": addendum_f_public(),
             "addendum_i": addendum_i_public(),
             "addendum_j": addendum_j_public(),
+            "lse_session": lse_session_public(self.session),
             "paper_execution": "CLOSED" if self.paper_execution_closed() else "OPEN",
             "paper_execution_closed": self.paper_execution_closed(),
             "paper_session": paper_session_status(),
@@ -391,6 +403,27 @@ class ControlEngine:
         details = {"order": order, **(extra or {})}
         self._evidence("order_denied", actor_id, {"reason": reason, **details})
         return Decision(False, reason, details)
+
+    def _deny_lse_session_unset(self, actor_id: str, order: dict[str, Any]) -> Decision:
+        """Fail-closed LSE hold. Not a rewrite of Addendum C. Not a US listing."""
+        return self._deny(
+            LSE_SESSION_RULE_REASON,
+            actor_id,
+            order,
+            {
+                "fail_closed": True,
+                "session_rule": "UNSET",
+                "cannot_silently_fill_at_grand_opening": True,
+                "addendum_c_not_rewritten": True,
+                "split_flatten_clocks": False,
+                "flatten_at": "US_REGULAR_CASH_CLOSE",
+                "flatten_not_at": "LONDON_CASH_CLOSE",
+                "invented_us_listings": False,
+                "us_names_wait_on_grand_opening": True,
+                "paper_execution_closed": self.paper_execution_closed(),
+                "employees_cannot_write": True,
+            },
+        )
 
     def _deny_paper_closed(self, actor_id: str, order: dict[str, Any]) -> Decision:
         """PAPER_EXECUTION_CLOSED; FIRM_CLOSED is an alias, not a second reason."""

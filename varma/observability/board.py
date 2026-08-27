@@ -22,6 +22,7 @@ from varma.controls.addendum_c import ADDENDUM_C_LABEL, addendum_c_public
 from varma.controls.addendum_e import ADDENDUM_E_LABEL, addendum_e_public
 from varma.controls.addendum_f import ADDENDUM_F_LABEL, addendum_f_public
 from varma.controls.addendum_i import ADDENDUM_I_LABEL, addendum_i_public
+from varma.controls.lse_session import LSE_HOLD_SYMBOLS, LSE_SESSION_RULE_REASON, lse_session_public
 from varma.controls.addendum_j import addendum_j_public
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
 from varma.controls.kill_switch import kill_switch_state
@@ -410,6 +411,12 @@ class BoardObservability:
             "addendum_i": ADDENDUM_I_LABEL,
             "simulated_capital_status": "FUTURE_PAPER_STARTING_BOOK_ONLY",
             "addendum_a_unused_until_open": True,
+            "lse_session": lse_session_public(self.session),
+            "lse_hold_symbols": list(LSE_HOLD_SYMBOLS),
+            "lse_session_rule_unset": True,
+            "lse_session_rule_reason": LSE_SESSION_RULE_REASON,
+            "cannot_silently_fill_lse_at_grand_opening": True,
+            "split_flatten_clocks": False,
             "successful_trade_definition": evaluation["successful_trade_definition"],
             "evaluation_win_rate_threshold": evaluation["win_rate_threshold"],
             "evaluation_requires_book_profitable": True,
