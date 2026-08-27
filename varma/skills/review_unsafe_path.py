@@ -11,6 +11,7 @@ from varma.clock import now_london
 from varma.controls.risk import UNSAFE_DEMO_PATH, RiskPolicy
 from varma.cost.ledger import CostLedger
 from varma.db.models import ChallengeReview, Employee, RiskDecision
+from varma.employees.brain import EmployeeBrain
 from varma.meetings.handoff import RISK_SLUG, get_employee
 from varma.memory.stores import MemoryStores
 from varma.ports.llm import LLMPort, get_llm
@@ -25,6 +26,7 @@ class ReviewUnsafePath:
         self.llm = llm or get_llm()
         self.cost = CostLedger(session)
         self.memory = MemoryStores(session)
+        self.brain = EmployeeBrain(session)
         self.policy = RiskPolicy(session)
 
     def run(
@@ -34,10 +36,13 @@ class ReviewUnsafePath:
         proposed: dict[str, Any] | None = None,
         thesis_id: str | None = None,
         challenge_review_id: str | None = None,
+        originator: Employee | None = None,
     ) -> RiskDecision:
         proposed = dict(proposed or UNSAFE_DEMO_PATH)
         decision = self.policy.review(actor_id=employee.id, proposed=proposed)
+        invocation = self.brain.invocation(employee, originator=originator)
         context = {
+            **invocation,
             "employee": {
                 "slug": employee.slug,
                 "display_name": employee.display_name,
@@ -92,6 +97,19 @@ class ReviewUnsafePath:
         employee.status = "AVAILABLE"
         employee.status_bubble = "DENIED"
         self.session.commit()
+        self.brain.record_invocation(
+            employee,
+            skill_name=SKILL_NAME,
+            artefact_id=row.id,
+            invocation=invocation,
+        )
+        self.memory.add_lesson(
+            employee.id,
+            (
+                f"JOB_LESSON:{row.id} Unsafe paths are denied. "
+                "Risk does not inherit Trader belief. Risk cannot approve LIVE."
+            ),
+        )
         return row
 
 

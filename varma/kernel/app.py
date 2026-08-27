@@ -37,6 +37,7 @@ from varma.db.models import (
     WatchlistItem,
 )
 from varma.db.seed import MI_SLUG, seed_if_empty
+from varma.employees.brain import EmployeeBrain
 from varma.employees.runtime import NO_LIVE_APPROVAL_SLUGS, EmployeeRuntime
 from varma.kernel.auth import Actor, parse_actor, require_board_member
 from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG, handoff_to_dict
@@ -236,10 +237,13 @@ def create_app() -> FastAPI:
         emp = _get_employee(session, slug)
         rt = EmployeeRuntime(session, emp)
         data = _employee_public(emp)
+        data["brain"] = EmployeeBrain(session).record(emp)
         data["context"] = {
             "role": emp.role_title,
             "responsibilities": emp.responsibilities,
             "authority_boundaries": emp.authority_boundaries,
+            "role_knowledge": data["brain"]["role_knowledge"],
+            "memory_pointers": data["brain"]["memory_pointers"],
             "lessons": [m.content for m in rt.memory.employee_lessons(emp.id)],
         }
         return data

@@ -20,14 +20,32 @@ class FakeLLM:
 
     def complete(self, *, task: str, context: dict[str, Any]) -> dict[str, Any]:
         if task == "prepare_daily_intelligence_brief":
-            return self._brief(context)
-        if task == "challenge_sample_thesis":
-            return self._challenge(context)
-        if task == "review_unsafe_path":
-            return self._risk(context)
-        if task == "chat":
-            return self._chat(context)
-        return {"text": "Unsupported task for FakeLLM.", "cost_units": 1}
+            raw = self._brief(context)
+        elif task == "challenge_sample_thesis":
+            raw = self._challenge(context)
+        elif task == "review_unsafe_path":
+            raw = self._risk(context)
+        elif task == "chat":
+            raw = self._chat(context)
+        else:
+            raw = {"text": "Unsupported task for FakeLLM.", "cost_units": 1}
+        return self._apply_persistent_memory(raw, context)
+
+    def _apply_persistent_memory(
+        self, payload: dict[str, Any], context: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Simulate retrieval. The memory API is the database, not this string."""
+        lessons = list(context.get("lessons") or [])
+        payload["blank_prompt"] = len(lessons) == 0
+        payload["lessons_loaded"] = lessons
+        payload["originator_beliefs_loaded"] = bool(context.get("originator_beliefs_loaded"))
+        if lessons:
+            marker = "PERSISTENT_MEMORY_LOADED: " + str(lessons[-1])
+            if payload.get("summary"):
+                payload["summary"] = str(payload["summary"]) + " " + marker
+            if payload.get("text"):
+                payload["text"] = str(payload["text"]) + " " + marker
+        return payload
 
     def _brief(self, context: dict[str, Any]) -> dict[str, Any]:
         news = context.get("news") or []

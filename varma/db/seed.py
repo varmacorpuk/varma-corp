@@ -72,6 +72,7 @@ from varma.db.models import (
     Skill,
     WatchlistItem,
 )
+from varma.employees.brain import seed_employee_brains
 from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG
 
 MI_SLUG = "market-intelligence-research"
@@ -257,6 +258,7 @@ def seed_if_empty(session: Session) -> None:
     seed_board_addendum_e(session)
     seed_board_addendum_i(session)
     seed_board_addendum_j(session)
+    seed_employee_brains(session)
     _reconcile_employee_locks(session)
     session.commit()
 

@@ -581,3 +581,46 @@ class RiskDecision(Base):
     skill_version: Mapped[str] = mapped_column(String(32), nullable=False)
     summary: Mapped[str] = mapped_column(Text, default="")
     label: Mapped[str] = mapped_column(String(80), default="DENY-PATH DEMO")
+
+
+class EmployeeFoundation(Base):
+    """Role knowledge / professional foundation (Document 03). Separate table so stale SQLite can create it."""
+
+    __tablename__ = "employee_foundations"
+
+    employee_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("employees.id"), primary_key=True
+    )
+    role_knowledge: Mapped[str] = mapped_column(Text, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class EmployeeRelationship(Base):
+    """Durable reporting / independence edges (Document 03). Not an LLM prompt."""
+
+    __tablename__ = "employee_relationships"
+    __table_args__ = (
+        UniqueConstraint("from_employee_id", "to_employee_id", "kind", name="uq_emp_rel"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    from_employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), nullable=False)
+    to_employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), nullable=False)
+    kind: Mapped[str] = mapped_column(String(40), nullable=False)
+    note: Mapped[str] = mapped_column(Text, default="")
+
+
+class SkillInvocation(Base):
+    """One LLM call as an invocation of a durable employee (Documents 03, 08)."""
+
+    __tablename__ = "skill_invocations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), nullable=False)
+    skill_name: Mapped[str] = mapped_column(String(80), nullable=False)
+    artefact_id: Mapped[str] = mapped_column(String(36), default="")
+    lessons_json: Mapped[str] = mapped_column(Text, default="[]")
+    originator_beliefs_loaded: Mapped[bool] = mapped_column(Boolean, default=False)
+    blank_prompt: Mapped[bool] = mapped_column(Boolean, default=False)
+    independent_of_json: Mapped[str] = mapped_column(Text, default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

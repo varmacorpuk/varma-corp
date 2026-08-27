@@ -39,7 +39,7 @@ def run_challenge(session: Session) -> dict:
         evidence_kind="thesis_handoff",
         status_bubble="THESIS IN",
     )
-    review = ChallengeSampleThesis(session).run(challenge, thesis)
+    review = ChallengeSampleThesis(session).run(challenge, thesis, originator=mi)
     handoff = (
         session.query(Handoff)
         .filter_by(artefact_id=review.id)

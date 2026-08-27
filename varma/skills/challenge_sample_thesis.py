@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from varma.clock import now_london
 from varma.cost.ledger import CostLedger
 from varma.db.models import ChallengeReview, Employee, SampleThesis
+from varma.employees.brain import EmployeeBrain
 from varma.meetings.handoff import CHALLENGE_SLUG, RISK_SLUG, deliver_handoff, get_employee
 from varma.memory.stores import MemoryStores
 from varma.ports.llm import LLMPort, get_llm
@@ -25,9 +26,18 @@ class ChallengeSampleThesis:
         self.llm = llm or get_llm()
         self.cost = CostLedger(session)
         self.memory = MemoryStores(session)
+        self.brain = EmployeeBrain(session)
 
-    def run(self, employee: Employee, thesis: SampleThesis) -> ChallengeReview:
+    def run(
+        self,
+        employee: Employee,
+        thesis: SampleThesis,
+        *,
+        originator: Employee | None = None,
+    ) -> ChallengeReview:
+        invocation = self.brain.invocation(employee, originator=originator)
         context = {
+            **invocation,
             "employee": {
                 "slug": employee.slug,
                 "display_name": employee.display_name,
@@ -83,6 +93,19 @@ class ChallengeSampleThesis:
             note="Challenge complete. Risk must deny any attempt to treat this as execution.",
             evidence_kind="challenge_handoff",
             status_bubble="REVIEW READY",
+        )
+        self.brain.record_invocation(
+            employee,
+            skill_name=SKILL_NAME,
+            artefact_id=review.id,
+            invocation=invocation,
+        )
+        self.memory.add_lesson(
+            employee.id,
+            (
+                f"JOB_LESSON:{review.id} A SAMPLE thesis is not an order. "
+                "Challenge does not inherit originator belief."
+            ),
         )
         return review
 
