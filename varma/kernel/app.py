@@ -429,6 +429,7 @@ def create_app() -> FastAPI:
                     "routines",
                     "missing_numeric_limits",
                     "controls",
+                    "paper_gate",
                 ],
             },
         }

@@ -55,4 +55,7 @@ def test_office_click_opens_panel_logic():
     assert "employees cannot write controls" in JS.lower()
     assert "unset_keys" in JS
     assert "allow_list" in JS
+    assert "Paper gate" in JS
+    assert "not started" in JS
+    assert "paper_status" in JS
     assert "#chat-form[hidden]" in CSS

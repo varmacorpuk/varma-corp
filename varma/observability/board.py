@@ -13,6 +13,7 @@ from varma.clock import describe_0630_weekday_routine, describe_nightly_memory_f
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
 from varma.db.models import (
+    BoardApproval,
     ChallengeReview,
     CostEntry,
     Employee,
@@ -93,6 +94,7 @@ class BoardObservability:
             "employees_cannot_write_controls": True,
             "missing_numeric_limits": self._missing_numeric_limits(control_snap),
             "controls": self._control_snapshot(control_snap),
+            "paper_gate": self._paper_gate(control_snap),
             "cost_cap_units": self.costs.cap,
             "cost_cap_label": TEMPORARY_BRIEF_COST_CAP_LABEL,
             "cost_cap_is_board_budget": False,
@@ -150,6 +152,50 @@ class BoardObservability:
                 "Board-only control snapshot. Employees cannot write controls. "
                 "Empty allow-list cannot execute. LIVE adapter is not loaded. "
                 "This view does not write trading_mode, allow-list, or permissions."
+            ),
+        }
+
+    def _paper_gate(self, control_snap: dict[str, Any]) -> dict[str, Any]:
+        """PAPER not started. No paper/live execution. Do not invent duration/success numbers."""
+        live_approvals = (
+            self.session.query(BoardApproval)
+            .filter_by(action="transition_to_live")
+            .count()
+        )
+        paper_approvals = (
+            self.session.query(BoardApproval)
+            .filter_by(action="start_paper")
+            .count()
+        )
+        return {
+            "read_only": True,
+            "source": "database",
+            "writes_controls": False,
+            "paper_status": "not started",
+            "paper_started": False,
+            "paper_execution_implemented": False,
+            "evaluation_status": "not",
+            "live_trading_recommendation": "not",
+            "board_review": "not",
+            "explicit_board_approval": "not",
+            "trading_mode": control_snap["trading_mode"],
+            "execution": False,
+            "live_adapter_loaded": control_snap["live_adapter_loaded"],
+            "live_approvals": live_approvals,
+            "paper_start_approvals": paper_approvals,
+            "gate": control_snap["live_gate"],
+            "silence_is_not_approval": True,
+            "open_board_decision": True,
+            "values_invented": False,
+            "values_shown": False,
+            "unset_open_keys": [
+                "paper_duration_threshold",
+                "paper_success_threshold",
+            ],
+            "note": (
+                "PAPER is not started. trading_mode=LIVE_BLOCKED. No paper/live execution "
+                "in this slice. Paper duration/success thresholds are OPEN BOARD DECISIONS "
+                "and are not invented here. Silence is not approval."
             ),
         }
 

@@ -82,6 +82,7 @@ def test_board_observability_api_is_read_only(client):
     assert "routines" in office["board_observability"]["includes"]
     assert "missing_numeric_limits" in office["board_observability"]["includes"]
     assert "controls" in office["board_observability"]["includes"]
+    assert "paper_gate" in office["board_observability"]["includes"]
 
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
@@ -436,6 +437,64 @@ def test_observability_missing_limits_still_deny_execution(session):
     assert d.reason == "MISSING_NUMERIC_LIMITS"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert LIVE_ADAPTER_LOADED is False
+
+
+def test_observability_paper_gate_not_started_board_only(client):
+    denied = client.get("/observability", headers=EMPLOYEE_HEADERS)
+    assert denied.status_code == 401
+    for headers in (CEO_HEADERS, CHALLENGE_HEADERS, RISK_HEADERS):
+        assert client.get("/observability", headers=headers).status_code == 401
+
+    body = client.get("/observability", headers=BOARD_HEADERS).json()
+    gate = body["paper_gate"]
+    assert gate["read_only"] is True
+    assert gate["source"] == "database"
+    assert gate["writes_controls"] is False
+    assert gate["paper_status"] == "not started"
+    assert gate["paper_started"] is False
+    assert gate["paper_execution_implemented"] is False
+    assert gate["evaluation_status"] == "not"
+    assert gate["live_trading_recommendation"] == "not"
+    assert gate["board_review"] == "not"
+    assert gate["explicit_board_approval"] == "not"
+    assert gate["trading_mode"] == "LIVE_BLOCKED"
+    assert gate["execution"] is False
+    assert gate["live_adapter_loaded"] is False
+    assert gate["silence_is_not_approval"] is True
+    assert gate["values_invented"] is False
+    assert gate["values_shown"] is False
+    assert "paper_duration_threshold" in gate["unset_open_keys"]
+    assert "paper_success_threshold" in gate["unset_open_keys"]
+    assert "paper_duration_threshold" not in gate
+    assert "paper_success_threshold" not in gate
+    assert "PAPER" in gate["gate"]
+    assert "EVALUATION" in gate["gate"]
+    blob = str(gate)
+    assert "days" not in blob.lower()
+    assert gate.get("duration") is None
+    assert gate.get("success_threshold") is None
+
+    post = client.post(
+        "/observability",
+        headers=BOARD_HEADERS,
+        json={"paper_status": "started", "trading_mode": "PAPER", "execution": True},
+    )
+    assert post.status_code == 403
+    assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
+    after = client.get("/observability", headers=BOARD_HEADERS).json()["paper_gate"]
+    assert after["paper_status"] == "not started"
+    assert after["trading_mode"] == "LIVE_BLOCKED"
+    assert after["execution"] is False
+    live = client.post(
+        "/execution/place-order",
+        headers=BOARD_HEADERS,
+        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+    )
+    assert live.status_code == 403
+    assert live.json()["detail"]["allowed"] is False
+    assert client.get("/controls").json()["trading_mode"] == "LIVE_BLOCKED"
+    assert LIVE_ADAPTER_LOADED is False
+
 
 
 
