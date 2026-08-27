@@ -20,6 +20,7 @@ from varma.controls.addendum_a import ADDENDUM_A_LABEL, CURRENCY, TIMEZONE, adde
 from varma.controls.addendum_c import ADDENDUM_C_LABEL, addendum_c_public
 from varma.controls.addendum_e import ADDENDUM_E_LABEL, addendum_e_public
 from varma.controls.addendum_f import ADDENDUM_F_LABEL, addendum_f_public
+from varma.controls.addendum_i import ADDENDUM_I_LABEL, addendum_i_public
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
 from varma.controls.kill_switch import kill_switch_state
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
@@ -127,6 +128,7 @@ class BoardObservability:
             "addendum_c": control_snap.get("addendum_c") or addendum_c_public(),
             "addendum_e": control_snap.get("addendum_e") or addendum_e_public(),
             "addendum_f": control_snap.get("addendum_f") or addendum_f_public(),
+            "addendum_i": control_snap.get("addendum_i") or addendum_i_public(),
             "paper_session": self._paper_session(control_snap),
             "missing_numeric_limits": self._missing_numeric_limits(control_snap),
             "numeric_limits": self._numeric_limits(control_snap),
@@ -251,10 +253,15 @@ class BoardObservability:
             "allow_list_empty": control_snap.get("allow_list_empty", True),
             "trading_mode": control_snap["trading_mode"],
             "does_not_switch_to_paper_mode": True,
+            "simulated_capital_status": "FUTURE_PAPER_STARTING_BOOK_ONLY",
+            "paper_execution_closed": True,
             "note": (
-                "Internal paper ledger. Not a broker. Empty allow-list ⇒ no orders. "
-                "trading_mode stays LIVE_BLOCKED. Flatten ALL paper before US regular "
-                "cash close (Board Addendum C). Do not flatten at London cash close."
+                "Internal paper ledger. Not a broker. £1000 is the FUTURE paper "
+                "starting book only (Board Addendum I). PAPER execution is CLOSED. "
+                "Do not fill. Allow-list E exists but cannot be used for fills until "
+                "open. trading_mode stays LIVE_BLOCKED. Flatten ALL paper before US "
+                "regular cash close (Board Addendum C) is a no-op while closed. "
+                "Do not flatten-as-if-there-were-positions."
             ),
         }
 
@@ -348,7 +355,7 @@ class BoardObservability:
         }
 
     def _paper_gate(self, control_snap: dict[str, Any]) -> dict[str, Any]:
-        """trading_mode stays LIVE_BLOCKED. Internal simulator exists. Empty allow-list ⇒ no orders."""
+        """PAPER execution CLOSED until Grand Opening. trading_mode stays LIVE_BLOCKED."""
         live_approvals = (
             self.session.query(BoardApproval)
             .filter_by(action="transition_to_live")
@@ -360,16 +367,26 @@ class BoardObservability:
             .count()
         )
         evaluation = evaluation_snapshot(self.session)
+        addendum_i = dict(control_snap.get("addendum_i") or addendum_i_public())
         return {
             "read_only": True,
             "source": "database",
             "writes_controls": False,
-            "paper_status": "internal simulator ledger (trading_mode LIVE_BLOCKED; Addendum E PAPER allow-list)",
+            "paper_status": (
+                "CLOSED until Grand Opening PAPER (Board Addendum I). "
+                "trading_mode LIVE_BLOCKED. £1000 is FUTURE paper starting book only."
+            ),
             "paper_started": False,
             "paper_mode_switched": False,
-            "paper_execution_implemented": True,
+            "paper_execution": "CLOSED",
+            "paper_execution_closed": True,
+            "paper_execution_implemented": False,
+            "first_paper_trade_path_implemented": False,
             "internal_simulator": True,
-            "evaluation_status": "ledger ready",
+            "firm_open": False,
+            "grand_opening_paper": "not",
+            "grand_opening_live": "not",
+            "evaluation_status": "ledger ready (unused until open)",
             "live_trading_recommendation": "not",
             "board_review": "not",
             "explicit_board_approval": "not",
@@ -385,6 +402,9 @@ class BoardObservability:
             "values_invented": False,
             "values_shown": True,
             "addendum": ADDENDUM_A_LABEL,
+            "addendum_i": ADDENDUM_I_LABEL,
+            "simulated_capital_status": "FUTURE_PAPER_STARTING_BOOK_ONLY",
+            "addendum_a_unused_until_open": True,
             "successful_trade_definition": evaluation["successful_trade_definition"],
             "evaluation_win_rate_threshold": evaluation["win_rate_threshold"],
             "evaluation_requires_book_profitable": True,
@@ -394,13 +414,14 @@ class BoardObservability:
                 "paper_duration_threshold",
             ],
             "note": (
-                "trading_mode stays LIVE_BLOCKED. Internal paper fill simulator is the "
-                "paper ledger. PAPER allow-list is Board Addendum E 2026-08-27. LIVE and "
-                "BROKER_PAPER remain UNLOADED. Success metric is Board Addendum A: a "
-                "successful trade is a CLOSED paper trade with profit > 0; evaluation "
-                "trigger is win rate > 50% AND book profitable. Do not auto-switch LIVE. "
-                "Paper duration remains an OPEN BOARD DECISION. Silence is not approval."
+                "Board Addendum I 2026-08-27: the company is CLOSED until Grand "
+                "Opening. PAPER execution is CLOSED. Do not fill. Do not propose "
+                "fills. Allow-list E exists but cannot be used for fills until Hari's "
+                "explicit Grand Opening PAPER yes. LIVE still blocked. Never auto-switch. "
+                "Silence is not approval. Addendum A numbers are stored but unused "
+                "until open. First paper trade path is not implemented in this slice."
             ),
+            "two_openings": addendum_i.get("two_openings"),
         }
 
     def _execution_ports(self, control_snap: dict[str, Any]) -> dict[str, Any]:
@@ -576,15 +597,21 @@ class BoardObservability:
             "run": meeting_to_dict(row, attendees_for(self.session, row.id)) if row else None,
             "attendee_slugs_documented": list(ATTENDEE_SLUGS),
             "not_a_twelve_employee_roster": True,
+            "board_member_diary_invite": False,
+            "board_member_calendar_invite": False,
+            "board_member_email": False,
+            "internal_staff_artefact": True,
         }
         if row is None:
             data["note"] = (
-                "No 07:30 company meeting stored yet. "
+                "No 07:30 company meeting stored yet. Internal staff artefact. "
+                "No diary invite to the Board Member. Must not email or calendar-invite Hari. "
                 "Board Member: POST /routines/run-0730-meeting or python -m varma.routines.run_0730_meeting"
             )
         else:
             data["note"] = (
                 "Latest on-demand 07:30 company meeting from the database. "
+                "Internal staff artefact. No Board Member diary/calendar invite. No approval email. "
                 "Not a trade. Not LIVE approval. Employees cannot start LIVE from a meeting."
             )
         return data
@@ -648,6 +675,10 @@ class BoardObservability:
                     "is_trade": False,
                     "is_live_approval": False,
                     "cannot_start_live": True,
+                    "board_member_diary_invite": False,
+                    "board_member_calendar_invite": False,
+                    "board_member_email": False,
+                    "internal_staff_artefact": True,
                     "method": "POST",
                     "path": "/routines/run-0730-meeting",
                     "cli": "python -m varma.routines.run_0730_meeting",
@@ -668,6 +699,7 @@ class BoardObservability:
                     "get_observability_flattens": False,
                     "internal_simulator": True,
                     "broker": False,
+                    "flatten_as_if_there_were_positions": False,
                 },
             },
             "note": (

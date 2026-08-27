@@ -316,12 +316,14 @@
         <button type="button" class="kill-reset" data-kill-action="reset">Reset kill switch</button>
       </div>
       <p class="meta">Employees cannot reset the kill switch.</p>
+      <h3>Board Addendum I 2026-08-27 (CLOSED until Grand Opening)</h3>
+      <p class="meta">The company is CLOSED. Nothing is trading. Not paper, not live. PAPER execution is CLOSED. Allow-list E exists but cannot be used for fills until Hari's explicit Grand Opening PAPER yes. £1000 is the FUTURE paper starting book only. Addendum A numbers are stored but unused until open. LIVE still blocked. Never auto-switch. Silence is not approval. First paper trade path is not implemented.</p>
       <h3>Paper gate</h3>
-      <p class="meta">PAPER: ${escapeHtml(paperGate.paper_status || "not started")} · trading_mode: ${escapeHtml(paperGate.trading_mode || data.trading_mode || "")} · execution: ${paperGate.execution === true} · internal simulator: ${paperGate.internal_simulator === true}</p>
+      <p class="meta">PAPER: ${escapeHtml(paperGate.paper_status || "not started")} · trading_mode: ${escapeHtml(paperGate.trading_mode || data.trading_mode || "")} · execution: ${paperGate.execution === true} · paper_execution_closed: ${paperGate.paper_execution_closed !== false} · internal simulator: ${paperGate.internal_simulator === true}</p>
       <p class="meta">EVALUATION: ${escapeHtml(paperGate.evaluation_status || "not")} · LIVE-trading recommendation: ${escapeHtml(paperGate.live_trading_recommendation || "not")} · Board review: ${escapeHtml(paperGate.board_review || "not")} · explicit Board approval: ${escapeHtml(paperGate.explicit_board_approval || "not")}</p>
       <p class="meta">Success: ${escapeHtml(paperGate.successful_trade_definition || evaluation.successful_trade_definition || "CLOSED paper trade with profit &gt; 0")}. Trigger: win rate &gt; 50% AND book profitable. Auto-switch LIVE: ${paperGate.evaluation_auto_switch_live === true}. Paper duration remains an OPEN BOARD DECISION. Silence is not approval.</p>
       <h3>Paper ledger (internal simulator)</h3>
-      <p class="meta">Not a broker. BROKER_PAPER and LIVE remain UNLOADED. PAPER allow-list is Board Addendum E. Simulated capital: ${escapeHtml(String(paperLedger.simulated_capital_gbp ?? "1000"))} GBP · cash: ${escapeHtml(String(paperLedger.cash_gbp ?? ""))} · equity: ${escapeHtml(String(paperLedger.equity_gbp ?? ""))} · fills: ${escapeHtml(String(paperLedger.fills ?? 0))}</p>
+      <p class="meta">Not a broker. BROKER_PAPER and LIVE remain UNLOADED. PAPER allow-list is Board Addendum E (cannot fill until open). Simulated capital: ${escapeHtml(String(paperLedger.simulated_capital_gbp ?? "1000"))} GBP (FUTURE paper starting book only) · cash: ${escapeHtml(String(paperLedger.cash_gbp ?? ""))} · equity: ${escapeHtml(String(paperLedger.equity_gbp ?? ""))} · fills: ${escapeHtml(String(paperLedger.fills ?? 0))}</p>
       <p class="meta">Assumptions: spread ${escapeHtml(String(assumptions.spread_bps ?? 10))} bps · slippage ${escapeHtml(String(assumptions.slippage_bps ?? 5))} bps · commission ${escapeHtml(String(assumptions.commission_bps ?? 5))} bps. Fake delayed last treated as GBP (INTERNAL ASSUMPTION, no FX vendor).</p>
       <h3>Evaluation ledger</h3>
       <p class="meta">Closed trades: ${escapeHtml(String(evaluation.closed_trades ?? 0))} · profitable closes: ${escapeHtml(String(evaluation.profitable_closes ?? 0))} · win rate: ${escapeHtml(String(evaluation.win_rate ?? 0))} · book P&amp;L: ${escapeHtml(String(evaluation.book_pnl_gbp ?? 0))} GBP · trigger met: ${evaluation.evaluation_trigger_met === true} · auto-switch LIVE: ${evaluation.evaluation_auto_switch_live === true}</p>
@@ -339,7 +341,7 @@
       <h3>07:30 meeting artefacts</h3>
       ${artefactRows}
       <h3>07:30 company meeting record</h3>
-      <p class="meta">${escapeHtml(companyMeeting.meeting || "07:30 Europe/London company meeting")} · on-demand · daemon: ${companyMeeting.daemon === true} · is_trade: ${companyMeeting.is_trade === true} · LIVE approval: ${companyMeeting.is_live_approval === true} · cannot start LIVE: ${companyMeeting.cannot_start_live !== false}</p>
+      <p class="meta">${escapeHtml(companyMeeting.meeting || "07:30 Europe/London company meeting")} · on-demand · daemon: ${companyMeeting.daemon === true} · is_trade: ${companyMeeting.is_trade === true} · LIVE approval: ${companyMeeting.is_live_approval === true} · cannot start LIVE: ${companyMeeting.cannot_start_live !== false} · no Board Member diary invite · no calendar invite · no approval email</p>
       ${
         meetingRun
           ? `<div class="ledger-row">started_by: ${escapeHtml(meetingRun.started_by || "")} · CEO handoff: ${escapeHtml(meetingRun.ceo_handoff_status || "not")} · Challenge: ${escapeHtml(meetingRun.challenge_status || "not")} · Risk: ${escapeHtml(meetingRun.risk_status || "not")} · trading_mode: ${escapeHtml(meetingRun.trading_mode_at_run || "")}<br /><span class="meta">${escapeHtml(meetingRun.brief_headline || "no MI brief")} · ${escapeHtml(meetingRun.ran_at || "")} · live_started: ${meetingRun.live_started === true}</span></div>

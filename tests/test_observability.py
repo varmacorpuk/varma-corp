@@ -440,7 +440,7 @@ def test_observability_missing_limits_still_deny_execution(session):
         order={"symbol": "AAPL", "execution_port": "SIMULATOR"},
     )
     assert d.allowed is False
-    assert d.reason == "MISSING_NUMERIC_LIMITS"
+    assert d.reason == "PAPER_EXECUTION_CLOSED"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert LIVE_ADAPTER_LOADED is False
 
@@ -458,9 +458,12 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert gate["writes_controls"] is False
     assert "LIVE_BLOCKED" in gate["paper_status"]
     assert gate["paper_started"] is False
-    assert gate["paper_execution_implemented"] is True
+    assert gate["paper_execution"] == "CLOSED"
+    assert gate["paper_execution_closed"] is True
+    assert gate["paper_execution_implemented"] is False
+    assert gate["first_paper_trade_path_implemented"] is False
     assert gate["internal_simulator"] is True
-    assert gate["evaluation_status"] == "ledger ready"
+    assert gate["evaluation_status"] == "ledger ready (unused until open)"
     assert gate["live_trading_recommendation"] == "not"
     assert gate["board_review"] == "not"
     assert gate["explicit_board_approval"] == "not"

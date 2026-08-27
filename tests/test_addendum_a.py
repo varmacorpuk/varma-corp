@@ -134,7 +134,7 @@ def test_live_still_blocked_with_limits(client):
     assert LIVE_PORT_LOADED is False
 
 
-def test_order_over_max_position_denies(session):
+def test_order_over_max_position_denies_because_paper_closed(session):
     emp = _grant_place_and_allow(session)
     d = ControlEngine(session).place_order(
         actor_id=emp.id,
@@ -148,14 +148,14 @@ def test_order_over_max_position_denies(session):
         },
     )
     assert d.allowed is False
-    assert d.reason == "MAX_POSITION_EXCEEDED"
+    assert d.reason == "PAPER_EXECUTION_CLOSED"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
 
 
-def test_seventh_order_in_a_day_denies(session):
+def test_orders_denied_while_paper_closed_not_filled(session):
     emp = _grant_place_and_allow(session)
     engine = ControlEngine(session)
-    for i in range(6):
+    for _i in range(7):
         d = engine.place_order(
             actor_id=emp.id,
             actor_type="employee",
@@ -168,21 +168,11 @@ def test_seventh_order_in_a_day_denies(session):
             },
             at=SESSION_OPEN,
         )
-        assert d.allowed is True, d.reason
-    seventh = engine.place_order(
-        actor_id=emp.id,
-        actor_type="employee",
-        order={
-            "symbol": "AAPL",
-            "side": "buy",
-            "quantity": 0.1,
-            "notional_gbp": 10,
-            "execution_port": "SIMULATOR",
-        },
-        at=SESSION_OPEN,
-    )
-    assert seventh.allowed is False
-    assert seventh.reason == "MAX_ORDERS_PER_DAY"
+        assert d.allowed is False
+        assert d.reason == "PAPER_EXECUTION_CLOSED"
+    from varma.db.models import PaperFill
+
+    assert session.query(PaperFill).count() == 0
 
 
 def test_kill_switch_denies_orders(session):

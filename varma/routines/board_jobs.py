@@ -92,9 +92,10 @@ BOARD_JOBS: tuple[dict[str, Any], ...] = (
         "internal_simulator_flatten": True,
         "flatten_at": "US_REGULAR_CASH_CLOSE",
         "flatten_not_at": "LONDON_CASH_CLOSE",
-        "paper_fills": True,
+        "paper_fills": False,
         "fills": False,
         "allow_list_not_required_for_flatten": True,
+        "flatten_as_if_there_were_positions": False,
         "daemon": False,
     },
 )
@@ -106,11 +107,12 @@ def runnable_jobs_catalog() -> dict[str, Any]:
         item = dict(job)
         item.update(JOB_SAFETY_FLAGS)
         if job["id"] == "run-flatten-us-close":
-            item["paper_fills"] = True
+            item["paper_fills"] = False
             item["fills"] = False
             item["internal_simulator_flatten"] = True
             item["broker_fills"] = False
             item["allow_list_not_required_for_flatten"] = True
+            item["flatten_as_if_there_were_positions"] = False
             item["flatten_at"] = "US_REGULAR_CASH_CLOSE"
             item["flatten_not_at"] = "LONDON_CASH_CLOSE"
             item["daemon"] = False
@@ -160,13 +162,13 @@ def with_job_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
 def with_flatten_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
     """Safety flags for the US-close flatten job. Internal simulator only."""
     out = with_job_safety(session, result)
-    fills = int(result.get("flatten_fills") or 0)
     out["job_safety"]["fills"] = False
-    out["job_safety"]["paper_fills"] = fills > 0
+    out["job_safety"]["paper_fills"] = False
     out["job_safety"]["live_fills"] = False
     out["job_safety"]["internal_simulator_flatten"] = True
     out["job_safety"]["broker_fills"] = False
     out["job_safety"]["allow_list_not_required"] = True
+    out["job_safety"]["flatten_as_if_there_were_positions"] = False
     out["job_safety"]["flatten_at"] = "US_REGULAR_CASH_CLOSE"
     out["job_safety"]["flatten_not_at"] = "LONDON_CASH_CLOSE"
     out["job_safety"]["loads_broker_ports"] = False

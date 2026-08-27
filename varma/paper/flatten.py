@@ -1,8 +1,9 @@
 """Flatten ALL paper before US regular cash close (Board Addendum C 2026-08-27).
 
 Internal PAPER FILL SIMULATOR only. Not BROKER_PAPER. Not LIVE.
-Empty allow-list still denies new risk orders. Flatten of existing paper
-is session hygiene (no-op if none). GET /observability must not call this.
+Board Addendum I: do not run flatten-as-if-there-were-positions. While PAPER
+execution is CLOSED there are no positions to flatten; this is a no-op.
+GET /observability must not call this.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from varma.controls.addendum_c import (
     addendum_c_public,
     us_regular_cash_close_london,
 )
+from varma.controls.addendum_i import ADDENDUM_I_LABEL, paper_execution_is_closed
 from varma.controls.engine import BROKER_PAPER_LOADED, LIVE_ADAPTER_LOADED, ControlEngine
 from varma.db.models import Evidence, PaperFlattenRun, PaperPosition
 from varma.paper.ledger import PaperLedger
@@ -39,6 +41,8 @@ def flatten_all_paper(
 
     Does not load BROKER_PAPER or LIVE. Does not write trading_mode or allow-list.
     Does not require allow-list membership.
+    Board Addendum I: do not run flatten-as-if-there-were-positions. While
+    PAPER execution is CLOSED this is a no-op (no fills).
     """
     now = at or now_london()
     engine = ControlEngine(session)
@@ -50,40 +54,42 @@ def flatten_all_paper(
         reason="FLATTEN_BEFORE_US_REGULAR_CASH_CLOSE",
         at=now,
     )
-    sim = PaperFillSimulator(session)
     closed_symbols: list[str] = []
     flatten_fills = 0
-    for pos in list(session.query(PaperPosition).all()):
-        if pos.quantity == 0:
-            continue
-        side = "sell" if pos.quantity > 0 else "buy"
-        qty = abs(pos.quantity)
-        decision = sim.fill(
-            actor_id=actor_id,
-            order={
-                "symbol": pos.symbol,
-                "side": side,
-                "quantity": qty,
-                "execution_port": "SIMULATOR",
-            },
-            at=now,
-            is_flatten=True,
-        )
-        if decision.allowed:
-            flatten_fills += 1
-            closed_symbols.append(pos.symbol)
-        else:
-            session.add(
-                Evidence(
-                    kind="paper_flatten_fill_denied",
-                    actor=actor_id,
-                    payload=json.dumps(
-                        {"symbol": pos.symbol, "reason": decision.reason},
-                        default=str,
-                    ),
-                    created_at=now,
-                )
+    firm_closed = paper_execution_is_closed(session)
+    if not firm_closed:
+        sim = PaperFillSimulator(session)
+        for pos in list(session.query(PaperPosition).all()):
+            if pos.quantity == 0:
+                continue
+            side = "sell" if pos.quantity > 0 else "buy"
+            qty = abs(pos.quantity)
+            decision = sim.fill(
+                actor_id=actor_id,
+                order={
+                    "symbol": pos.symbol,
+                    "side": side,
+                    "quantity": qty,
+                    "execution_port": "SIMULATOR",
+                },
+                at=now,
+                is_flatten=True,
             )
+            if decision.allowed:
+                flatten_fills += 1
+                closed_symbols.append(pos.symbol)
+            else:
+                session.add(
+                    Evidence(
+                        kind="paper_flatten_fill_denied",
+                        actor=actor_id,
+                        payload=json.dumps(
+                            {"symbol": pos.symbol, "reason": decision.reason},
+                            default=str,
+                        ),
+                        created_at=now,
+                    )
+                )
     remaining = session.query(PaperPosition).filter(PaperPosition.quantity != 0).count()
     after_mode = engine.state().trading_mode
     run = PaperFlattenRun(
@@ -124,7 +130,10 @@ def flatten_all_paper(
                     "us_regular_cash_close_london": us_regular_cash_close_london(now).isoformat(),
                     "broker": False,
                     "live_loaded": False,
+                    "paper_execution_closed": firm_closed,
+                    "flatten_as_if_there_were_positions": False,
                     "source": ADDENDUM_C_LABEL,
+                    "addendum_i": ADDENDUM_I_LABEL,
                 },
                 default=str,
             ),
@@ -142,6 +151,8 @@ def flatten_all_paper(
         "internal_simulator_flatten": True,
         "allow_list_unchanged": engine.allow_list_symbols() == before_allow,
         "trading_mode": after_mode,
+        "paper_execution_closed": firm_closed,
+        "flatten_as_if_there_were_positions": False,
         "description": describe_flatten_us_close(),
     })
 

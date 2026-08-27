@@ -124,7 +124,7 @@ def test_live_still_denied_with_allow_list(client):
     assert LIVE_PORT_LOADED is False
 
 
-def test_simulator_fills_allow_listed_ticker_while_live_blocked(session):
+def test_simulator_denies_allow_listed_ticker_while_paper_closed(session):
     emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     session.query(Permission).filter_by(subject_id=emp.id, action="place_order").one().allowed = True
     session.commit()
@@ -134,12 +134,10 @@ def test_simulator_fills_allow_listed_ticker_while_live_blocked(session):
         order={"symbol": "AAPL", "side": "buy", "notional_gbp": 50, "execution_port": "SIMULATOR"},
         at=SESSION_OPEN,
     )
-    assert d.allowed is True, d.reason
-    assert d.reason == "PAPER_FILL_SIMULATED"
-    assert d.details["is_paper"] is True
-    assert d.details["is_live"] is False
-    assert d.details["broker"] is False
+    assert d.allowed is False
+    assert d.reason == "PAPER_EXECUTION_CLOSED"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert LIVE_ADAPTER_LOADED is False
     assert BROKER_PAPER_LOADED is False
     assert addendum_e_public()["count"] == 10
+    assert addendum_e_public()["allow_list_e_cannot_fill_until_open"] is True

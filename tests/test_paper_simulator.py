@@ -82,7 +82,7 @@ def test_simulator_denies_empty_allow_list_live_kill_switch_and_limits(session):
         actor_type="employee",
         order={"symbol": "AAPL", "side": "buy", "notional_gbp": 201, "execution_port": "SIMULATOR"},
     )
-    assert over.reason == "MAX_POSITION_EXCEEDED"
+    assert over.reason == "PAPER_EXECUTION_CLOSED"
 
     from varma.controls.kill_switch import trip_kill_switch
 
@@ -99,7 +99,7 @@ def test_simulator_denies_empty_allow_list_live_kill_switch_and_limits(session):
     assert LIVE_PORT_LOADED is False
 
 
-def test_simulator_fills_when_allow_list_has_test_symbol(session):
+def test_simulator_denies_allow_listed_ticker_while_paper_closed(session):
     emp = _grant_place_and_allow(session)
     d = ControlEngine(session).place_order(
         actor_id=emp.id,
@@ -107,14 +107,10 @@ def test_simulator_fills_when_allow_list_has_test_symbol(session):
         order={"symbol": "AAPL", "side": "buy", "quantity": 0.5, "notional_gbp": 50, "execution_port": "SIMULATOR"},
         at=SESSION_OPEN,
     )
-    assert d.allowed is True
-    assert d.reason == "PAPER_FILL_SIMULATED"
-    assert d.details["is_paper"] is True
-    assert d.details["is_live"] is False
-    assert d.details["broker"] is False
-    assert d.details["assumptions"]["spread_bps"] == 10
-    assert session.query(PaperFill).count() == 1
-    assert session.query(PaperOrder).filter_by(status="FILLED").count() == 1
+    assert d.allowed is False
+    assert d.reason == "PAPER_EXECUTION_CLOSED"
+    assert session.query(PaperFill).count() == 0
+    assert session.query(PaperOrder).filter_by(status="FILLED").count() == 0
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     paper = ExecutionPort(session).place_order(
         actor_id=emp.id,

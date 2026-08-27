@@ -133,7 +133,15 @@ def reset_kill_switch(session: Session, *, actor_id: str, actor_type: str) -> De
 
 
 def maybe_auto_trip(session: Session, *, actor_id: str) -> dict[str, Any] | None:
-    """Trip if Addendum A floors are breached. Does not run from observability."""
+    """Trip if Addendum A floors are breached. Does not run from observability.
+
+    Board Addendum I: Addendum A numbers are stored but unused until Grand
+    Opening PAPER. Do not auto-trip while PAPER execution is CLOSED.
+    """
+    from varma.controls.addendum_i import paper_execution_is_closed
+
+    if paper_execution_is_closed(session):
+        return None
     state = session.get(ControlState, 1)
     if state is None:
         return None

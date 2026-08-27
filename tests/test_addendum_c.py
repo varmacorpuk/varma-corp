@@ -55,7 +55,7 @@ def test_london_cash_close_is_inside_session():
 def test_outside_window_denies_allow_listed_ticker(session):
     emp = _grant_place(session)
     engine = ControlEngine(session)
-    for when, detail in (
+    for when, _detail in (
         (BEFORE_UK_OPEN, "before_uk_cash_open"),
         (us_regular_cash_close_london(SESSION_OPEN), "after_us_regular_cash_close"),
         (WEEKEND, "weekend"),
@@ -67,11 +67,10 @@ def test_outside_window_denies_allow_listed_ticker(session):
             at=when,
         )
         assert d.allowed is False, d.reason
-        assert d.reason == "PAPER_SESSION_CLOSED"
-        assert d.details.get("overnight") is True or detail == "weekend"
+        assert d.reason == "PAPER_EXECUTION_CLOSED"
 
 
-def test_london_1630_still_allows_paper_fill(session):
+def test_london_1630_still_denies_paper_fill_while_closed(session):
     emp = _grant_place(session)
     d = ControlEngine(session).place_order(
         actor_id=emp.id,
@@ -79,13 +78,12 @@ def test_london_1630_still_allows_paper_fill(session):
         order={"symbol": "AAPL", "side": "buy", "notional_gbp": 50, "execution_port": "SIMULATOR"},
         at=LONDON_CASH_CLOSE,
     )
-    assert d.allowed is True, d.reason
-    assert d.reason == "PAPER_FILL_SIMULATED"
-    assert d.details["is_live"] is False
+    assert d.allowed is False
+    assert d.reason == "PAPER_EXECUTION_CLOSED"
     assert LIVE_ADAPTER_LOADED is False
 
 
-def test_flatten_at_us_close_closes_paper(session):
+def test_flatten_at_us_close_is_noop_while_closed(session):
     emp = _grant_place(session)
     filled = ControlEngine(session).place_order(
         actor_id=emp.id,
@@ -93,8 +91,9 @@ def test_flatten_at_us_close_closes_paper(session):
         order={"symbol": "MSFT", "side": "buy", "notional_gbp": 40, "execution_port": "SIMULATOR"},
         at=SESSION_OPEN,
     )
-    assert filled.allowed is True, filled.reason
-    assert session.query(PaperPosition).count() >= 1
+    assert filled.allowed is False
+    assert filled.reason == "PAPER_EXECUTION_CLOSED"
+    assert session.query(PaperPosition).count() == 0
     close = us_regular_cash_close_london(SESSION_OPEN)
     result = flatten_all_paper(
         session,
@@ -105,7 +104,9 @@ def test_flatten_at_us_close_closes_paper(session):
     assert result["flatten_at"] == "US_REGULAR_CASH_CLOSE"
     assert result["flatten_not_at"] == "LONDON_CASH_CLOSE"
     assert result["flatten_at_london_cash_close"] is False
-    assert result["closed_positions"] >= 1
+    assert result["closed_positions"] == 0
+    assert result["flatten_fills"] == 0
+    assert result["flatten_as_if_there_were_positions"] is False
     assert result["positions_remaining"] == 0
     assert result["trading_mode_after"] == "LIVE_BLOCKED"
     assert result["broker"] is False
@@ -126,7 +127,7 @@ def test_get_observability_does_not_flatten(session):
         at=SESSION_OPEN,
     )
     before = session.query(PaperPosition).count()
-    assert before >= 1
+    assert before == 0
     snap = BoardObservability(session).snapshot()
     assert snap["paper_flatten"]["get_observability_flattens"] is False
     assert snap["paper_flatten"]["run"] is None

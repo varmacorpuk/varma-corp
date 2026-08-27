@@ -1,9 +1,10 @@
-"""Seed persistent identities, Board Addenda A/C/E/F, and TEMPORARY watchlist.
+"""Seed persistent identities, Board Addenda A/C/E/F/I, and TEMPORARY watchlist.
 
-Numeric limits are Board Addendum A 2026-08-27 (Board-set).
+Numeric limits are Board Addendum A 2026-08-27 (Board-set; unused until open).
 Paper session is Board Addendum C 2026-08-27 (UK open through US close).
-PAPER allow-list is Board Addendum E 2026-08-27 (Board-set).
+PAPER allow-list is Board Addendum E 2026-08-27 (Board-set; no fills until open).
 Staff display is Board Addendum F 2026-08-27 (person · department).
+Company CLOSED until Grand Opening: Board Addendum I 2026-08-27.
 trading_mode stays LIVE_BLOCKED. LIVE and BROKER_PAPER remain UNLOADED.
 """
 
@@ -40,6 +41,11 @@ from varma.controls.addendum_f import (
     TRADER_SLUG,
     format_staff_display,
     staff_display_for_slug,
+)
+from varma.controls.addendum_i import (
+    ADDENDUM_I_LABEL,
+    ADDENDUM_I_SET_BY,
+    ADDENDUM_I_SETTINGS,
 )
 from varma.db.models import (
     AllowListInstrument,
@@ -209,6 +215,7 @@ def seed_if_empty(session: Session) -> None:
     seed_board_addendum_a(session)
     seed_board_addendum_c(session)
     seed_board_addendum_e(session)
+    seed_board_addendum_i(session)
     session.commit()
 
 
@@ -307,11 +314,41 @@ def seed_board_addendum_c(session: Session) -> None:
     session.flush()
 
 
+def seed_board_addendum_i(session: Session) -> None:
+    """Write Board Addendum I 2026-08-27 CLOSED-until-Grand-Opening flag.
+
+    PAPER execution is CLOSED. Employees including the CEO cannot write it.
+    Does not implement Grand Opening PAPER or LIVE. Does not fill.
+    """
+    now = now_london()
+    for key, value, unit in ADDENDUM_I_SETTINGS:
+        row = session.get(ControlSetting, key)
+        if row is None:
+            session.add(
+                ControlSetting(
+                    key=key,
+                    value=value,
+                    unit=unit,
+                    set_by=ADDENDUM_I_SET_BY,
+                    set_at=now,
+                    source=ADDENDUM_I_LABEL,
+                )
+            )
+        elif row.value in (None, ""):
+            row.value = value
+            row.unit = unit
+            row.set_by = ADDENDUM_I_SET_BY
+            row.set_at = now
+            row.source = ADDENDUM_I_LABEL
+    session.flush()
+
+
 def seed_board_addendum_e(session: Session) -> None:
     """Write Board Addendum E 2026-08-27 PAPER execution allow-list.
 
     Board-set. Employees including the CEO cannot write this list.
     Does not load LIVE or BROKER_PAPER. Does not switch trading_mode.
+    Addendum I: the list exists but cannot be used for fills until open.
     """
     now = now_london()
     for symbol, venue in ADDENDUM_E_INSTRUMENTS:

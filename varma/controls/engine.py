@@ -2,11 +2,12 @@
 
 LIVE adapter is not loaded unless trading_mode is LIVE and a Board approval exists.
 This slice never loads a live adapter. Unknown tickers and gold deny.
-Numeric limits are Board Addendum A 2026-08-27 (Board-set). Missing limits deny.
+Numeric limits are Board Addendum A 2026-08-27 (Board-set; unused until open).
 PAPER allow-list is Board Addendum E 2026-08-27. Employees cannot write control tables.
+Board Addendum I 2026-08-27: PAPER execution is CLOSED until Grand Opening.
 
-trading_mode stays LIVE_BLOCKED. Internal paper fill simulator is the paper ledger.
-Do not load LIVE or BROKER_PAPER.
+trading_mode stays LIVE_BLOCKED. Simulator DENY all fills while closed.
+Do not load LIVE or BROKER_PAPER. Do not implement the first paper trade path.
 """
 
 from __future__ import annotations
@@ -31,6 +32,14 @@ from varma.controls.addendum_c import (
 )
 from varma.controls.addendum_e import addendum_e_public
 from varma.controls.addendum_f import addendum_f_public
+from varma.controls.addendum_i import (
+    ADDENDUM_I_LABEL,
+    FIRM_OPEN_WRITE_FIELDS,
+    GRAND_OPENING_NOT_IMPLEMENTED_REASON,
+    PAPER_EXECUTION_CLOSED_REASON,
+    addendum_i_public,
+    paper_execution_is_closed,
+)
 from varma.db.models import (
     AllowListInstrument,
     BoardApproval,
@@ -61,8 +70,9 @@ LIMIT_WRITE_FIELDS = set(REQUIRED_LIMIT_KEYS) | {
     "evaluation_policy",
     "paper_session",
     "addendum_c",
+    "addendum_i",
     "control_settings",
-}
+} | set(FIRM_OPEN_WRITE_FIELDS)
 
 
 @dataclass
@@ -144,6 +154,9 @@ class ControlEngine:
         )
         return bool(row and row.allowed)
 
+    def paper_execution_closed(self) -> bool:
+        return paper_execution_is_closed(self.session)
+
     def broker_paper_loaded(self) -> bool:
         return BROKER_PAPER_LOADED
 
@@ -168,10 +181,12 @@ class ControlEngine:
         order: dict[str, Any],
         at=None,
     ) -> Decision:
-        """Employees propose. Empty allow-list, LIVE, kill switch, limits, and closed session deny.
+        """Employees propose. LIVE, gold, unknown tickers, and PAPER-closed deny.
 
-        When all gates pass, the internal paper fill simulator is the paper ledger.
-        BROKER_PAPER and LIVE remain UNLOADED. trading_mode stays LIVE_BLOCKED.
+        Board Addendum I: PAPER execution is CLOSED until Grand Opening.
+        Simulator DENY all fills while closed, even for allow-listed tickers.
+        Allow-list E still exists. Addendum A numbers are stored but unused
+        until open. BROKER_PAPER and LIVE remain UNLOADED.
         """
         now = at or now_london()
         state = self.state()
@@ -202,7 +217,9 @@ class ControlEngine:
 
         from varma.controls.kill_switch import maybe_auto_trip
 
-        maybe_auto_trip(self.session, actor_id=actor_id)
+        closed = self.paper_execution_closed()
+        if not closed:
+            maybe_auto_trip(self.session, actor_id=actor_id)
         state = self.state()
         if state.kill_switch:
             return self._deny("KILL_SWITCH", actor_id, order)
@@ -211,13 +228,31 @@ class ControlEngine:
         if symbol.upper() in {"XAU", "XAUUSD", "GOLD", "GC"}:
             return self._deny("GOLD_NOT_AUTHORISED", actor_id, order)
 
-        # Even the internal simulator requires a Board-set allow-list and limits.
+        # Allow-list E still exists but cannot be used for fills until open.
         allow = self.allow_list_symbols()
         if not allow:
             return self._deny("EMPTY_ALLOW_LIST", actor_id, order)
 
         if symbol not in allow:
             return self._deny("SYMBOL_NOT_ON_ALLOW_LIST", actor_id, order)
+
+        if closed:
+            return self._deny(
+                PAPER_EXECUTION_CLOSED_REASON,
+                actor_id,
+                order,
+                {
+                    "paper_execution": "CLOSED",
+                    "firm_open": False,
+                    "grand_opening_paper": "not",
+                    "grand_opening_live": "not",
+                    "allow_list_cannot_fill_until_open": True,
+                    "addendum_a_unused_until_open": True,
+                    "simulated_capital_status": "FUTURE_PAPER_STARTING_BOOK_ONLY",
+                    "first_paper_trade_path_implemented": False,
+                    "source": ADDENDUM_I_LABEL,
+                },
+            )
 
         missing = self.missing_limits()
         if missing:
@@ -306,7 +341,8 @@ class ControlEngine:
                 {"field": field, "reason": "EMPLOYEE_CANNOT_WRITE_CONTROLS"},
             )
             return Decision(False, "EMPLOYEE_CANNOT_WRITE_CONTROLS")
-        # Board writes are reserved actions; this slice does not implement LIVE transition.
+        # Board writes are reserved actions; this slice does not implement LIVE transition
+        # or Grand Opening PAPER/LIVE. CLOSED gate only. Silence is not approval.
         if field == "trading_mode" and value == "LIVE":
             return Decision(False, "LIVE_TRANSITION_NOT_IMPLEMENTED_REQUIRES_BOARD_APPROVAL_ROW")
         if field == "trading_mode" and value == "PAPER":
@@ -314,6 +350,8 @@ class ControlEngine:
                 False,
                 "TRADING_MODE_STAYS_LIVE_BLOCKED_PAPER_LEDGER_IS_INTERNAL_SIMULATOR",
             )
+        if field in FIRM_OPEN_WRITE_FIELDS:
+            return Decision(False, GRAND_OPENING_NOT_IMPLEMENTED_REASON)
         if field == "allow_list":
             return Decision(False, "ALLOW_LIST_IS_BOARD_ADDENDUM_E_EMPLOYEES_CANNOT_WRITE")
         if field in LIMIT_WRITE_FIELDS:
@@ -340,6 +378,9 @@ class ControlEngine:
             "addendum_c": addendum_c_public(),
             "addendum_e": addendum_e_public(),
             "addendum_f": addendum_f_public(),
+            "addendum_i": addendum_i_public(),
+            "paper_execution": "CLOSED" if self.paper_execution_closed() else "OPEN",
+            "paper_execution_closed": self.paper_execution_closed(),
             "paper_session": paper_session_status(),
             "control_settings": self.setting_rows(),
             "live_adapter_loaded": self.live_adapter_loaded(),
@@ -347,8 +388,9 @@ class ControlEngine:
             "live_gate": "PAPER → EVALUATION → LIVE-TRADING RECOMMENDATION → BOARD REVIEW → EXPLICIT BOARD APPROVAL → LIVE",
             "note": (
                 "Silence, elapsed time, paper success, and employee confidence are not approval. "
-                "PAPER allow-list is Board Addendum E. trading_mode stays LIVE_BLOCKED. "
-                "Internal simulator is the paper ledger. LIVE and BROKER_PAPER remain UNLOADED."
+                "The company is CLOSED until Grand Opening (Board Addendum I). "
+                "PAPER execution is CLOSED. Allow-list E exists but cannot fill until open. "
+                "trading_mode stays LIVE_BLOCKED. LIVE and BROKER_PAPER remain UNLOADED."
             ),
         }
 

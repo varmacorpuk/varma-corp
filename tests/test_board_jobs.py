@@ -80,7 +80,8 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
         if row["id"] == "run-flatten-us-close":
             assert row["internal_simulator_flatten"] is True
             assert row["flatten_at"] == "US_REGULAR_CASH_CLOSE"
-            assert row["paper_fills"] is True
+            assert row["paper_fills"] is False
+            assert row["flatten_as_if_there_were_positions"] is False
         else:
             assert row["paper_fills"] is False
         assert row["fills"] is False

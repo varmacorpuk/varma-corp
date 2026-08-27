@@ -49,9 +49,12 @@ def addendum_e_public() -> dict[str, Any]:
         "ceo_cannot_write": True,
         "symbols": list(ADDENDUM_E_SYMBOLS),
         "count": len(ADDENDUM_E_SYMBOLS),
+        "allow_list_e_cannot_fill_until_open": True,
         "note": (
-            "Board-set PAPER execution allow-list. Internal simulator may fill "
-            "these names when other gates pass. LIVE and BROKER_PAPER remain "
-            "UNLOADED. Gold is not on this list. Unknown tickers deny."
+            "Board-set PAPER execution allow-list. Exists but cannot be used "
+            "for fills until Grand Opening PAPER (Board Addendum I). Internal "
+            "simulator DENY all fills while PAPER execution is CLOSED, even for "
+            "these names. LIVE and BROKER_PAPER remain UNLOADED. Gold is not on "
+            "this list. Unknown tickers deny."
         ),
     }
