@@ -33,7 +33,8 @@ Docker is optional. If Postgres is not running, the kernel uses TEMPORARY SQLite
 
 Python 3.12+ (this box may be 3.13; that is fine).
 
-    cd /workspace/varma-corp
+From the repository root:
+
     python3 -m pip install -r requirements.txt
     cp -n .env.example .env
     make test

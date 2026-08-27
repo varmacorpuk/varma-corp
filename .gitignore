@@ -1,0 +1,34 @@
+# Secrets and local env — never commit
+.env
+.env.local
+.env.*.local
+
+# TEMPORARY DEVELOPMENT SQLite (StoragePort). Not the system of record.
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+
+# Desktop / Electron
+desktop/node_modules/
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
