@@ -9,6 +9,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from varma.clock import describe_0630_weekday_routine, describe_nightly_memory_filter
 from varma.controls.engine import ControlEngine
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
 from varma.db.models import (
@@ -21,6 +22,7 @@ from varma.db.models import (
     MemoryFilterRun,
     MemoryOrg,
     RiskDecision,
+    Routine,
     SampleThesis,
 )
 from varma.meetings.handoff import CEO_SLUG
@@ -106,6 +108,7 @@ class BoardObservability:
             "meeting_pack": self._meeting_pack(),
             "meeting_artefacts": self._meeting_artefacts(),
             "status_bubbles": self._status_bubbles(),
+            "routines": self._routine_schedules(),
             "note": READ_ONLY_NOTE,
         }
 
@@ -292,3 +295,45 @@ class BoardObservability:
             }
             for e in rows
         ]
+
+    def _routine_schedules(self) -> dict[str, Any]:
+        rows = self.session.query(Routine).order_by(Routine.name.asc()).all()
+        return {
+            "read_only": True,
+            "source": "database",
+            "daemon": False,
+            "writes_controls": False,
+            "timezone": "Europe/London",
+            "items": [
+                {
+                    "name": row.name,
+                    "schedule": row.schedule,
+                    "timezone": row.timezone,
+                    "skill_name": row.skill_name,
+                    "enabled": bool(row.enabled),
+                    "notes": row.notes,
+                }
+                for row in rows
+            ],
+            "documented": {
+                "brief": {
+                    "schedule": "06:30 weekdays",
+                    "timezone": "Europe/London",
+                    "daemon": False,
+                    "cli": "python -m varma.routines.run_brief",
+                    "description": describe_0630_weekday_routine(),
+                },
+                "nightly_filter": {
+                    "schedule": "nightly",
+                    "timezone": "Europe/London",
+                    "daemon": False,
+                    "writes_controls": False,
+                    "cli": "python -m varma.routines.run_nightly_filter",
+                    "description": describe_nightly_memory_filter(),
+                },
+            },
+            "note": (
+                "Board-only read of documented schedules. On-demand. No 24/7 daemon. "
+                "Nightly filter has no invented clock hour. This view does not write controls."
+            ),
+        }

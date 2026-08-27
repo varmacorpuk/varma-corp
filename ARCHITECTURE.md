@@ -45,7 +45,7 @@ Company Kernel
    Meeting handoffs (MI brief → CEO; SAMPLE thesis → Challenge; challenge → Risk)
    Control engine + Risk deny-path (never LIVE)
    Observability, Cost ledger (Board read-only in the right-hand panel; database is the ledger)
-   Nightly filter run + organisation-memory titles + 07:30 meeting pack status + artefact list + status bubbles
+   Nightly filter run + organisation-memory titles + 07:30 meeting pack status + artefact list + status bubbles + documented routine schedules
         |
    LLMPort          DataPorts           ExecutionPort
    (FakeLLM)    (fake delayed/news)    (LIVE adapter not loaded)
