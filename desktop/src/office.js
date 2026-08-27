@@ -10,6 +10,7 @@
   const chatForm = document.getElementById("chat-form");
   const chatInput = document.getElementById("chat-input");
   const modeBanner = document.getElementById("mode-banner");
+  const boardObservabilityBtn = document.getElementById("board-observability-btn");
 
   let employees = [];
   let selected = null;
@@ -114,6 +115,68 @@
     });
     if (hit) selectEmployee(hit);
   });
+
+  if (boardObservabilityBtn) {
+    boardObservabilityBtn.addEventListener("click", () => {
+      showBoardObservability();
+    });
+  }
+
+  function openPanel() {
+    placeholder.hidden = true;
+    panelBody.hidden = false;
+  }
+
+  async function showBoardObservability() {
+    if (!rightPanel) return;
+    selected = null;
+    draw();
+    openPanel();
+    if (chatForm) chatForm.hidden = true;
+    try {
+      const data = await get("/observability");
+      panelBody.innerHTML = renderObservability(data);
+    } catch (err) {
+      panelBody.innerHTML = `
+        <h3>Board observability</h3>
+        <p class="meta">Read-only. Cost ledger and evidence live in the database, not on this desktop.</p>
+        <p class="meta">Kernel unreachable or Board identity missing. Start the API. This view does not write controls.</p>
+      `;
+    }
+  }
+
+  function renderObservability(data) {
+    const costs = (data.costs && data.costs.entries) || [];
+    const evidence = (data.evidence && data.evidence.entries) || [];
+    const costRows = costs.length
+      ? costs
+          .map(
+            (row) =>
+              `<div class="ledger-row">${escapeHtml(row.workflow || "")} · ${escapeHtml(row.kind || "")} · ${escapeHtml(String(row.units))} units · ${escapeHtml(row.created_at || "")}<br /><span class="meta">${escapeHtml(row.note || "")}</span></div>`
+          )
+          .join("")
+      : "<p class=\"meta\">No cost entries in the database yet.</p>";
+    const evidenceRows = evidence.length
+      ? evidence
+          .map(
+            (row) =>
+              `<div class="ledger-row">${escapeHtml(row.kind || "")} · actor: ${escapeHtml(row.actor || "")} · ${escapeHtml(row.created_at || "")}<br /><span class="meta">${escapeHtml(String(row.payload || "").slice(0, 280))}</span></div>`
+          )
+          .join("")
+      : "<p class=\"meta\">No evidence rows in the database yet.</p>";
+    return `
+      <h3>Board observability</h3>
+      <p class="meta">Read-only. Source: ${escapeHtml(data.source || "database")}. This view does not write controls, trading_mode, allow-list, or permissions.</p>
+      <p class="meta">trading_mode: ${escapeHtml(data.trading_mode || "")} · allow-list empty: ${data.allow_list_empty} · LIVE adapter: ${data.live_adapter_loaded}</p>
+      <p class="meta">${escapeHtml(data.cost_cap_label || "TEMPORARY DEVELOPMENT DEFAULT cost cap. Not a Board-approved budget.")}</p>
+      <h3>Cost ledger</h3>
+      <p class="meta">Total units: ${escapeHtml(String((data.costs && data.costs.total_units) || 0))} · TEMPORARY cap ${escapeHtml(String(data.cost_cap_units || ""))} (not a Board budget)</p>
+      ${costRows}
+      <h3>Recent evidence</h3>
+      <p class="meta">Append-only evidence store. Originals are not overwritten.</p>
+      ${evidenceRows}
+    `;
+  }
 
   function chatPlaceholder(slug) {
     if (slug === "ceo") return "Ask the CEO…";
@@ -241,6 +304,7 @@
       const state = await get("/office/state");
       employees = state.employees || [];
       draw();
+      await showBoardObservability();
     } catch (err) {
       modeBanner.textContent = "kernel unreachable — start the API";
       employees = [
@@ -274,6 +338,7 @@
         },
       ];
       draw();
+      showBoardObservability();
     }
   }
 

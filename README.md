@@ -18,6 +18,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 10. pytest without paid APIs. Execution in LIVE mode is denied. Empty allow-list cannot execute.
 11. TEMPORARY DEVELOPMENT DEFAULT watchlist of a few listed stocks. It is not the execution allow-list. No gold.
 12. Nightly Europe/London memory filter (on-demand): archives working context in the database; evidence stays append-only; filter does not write controls.
+13. Board Member read-only observability in the right-hand panel: cost ledger + recent evidence from the database. Visible without clicking an employee, and via a Board observability entry. This view does not write controls, trading_mode, allow-list, or permissions.
 
 ## System separation
 
@@ -58,7 +59,7 @@ One client for Mac and Windows (Electron). Browser also works in development.
 
 Then open http://127.0.0.1:5173
 
-Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE.
+Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (cost ledger + recent evidence) loads in that same panel without clicking an employee, and via the Board observability entry. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. Observability is read-only.
 
 ## 06:30 Europe/London routine
 
@@ -119,9 +120,19 @@ On demand, not a 24/7 daemon:
 - The filter does not write controls, `trading_mode`, allow-list, or permissions.
 - Filter run is a database artefact (`memory_filter_runs`), not a desktop file.
 
+## Board observability (this slice)
+
+The right-hand panel is a Board Member projection of the database, not a ledger of its own.
+
+- Cost ledger and recent evidence are read from the kernel (`GET /observability`).
+- Visible without clicking an employee. A Board observability entry returns to this view.
+- Read-only. It does not write controls, `trading_mode`, allow-list, or permissions.
+- Cost cap remains a TEMPORARY DEVELOPMENT DEFAULT. It is not a Board-approved budget (Document 17 OPEN: material-cost thresholds).
+- Evidence stays append-only.
+
 ## Next slice
 
-Board Member read-only observability in the right-hand panel (cost ledger + recent evidence from the database). No new employees. Still no paper/live execution and no 12-employee roster.
+Extend the same Board observability panel with the latest nightly memory-filter run and organisation-memory titles (read-only, still from the database). No new employees. Still no paper/live execution and no 12-employee roster.
 
 ## Specs
 
@@ -131,4 +142,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
+Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; Board can read cost ledger and recent evidence; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.

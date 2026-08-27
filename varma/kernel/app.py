@@ -33,6 +33,7 @@ from varma.kernel.auth import Actor, parse_actor, require_board_member
 from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG, handoff_to_dict
 from varma.ports.execution import ExecutionPort
 from varma.memory.filter import filter_run_to_dict
+from varma.observability.board import BoardObservability
 from varma.routines.run_brief import run_brief
 from varma.routines.run_challenge import run_challenge
 from varma.routines.run_nightly_filter import run_nightly_filter
@@ -408,7 +409,32 @@ def create_app() -> FastAPI:
                     {"id": "risk", "label": "Risk desk"},
                 ],
             },
+            "board_observability": {
+                "path": "/observability",
+                "read_only": True,
+                "source": "database",
+                "writes_controls": False,
+            },
         }
+
+    @app.get("/observability")
+    def observability(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return BoardObservability(session).snapshot()
+
+    @app.post("/observability")
+    def observability_write_denied(
+        authorization: str | None = Header(default=None),
+        x_varma_actor: str | None = Header(default=None),
+        x_varma_employee: str | None = Header(default=None),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        parse_actor(authorization, x_varma_actor, x_varma_employee)
+        # Touch the session so tests can prove controls were not mutated.
+        ControlEngine(session).snapshot()
+        raise HTTPException(403, "OBSERVABILITY_IS_READ_ONLY")
 
     return app
 

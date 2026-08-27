@@ -44,7 +44,7 @@ Company Kernel
    Nightly Europe/London working-context filter (archive working; evidence append-only; no control writes)
    Meeting handoffs (MI brief → CEO; SAMPLE thesis → Challenge; challenge → Risk)
    Control engine + Risk deny-path (never LIVE)
-   Observability, Cost ledger
+   Observability, Cost ledger (Board read-only in the right-hand panel; database is the ledger)
         |
    LLMPort          DataPorts           ExecutionPort
    (FakeLLM)    (fake delayed/news)    (LIVE adapter not loaded)
@@ -53,3 +53,5 @@ Company Kernel
 The visual office is a projection. It is not the source of truth (Document 16).
 
 CEO, Challenge, and Risk are AI employees. They cannot approve LIVE, place orders, or write controls. Human = Board Member.
+
+Board Member observability (cost ledger + recent evidence) is a read-only right-hand panel view of the database. It does not write controls. It is not stored on the desktop disk.
