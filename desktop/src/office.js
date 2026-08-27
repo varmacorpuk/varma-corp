@@ -161,6 +161,9 @@
     const controls = data.controls || {};
     const allowList = controls.allow_list || [];
     const paperGate = data.paper_gate || {};
+    const executionPorts = data.execution_ports || {};
+    const brokerPaper = executionPorts.broker_paper || {};
+    const livePort = executionPorts.live || {};
     const costRows = costs.length
       ? costs
           .map(
@@ -253,6 +256,9 @@
       <p class="meta">PAPER: ${escapeHtml(paperGate.paper_status || "not started")} · trading_mode: ${escapeHtml(paperGate.trading_mode || data.trading_mode || "")} · execution: ${paperGate.execution === true} · paper execution implemented: ${paperGate.paper_execution_implemented === true}</p>
       <p class="meta">EVALUATION: ${escapeHtml(paperGate.evaluation_status || "not")} · LIVE-trading recommendation: ${escapeHtml(paperGate.live_trading_recommendation || "not")} · Board review: ${escapeHtml(paperGate.board_review || "not")} · explicit Board approval: ${escapeHtml(paperGate.explicit_board_approval || "not")}</p>
       <p class="meta">${escapeHtml(paperGate.gate || "PAPER → EVALUATION → LIVE-TRADING RECOMMENDATION → BOARD REVIEW → EXPLICIT BOARD APPROVAL → LIVE")}. Silence is not approval. Paper duration/success thresholds are OPEN BOARD DECISIONS and are not invented here.</p>
+      <h3>Execution ports</h3>
+      <p class="meta">Status only. No fills. BROKER_PAPER: ${escapeHtml(brokerPaper.status || "UNLOADED")} (loaded: ${brokerPaper.loaded === true}) · LIVE: ${escapeHtml(livePort.status || "UNLOADED")} (loaded: ${livePort.loaded === true})</p>
+      <p class="meta">fills: ${executionPorts.fills === true} · paper fills: ${executionPorts.paper_fills === true} · live fills: ${executionPorts.live_fills === true}. Constructing or using BROKER_PAPER or LIVE is denied. This view does not load those ports.</p>
       <h3>Missing numeric limits</h3>
       <p class="meta">OPEN BOARD DECISIONS. Keys only — values are not invented here. Missing limits DENY execution.</p>
       ${missingRows}

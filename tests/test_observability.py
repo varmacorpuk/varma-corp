@@ -83,6 +83,7 @@ def test_board_observability_api_is_read_only(client):
     assert "missing_numeric_limits" in office["board_observability"]["includes"]
     assert "controls" in office["board_observability"]["includes"]
     assert "paper_gate" in office["board_observability"]["includes"]
+    assert "execution_ports" in office["board_observability"]["includes"]
 
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
@@ -493,6 +494,70 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert live.status_code == 403
     assert live.json()["detail"]["allowed"] is False
     assert client.get("/controls").json()["trading_mode"] == "LIVE_BLOCKED"
+    assert LIVE_ADAPTER_LOADED is False
+
+
+def test_observability_execution_ports_unloaded_board_only(client):
+    denied = client.get("/observability", headers=EMPLOYEE_HEADERS)
+    assert denied.status_code == 401
+    for headers in (CEO_HEADERS, CHALLENGE_HEADERS, RISK_HEADERS):
+        assert client.get("/observability", headers=headers).status_code == 401
+
+    body = client.get("/observability", headers=BOARD_HEADERS).json()
+    ports = body["execution_ports"]
+    assert ports["read_only"] is True
+    assert ports["source"] == "kernel"
+    assert ports["fills"] is False
+    assert ports["paper_fills"] is False
+    assert ports["live_fills"] is False
+    assert ports["writes_controls"] is False
+    assert ports["broker_paper"]["port"] == "BROKER_PAPER"
+    assert ports["broker_paper"]["status"] == "UNLOADED"
+    assert ports["broker_paper"]["loaded"] is False
+    assert ports["broker_paper"]["fills"] is False
+    assert ports["live"]["port"] == "LIVE"
+    assert ports["live"]["status"] == "UNLOADED"
+    assert ports["live"]["loaded"] is False
+    assert ports["live"]["fills"] is False
+    assert "BROKER_PAPER" in ports["unloaded"]
+    assert "LIVE" in ports["unloaded"]
+    assert "BROKER_PAPER" not in ports["available"]
+    assert "LIVE" not in ports["available"]
+    assert body["broker_paper_loaded"] is False
+    assert body["live_adapter_loaded"] is False
+    assert body["controls"]["broker_paper_loaded"] is False
+    assert body["paper_gate"]["broker_paper_loaded"] is False
+    assert body["trading_mode"] == "LIVE_BLOCKED"
+
+    post = client.post(
+        "/observability",
+        headers=BOARD_HEADERS,
+        json={"broker_paper_loaded": True, "live_adapter_loaded": True, "fills": True},
+    )
+    assert post.status_code == 403
+    assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
+    after = client.get("/observability", headers=BOARD_HEADERS).json()["execution_ports"]
+    assert after["broker_paper"]["status"] == "UNLOADED"
+    assert after["live"]["status"] == "UNLOADED"
+    assert after["fills"] is False
+    paper = client.post(
+        "/execution/place-order",
+        headers=BOARD_HEADERS,
+        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "BROKER_PAPER"},
+    )
+    assert paper.status_code == 403
+    assert paper.json()["detail"]["allowed"] is False
+    assert paper.json()["detail"]["reason"] == "BROKER_PAPER_NOT_LOADED"
+    live = client.post(
+        "/execution/place-order",
+        headers=EMPLOYEE_HEADERS,
+        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "LIVE"},
+    )
+    assert live.status_code == 403
+    assert live.json()["detail"]["allowed"] is False
+    assert client.get("/controls").json()["trading_mode"] == "LIVE_BLOCKED"
+    assert client.get("/controls").json()["broker_paper_loaded"] is False
+    assert client.get("/controls").json()["live_adapter_loaded"] is False
     assert LIVE_ADAPTER_LOADED is False
 
 

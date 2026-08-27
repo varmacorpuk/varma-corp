@@ -11,6 +11,7 @@ def test_trading_mode_live_blocked(client):
     assert body["allow_list"] == []
     assert body["allow_list_empty"] is True
     assert body["live_adapter_loaded"] is False
+    assert body["broker_paper_loaded"] is False
     assert body["employees_cannot_write_this"] is True
     assert "simulated_capital" in body["missing_numeric_limits"]
 

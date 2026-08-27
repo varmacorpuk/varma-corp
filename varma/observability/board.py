@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from varma.clock import describe_0630_weekday_routine, describe_nightly_memory_filter
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
+from varma.ports.execution import execution_port_status
 from varma.db.models import (
     BoardApproval,
     ChallengeReview,
@@ -91,10 +92,12 @@ class BoardObservability:
             "trading_mode": control_snap["trading_mode"],
             "allow_list_empty": control_snap["allow_list_empty"],
             "live_adapter_loaded": control_snap["live_adapter_loaded"],
+            "broker_paper_loaded": control_snap.get("broker_paper_loaded", False),
             "employees_cannot_write_controls": True,
             "missing_numeric_limits": self._missing_numeric_limits(control_snap),
             "controls": self._control_snapshot(control_snap),
             "paper_gate": self._paper_gate(control_snap),
+            "execution_ports": self._execution_ports(control_snap),
             "cost_cap_units": self.costs.cap,
             "cost_cap_label": TEMPORARY_BRIEF_COST_CAP_LABEL,
             "cost_cap_is_board_budget": False,
@@ -147,10 +150,11 @@ class BoardObservability:
             "allow_list": list(control_snap["allow_list"]),
             "allow_list_empty": control_snap["allow_list_empty"],
             "live_adapter_loaded": control_snap["live_adapter_loaded"],
+            "broker_paper_loaded": control_snap.get("broker_paper_loaded", False),
             "live_gate": control_snap["live_gate"],
             "note": (
                 "Board-only control snapshot. Employees cannot write controls. "
-                "Empty allow-list cannot execute. LIVE adapter is not loaded. "
+                "Empty allow-list cannot execute. BROKER_PAPER and LIVE remain UNLOADED. "
                 "This view does not write trading_mode, allow-list, or permissions."
             ),
         }
@@ -181,6 +185,7 @@ class BoardObservability:
             "trading_mode": control_snap["trading_mode"],
             "execution": False,
             "live_adapter_loaded": control_snap["live_adapter_loaded"],
+            "broker_paper_loaded": control_snap.get("broker_paper_loaded", False),
             "live_approvals": live_approvals,
             "paper_start_approvals": paper_approvals,
             "gate": control_snap["live_gate"],
@@ -198,6 +203,15 @@ class BoardObservability:
                 "and are not invented here. Silence is not approval."
             ),
         }
+
+    def _execution_ports(self, control_snap: dict[str, Any]) -> dict[str, Any]:
+        """BROKER_PAPER and LIVE remain UNLOADED. Status only. No fills."""
+        status = execution_port_status()
+        status["trading_mode"] = control_snap["trading_mode"]
+        status["live_adapter_loaded"] = control_snap["live_adapter_loaded"]
+        status["broker_paper_loaded"] = bool(control_snap.get("broker_paper_loaded", False))
+        status["employees_cannot_write_controls"] = True
+        return status
 
     def _nightly_filter(self) -> dict[str, Any]:
         row = self.session.query(MemoryFilterRun).order_by(MemoryFilterRun.ran_at.desc()).first()

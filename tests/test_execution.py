@@ -58,6 +58,89 @@ def test_live_adapter_cannot_be_constructed():
         assert "not loaded" in str(exc)
 
 
+def test_broker_paper_adapter_cannot_be_constructed():
+    from varma.ports.execution import PaperBrokerAdapter
+
+    try:
+        PaperBrokerAdapter()
+        raise AssertionError("BROKER_PAPER adapter must not construct")
+    except RuntimeError as exc:
+        assert "not loaded" in str(exc)
+        assert "UNLOADED" in str(exc)
+
+
+def test_constructing_and_using_unloaded_ports_is_denied():
+    from varma.ports.execution import (
+        BROKER_PAPER_LOADED,
+        LIVE_PORT_LOADED,
+        construct_execution_port,
+        use_broker_paper_port,
+        use_live_port,
+    )
+
+    assert BROKER_PAPER_LOADED is False
+    assert LIVE_PORT_LOADED is False
+    try:
+        construct_execution_port("BROKER_PAPER")
+        raise AssertionError("BROKER_PAPER must not construct")
+    except RuntimeError as exc:
+        assert "not loaded" in str(exc)
+    try:
+        construct_execution_port("LIVE")
+        raise AssertionError("LIVE must not construct")
+    except RuntimeError as exc:
+        assert "not loaded" in str(exc)
+    try:
+        use_broker_paper_port(order={"symbol": "AAPL", "side": "buy"})
+        raise AssertionError("using BROKER_PAPER must be denied")
+    except RuntimeError as exc:
+        assert "not loaded" in str(exc)
+    try:
+        use_live_port(order={"symbol": "AAPL", "side": "buy"})
+        raise AssertionError("using LIVE must be denied")
+    except RuntimeError as exc:
+        assert "not loaded" in str(exc)
+
+
+def test_execution_port_reports_broker_paper_and_live_unloaded(session):
+    from varma.ports.execution import BROKER_PAPER_LOADED, LIVE_PORT_LOADED
+
+    port = ExecutionPort(session)
+    assert "BROKER_PAPER" not in port.available_ports()
+    assert "LIVE" not in port.available_ports()
+    assert port.unloaded_ports() == ["BROKER_PAPER", "LIVE"]
+    assert port.broker_paper_loaded() is False
+    assert port.live_loaded() is False
+    status = port.port_status()
+    assert status["fills"] is False
+    assert status["paper_fills"] is False
+    assert status["live_fills"] is False
+    assert status["broker_paper"]["status"] == "UNLOADED"
+    assert status["broker_paper"]["loaded"] is False
+    assert status["live"]["status"] == "UNLOADED"
+    assert status["live"]["loaded"] is False
+    assert BROKER_PAPER_LOADED is False
+    assert LIVE_PORT_LOADED is False
+
+
+def test_place_order_via_unloaded_ports_is_denied(session):
+    port = ExecutionPort(session)
+    paper = port.place_order(
+        actor_id="board-member",
+        actor_type="board_member",
+        order={"symbol": "AAPL", "execution_port": "BROKER_PAPER", "quantity": 1},
+    )
+    assert paper.allowed is False
+    assert paper.reason == "BROKER_PAPER_NOT_LOADED"
+    live = port.place_order(
+        actor_id="board-member",
+        actor_type="board_member",
+        order={"symbol": "AAPL", "execution_port": "LIVE", "quantity": 1},
+    )
+    assert live.allowed is False
+    assert live.reason in {"LIVE_BLOCKED", "LIVE_ADAPTER_NOT_LOADED"}
+
+
 def test_gold_cannot_execute(session):
     emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     from varma.db.models import Permission

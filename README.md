@@ -25,6 +25,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 17. Same panel: Board-only read of missing numeric-limit KEYS (OPEN BOARD DECISIONS, values unset and not invented). Missing limits still DENY execution.
 18. Same panel: Board-only control snapshot (trading_mode=LIVE_BLOCKED, empty allow-list, employees cannot write controls). Read-only.
 19. Same panel: Board-only paper-gate status — PAPER not started, trading_mode=LIVE_BLOCKED, no execution. Paper duration/success thresholds remain unset OPEN BOARD DECISIONS.
+20. Same panel: Board-only confirmation that BROKER_PAPER and LIVE execution ports remain UNLOADED. Status only. No fills. Constructing or using those ports is denied.
 
 ## System separation
 
@@ -65,7 +66,7 @@ One client for Mac and Windows (Electron). Browser also works in development.
 
 Then open http://127.0.0.1:5173
 
-Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (control snapshot, missing numeric-limit keys, paper-gate status, cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. Observability is read-only.
+Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (control snapshot, missing numeric-limit keys, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. Observability is read-only.
 
 ## 06:30 Europe/London routine
 
@@ -83,6 +84,7 @@ A later slice can attach the same skill to a Europe/London scheduler.
 - Execution allow-list: empty, so no execution
 - Numeric limits: unset, so deny (OPEN BOARD DECISION, not invented here)
 - LIVE adapter: not loaded
+- BROKER_PAPER and LIVE execution ports: UNLOADED (status only; no fills)
 - Employees cannot write control tables
 - CEO, Challenge, and Risk cannot approve live trading (Board Member only)
 - Paper and live trading are not implemented in this slice
@@ -138,6 +140,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 - Board-only missing numeric-limit KEYS. Values remain unset OPEN BOARD DECISIONS and are not invented. Missing limits DENY execution.
 - Board-only control snapshot: `trading_mode=LIVE_BLOCKED`, empty allow-list, employees cannot write controls. Read-only.
 - Board-only paper-gate status: PAPER not started / `LIVE_BLOCKED` / no execution. Paper duration/success thresholds remain unset OPEN BOARD DECISIONS.
+- Board-only execution-port status: BROKER_PAPER and LIVE remain UNLOADED. Status only. No fills. Constructing or using those ports is denied.
 - Board-only employee status bubbles. Click an employee (floor or bubble name) to open that person in the same right-hand panel.
 - Visible without clicking an employee. A Board observability entry returns to this view.
 - Read-only. It does not write controls, `trading_mode`, allow-list, or permissions. Chat is hidden on this view.
@@ -146,7 +149,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 
 ## Next slice
 
-Board-only confirmation that BROKER_PAPER and LIVE execution ports remain unloaded (status only, still no fills). No new employees. Still no paper/live execution and no 12-employee roster.
+On-demand 07:30 Europe/London company meeting record: a Board Member (or documented CLI) can run a meeting that writes a meeting artefact to the database from existing handoffs (MI brief, CEO pack, Challenge SAMPLE, Risk DENY). Show the latest meeting in Board observability. Not a trade, not LIVE approval, not a daemon. No new employees. Still no paper/live execution and no 12-employee roster.
 
 ## Specs
 
@@ -156,4 +159,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, status bubbles, documented routine schedules, missing numeric-limit keys, control snapshot, paper-gate status (PAPER not started), and employee chat history; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
+Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, status bubbles, documented routine schedules, missing numeric-limit keys, control snapshot, paper-gate status (PAPER not started), UNLOADED BROKER_PAPER and LIVE execution ports (status only, no fills), and employee chat history; constructing or using BROKER_PAPER/LIVE is denied; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
