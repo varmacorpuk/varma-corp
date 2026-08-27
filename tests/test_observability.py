@@ -5,10 +5,16 @@ from tests.conftest import (
     EMPLOYEE_HEADERS,
     RISK_HEADERS,
 )
+from varma.clock import now_london
 from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
-from varma.db.models import AllowListInstrument, ControlState
+from varma.db.models import AllowListInstrument, ControlState, MemoryOrg
+from varma.db.seed import MI_SLUG
+from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG
 from varma.observability.board import BoardObservability
 from varma.routines.run_brief import run_brief
+from varma.routines.run_challenge import run_challenge
+from varma.routines.run_nightly_filter import run_nightly_filter
+from varma.routines.run_risk_deny import run_risk_deny
 
 
 def test_board_reads_costs_and_evidence_from_database(session):
@@ -69,6 +75,9 @@ def test_board_observability_api_is_read_only(client):
     assert office["board_observability"]["read_only"] is True
     assert office["board_observability"]["writes_controls"] is False
     assert office["office_is_source_of_truth"] is False
+    assert "nightly_filter" in office["board_observability"]["includes"]
+    assert "meeting_pack" in office["board_observability"]["includes"]
+    assert "status_bubbles" in office["board_observability"]["includes"]
 
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
@@ -125,3 +134,106 @@ def test_observability_does_not_unblock_live(client):
     assert controls["trading_mode"] == "LIVE_BLOCKED"
     assert controls["allow_list"] == []
     assert controls["live_adapter_loaded"] is False
+
+
+def test_observability_nightly_filter_and_org_titles(session):
+    empty = BoardObservability(session).snapshot()
+    assert empty["nightly_filter"]["run"] is None
+    assert empty["nightly_filter"]["writes_controls"] is False
+    assert empty["nightly_filter"]["daemon"] is False
+    assert empty["nightly_filter"]["timezone"] == "Europe/London"
+    assert empty["organisation_memory"]["titles"] == []
+    assert empty["organisation_memory"]["source"] == "database"
+
+    session.add(
+        MemoryOrg(
+            title="SAMPLE org title — TEMPORARY DEVELOPMENT DEFAULT",
+            content="Not Board-approved organisation knowledge.",
+            promoted_by="test",
+            created_at=now_london(),
+        )
+    )
+    session.commit()
+    run_brief(session)
+    before = session.get(ControlState, 1).trading_mode
+    result = run_nightly_filter(session)
+    snap = BoardObservability(session).snapshot()
+    assert snap["nightly_filter"]["run"] is not None
+    assert snap["nightly_filter"]["run"]["id"] == result["id"]
+    assert snap["nightly_filter"]["run"]["controls_written"] is False
+    assert snap["nightly_filter"]["run"]["daemon"] is False
+    titles = [row["title"] for row in snap["organisation_memory"]["titles"]]
+    assert "SAMPLE org title — TEMPORARY DEVELOPMENT DEFAULT" in titles
+    assert "content" not in snap["organisation_memory"]["titles"][0]
+    assert session.get(ControlState, 1).trading_mode == before == "LIVE_BLOCKED"
+    assert snap["writes_controls"] is False
+
+
+def test_observability_meeting_pack_status(session):
+    empty = BoardObservability(session).snapshot()
+    pack = empty["meeting_pack"]
+    assert pack["read_only"] is True
+    assert pack["source"] == "database"
+    assert pack["meeting"] == "07:30 Europe/London company meeting"
+    assert pack["brief_headline"] is None
+    assert pack["ceo_handoff_status"] == "not"
+    assert pack["challenge_sample_thesis"]["status"] == "not"
+    assert pack["challenge_sample_thesis"]["sample_not_a_live_trade"] is True
+    assert pack["risk_status"] == "not"
+    assert pack["risk_denied"] is False
+
+    brief = run_brief(session)
+    after_brief = BoardObservability(session).snapshot()["meeting_pack"]
+    assert after_brief["brief_headline"] == brief["headline"]
+    assert after_brief["ceo_handoff_status"] == "DELIVERED"
+
+    challenge = run_challenge(session)
+    after_challenge = BoardObservability(session).snapshot()["meeting_pack"]
+    assert after_challenge["challenge_sample_thesis"]["present"] is True
+    assert "SAMPLE" in (after_challenge["challenge_sample_thesis"]["label"] or "")
+    assert after_challenge["challenge_sample_thesis"]["is_live_trade"] is False
+    assert after_challenge["challenge_sample_thesis"]["status"] in {
+        "SAMPLE",
+        challenge["review"]["verdict"],
+        "CHALLENGED",
+    }
+
+    run_risk_deny(session)
+    after_risk = BoardObservability(session).snapshot()
+    assert after_risk["meeting_pack"]["risk_status"] == "DENIED"
+    assert after_risk["meeting_pack"]["risk_denied"] is True
+    assert after_risk["trading_mode"] == "LIVE_BLOCKED"
+    assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
+
+
+def test_observability_status_bubbles_board_only(client):
+    denied = client.get("/observability", headers=EMPLOYEE_HEADERS)
+    assert denied.status_code == 401
+    for headers in (CEO_HEADERS, CHALLENGE_HEADERS, RISK_HEADERS):
+        assert client.get("/observability", headers=headers).status_code == 401
+
+    body = client.get("/observability", headers=BOARD_HEADERS).json()
+    slugs = [row["slug"] for row in body["status_bubbles"]]
+    assert slugs == sorted(slugs)
+    assert MI_SLUG in slugs
+    assert CEO_SLUG in slugs
+    assert CHALLENGE_SLUG in slugs
+    assert RISK_SLUG in slugs
+    assert len(body["status_bubbles"]) == 4
+    for row in body["status_bubbles"]:
+        assert row["status_bubble"]
+        assert row["read_only"] is True
+
+    client.post("/routines/run-brief", headers=BOARD_HEADERS)
+    after = client.get("/observability", headers=BOARD_HEADERS).json()
+    by_slug = {row["slug"]: row for row in after["status_bubbles"]}
+    assert by_slug[MI_SLUG]["status_bubble"] == "BRIEF READY"
+    assert by_slug[CEO_SLUG]["status_bubble"] == "PACK READY"
+    assert after["meeting_pack"]["ceo_handoff_status"] == "DELIVERED"
+
+    post = client.post("/observability", headers=BOARD_HEADERS, json={"status_bubble": "LIVE"})
+    assert post.status_code == 403
+    assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
+    assert client.get("/controls").json()["trading_mode"] == "LIVE_BLOCKED"
+    assert LIVE_ADAPTER_LOADED is False
+

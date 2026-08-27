@@ -414,6 +414,14 @@ def create_app() -> FastAPI:
                 "read_only": True,
                 "source": "database",
                 "writes_controls": False,
+                "includes": [
+                    "costs",
+                    "evidence",
+                    "nightly_filter",
+                    "organisation_memory",
+                    "meeting_pack",
+                    "status_bubbles",
+                ],
             },
         }
 
