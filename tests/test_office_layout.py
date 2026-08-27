@@ -40,6 +40,7 @@ def test_office_click_opens_panel_logic():
     assert "chatForm.hidden = true" in JS.replace(" ", "") or "chatForm.hidden=true" in JS.replace(" ", "")
     assert "nightly" in JS.lower()
     assert "07:30" in JS
+    assert "meeting artefacts" in JS.lower() or "meeting_artefacts" in JS
     assert "organisation memory" in JS.lower() or "organisation_memory" in JS
     assert "status_bubbles" in JS or "status bubbles" in JS.lower()
     assert "data-employee-slug" in JS

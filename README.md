@@ -20,6 +20,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 12. Nightly Europe/London memory filter (on-demand): archives working context in the database; evidence stays append-only; filter does not write controls.
 13. Board Member read-only observability in the right-hand panel: cost ledger + recent evidence from the database. Visible without clicking an employee, and via a Board observability entry. This view does not write controls, trading_mode, allow-list, or permissions.
 14. Same Board observability panel also shows: latest nightly memory-filter run; organisation-memory titles; 07:30 meeting pack status (MI brief headline, CEO handoff DELIVERED/not, Challenge SAMPLE thesis status, Risk DENIED/not); Board-only employee status bubbles. Click still opens the person in the right-hand panel. Chat stays hidden on observability.
+15. Same panel lists 07:30 meeting artefacts from the database (brief, CEO handoff, SAMPLE thesis, challenge review, Risk decision). Read-only. SAMPLE is not a live trade. Risk cannot approve LIVE.
 
 ## System separation
 
@@ -128,6 +129,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 - Cost ledger and recent evidence are read from the kernel (`GET /observability`).
 - Latest nightly memory-filter run and organisation-memory titles (titles only) are read from the database.
 - 07:30 meeting pack status: latest MI brief headline, CEO handoff DELIVERED/not, Challenge SAMPLE thesis status, Risk DENIED/not.
+- 07:30 meeting artefact list (read-only): latest brief, CEO handoff, SAMPLE thesis, challenge review, Risk decision.
 - Board-only employee status bubbles. Click an employee (floor or bubble name) to open that person in the same right-hand panel.
 - Visible without clicking an employee. A Board observability entry returns to this view.
 - Read-only. It does not write controls, `trading_mode`, allow-list, or permissions. Chat is hidden on this view.
@@ -136,7 +138,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 
 ## Next slice
 
-Documented 07:30 meeting artefact list in the same Board observability panel (read-only: brief, handoff, SAMPLE thesis, challenge review, Risk decision as a list of artefacts, still from the database). No new employees. Still no paper/live execution and no 12-employee roster.
+Load selected-employee chat history from the database into the right-hand panel when an employee is opened (GET already exists; desktop currently does not load it). No new employees. Still no paper/live execution and no 12-employee roster.
 
 ## Specs
 
@@ -146,4 +148,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, and status bubbles; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
+Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, and status bubbles; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.

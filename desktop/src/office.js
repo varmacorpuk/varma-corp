@@ -152,6 +152,7 @@
     const run = filter.run;
     const titles = (data.organisation_memory && data.organisation_memory.titles) || [];
     const pack = data.meeting_pack || {};
+    const artefacts = (data.meeting_artefacts && data.meeting_artefacts.items) || [];
     const thesis = pack.challenge_sample_thesis || {};
     const bubbles = data.status_bubbles || [];
     const costRows = costs.length
@@ -186,6 +187,24 @@
           )
           .join("")
       : "<p class=\"meta\">No employee status bubbles.</p>";
+    const artefactRows = artefacts.length
+      ? artefacts
+          .map((row) => {
+            const kind = escapeHtml(row.kind || "");
+            const extra =
+              row.kind === "sample_thesis"
+                ? " · SAMPLE not a live trade"
+                : row.kind === "risk_decision"
+                  ? " · " + escapeHtml(row.decision || "")
+                  : row.kind === "handoff"
+                    ? " · " + escapeHtml(row.status || "")
+                    : row.kind === "challenge_review"
+                      ? " · " + escapeHtml(row.verdict || "")
+                      : "";
+            return `<div class="ledger-row">${kind}${extra}<br /><span class="meta">${escapeHtml(row.label || row.purpose || row.id || "")}</span></div>`;
+          })
+          .join("")
+      : "<p class=\"meta\">No 07:30 meeting artefacts stored yet.</p>";
     return `
       <h3>Board observability</h3>
       <p class="meta">Read-only. Source: ${escapeHtml(data.source || "database")}. This view does not write controls, trading_mode, allow-list, or permissions.</p>
@@ -194,6 +213,8 @@
       <h3>07:30 meeting pack</h3>
       <p class="meta">${escapeHtml(pack.meeting || "07:30 Europe/London company meeting")} · MI brief: ${escapeHtml(pack.brief_headline || "not")} · CEO handoff: ${escapeHtml(pack.ceo_handoff_status || "not")} · Challenge SAMPLE thesis: ${escapeHtml(thesis.status || "not")} · Risk: ${escapeHtml(pack.risk_status || "not")}</p>
       <p class="meta">${escapeHtml(thesis.label || "SAMPLE — not a live trade")}. Not an order.</p>
+      <h3>07:30 meeting artefacts</h3>
+      ${artefactRows}
       <h3>Nightly memory filter</h3>
       <p class="meta">On-demand. Europe/London. Evidence append-only. Does not write controls.</p>
       ${filterBlock}

@@ -104,6 +104,7 @@ class BoardObservability:
             "nightly_filter": self._nightly_filter(),
             "organisation_memory": self._organisation_memory_titles(),
             "meeting_pack": self._meeting_pack(),
+            "meeting_artefacts": self._meeting_artefacts(),
             "status_bubbles": self._status_bubbles(),
             "note": READ_ONLY_NOTE,
         }
@@ -137,7 +138,14 @@ class BoardObservability:
             ),
         }
 
-    def _meeting_pack(self) -> dict[str, Any]:
+    def _latest_meeting_rows(self) -> tuple[
+        IntelligenceBrief | None,
+        Employee | None,
+        Handoff | None,
+        SampleThesis | None,
+        ChallengeReview | None,
+        RiskDecision | None,
+    ]:
         brief = (
             self.session.query(IntelligenceBrief)
             .order_by(IntelligenceBrief.produced_at.desc())
@@ -170,6 +178,10 @@ class BoardObservability:
         risk = (
             self.session.query(RiskDecision).order_by(RiskDecision.produced_at.desc()).first()
         )
+        return brief, ceo, handoff, thesis, review, risk
+
+    def _meeting_pack(self) -> dict[str, Any]:
+        brief, _ceo, handoff, thesis, review, risk = self._latest_meeting_rows()
         if review is not None:
             challenge_status = str(review.verdict or "SAMPLE")
         elif thesis is not None:
@@ -197,6 +209,74 @@ class BoardObservability:
             "note": (
                 "Read-only 07:30 meeting pack status from the database. "
                 "Not a trade recommendation. Not an order."
+            ),
+        }
+
+    def _meeting_artefacts(self) -> dict[str, Any]:
+        brief, _ceo, handoff, thesis, review, risk = self._latest_meeting_rows()
+        items: list[dict[str, Any]] = []
+        if brief is not None:
+            items.append(
+                {
+                    "kind": "intelligence_brief",
+                    "id": brief.id,
+                    "label": brief.headline,
+                    "produced_at": brief.produced_at.isoformat() if brief.produced_at else None,
+                    "verification_passed": brief.verification_passed,
+                    "no_execution_authority": True,
+                }
+            )
+        if handoff is not None:
+            items.append(
+                {
+                    "kind": "handoff",
+                    "id": handoff.id,
+                    "artefact_type": handoff.artefact_type,
+                    "status": handoff.status,
+                    "to": CEO_SLUG,
+                    "purpose": handoff.purpose,
+                }
+            )
+        if thesis is not None:
+            items.append(
+                {
+                    "kind": "sample_thesis",
+                    "id": thesis.id,
+                    "label": thesis.label,
+                    "symbol": thesis.symbol,
+                    "is_live_trade": False,
+                    "no_execution_authority": True,
+                }
+            )
+        if review is not None:
+            items.append(
+                {
+                    "kind": "challenge_review",
+                    "id": review.id,
+                    "verdict": review.verdict,
+                    "does_not_approve_live": True,
+                    "no_execution_authority": True,
+                }
+            )
+        if risk is not None:
+            items.append(
+                {
+                    "kind": "risk_decision",
+                    "id": risk.id,
+                    "decision": risk.decision,
+                    "cannot_approve_live": True,
+                    "label": risk.label,
+                }
+            )
+        return {
+            "read_only": True,
+            "source": "database",
+            "meeting": "07:30 Europe/London company meeting",
+            "timezone": "Europe/London",
+            "items": items,
+            "note": (
+                "Read-only list of 07:30 meeting artefacts from the database. "
+                "SAMPLE thesis is not a live trade. Risk cannot approve LIVE."
             ),
         }
 
