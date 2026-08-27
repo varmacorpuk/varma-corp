@@ -6,8 +6,8 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 
 ## What this slice proves
 
-1. FastAPI kernel: health, Board Member auth stub, control tables (permissions, empty allow-list, trading_mode=LIVE_BLOCKED). Employees cannot write those tables.
-2. Four persistent employees: Research (Market Intelligence; slug `market-intelligence-research`; internal person_name Asha Patel is not the door label), CEO, Challenge, and Risk. LLM calls are invocations, not the employee. Office doors/titles are CEO, Research, Challenge, Risk. Talk is disabled.
+1. FastAPI kernel: health, Board Member auth stub, control tables (permissions, Board Addendum E PAPER allow-list, trading_mode=LIVE_BLOCKED). Employees cannot write those tables.
+2. Seven persistent employees shown as person · department (Board Addendum F): Asha Patel · Research, Jordan Hale · CEO, Sam Okeke · Challenge, Elena Voss · Risk, Chris Adeyemi · Trader, Nina Kapoor · Quant, Owen Blake · Technology. Door/role stays the job title. Talk is disabled.
 3. Skill prepare_daily_intelligence_brief. FakeLLM for tests. Optional LLM env is unused by default.
 4. On-demand brief plus a documented 06:30 Europe/London weekday routine.
 5. Independent verification of the brief (required fields, source+timestamp, freshness, TEMPORARY cost cap).
@@ -86,8 +86,8 @@ A later slice can attach the same skill to a Europe/London scheduler.
 
 ## Controls (not memory)
 
-- trading_mode: LIVE_BLOCKED (does not switch to PAPER while the allow-list is empty)
-- Execution allow-list: empty, so no orders (paper or live)
+- trading_mode: LIVE_BLOCKED (internal paper fill simulator is the paper ledger; do not load LIVE or BROKER_PAPER)
+- Execution allow-list: Board Addendum E 2026-08-27 PAPER membership (AAPL, MSFT, NVDA, AMZN, GOOGL, JPM, JNJ, SHEL.L, AZN.L, ULVR.L). Unknown tickers deny. Gold denies. Employees including the CEO cannot write the list.
 - Numeric limits: Board Addendum A 2026-08-27 (Board-set, VALUES shown)
   - simulated_capital = 1000 GBP
   - max_position = 200 GBP (one paper trade)
@@ -97,7 +97,8 @@ A later slice can attach the same skill to a Europe/London scheduler.
 - Currency GBP. Timezone Europe/London.
 - LIVE adapter: not loaded
 - BROKER_PAPER and LIVE execution ports: UNLOADED (no broker fills)
-- Internal PAPER FILL SIMULATOR is the paper ledger (Document 12). Still denies when the allow-list is empty, when LIVE, when the kill switch is on, or when limits are exceeded.
+- Internal PAPER FILL SIMULATOR is the paper ledger (Document 12). Still denies unknown tickers, gold, LIVE, kill switch, closed session, and limit breaches.
+- Paper session (Board Addendum C 2026-08-27): desk open from UK cash open (08:00 Europe/London weekdays) through US regular cash close (16:00 America/New_York converted onto the Europe/London clock). Flatten ALL paper before US close. Do NOT flatten at London cash close. No overnight. No US after-hours. No extended hours. On-demand Board job / CLI; no daemon. GET /observability does not flatten.
 - Employees cannot write control tables, allow-list, limits, trading_mode, or approve LIVE. CEO may recommend allow-list adds; cannot write them.
 - Board Member can trigger the kill switch without an AI employee. On halt: cancel open PAPER orders only; never load LIVE; never flatten live. Employees cannot reset it.
 
@@ -190,7 +191,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 
 ## Next slice
 
-Still no invented tickers. Still not live. Trader/Quant/Technology MVP combinable employees. BROKER_PAPER and LIVE remain UNLOADED. Empty allow-list ⇒ no orders. Approve LIVE remains impossible until the Board explicitly approves moving on.
+Still not live. BROKER_PAPER and LIVE remain UNLOADED. No office visual redesign. No Mac installers. Approve LIVE remains impossible until the Board explicitly approves moving on.
 
 ## Specs
 

@@ -4,9 +4,11 @@ from tests.conftest import (
     CHALLENGE_HEADERS,
     EMPLOYEE_HEADERS,
     RISK_HEADERS,
+    SESSION_OPEN,
 )
 from varma.clock import now_london
 from varma.controls.addendum_a import ADDENDUM_A_LABEL
+from varma.controls.addendum_e import ADDENDUM_E_SYMBOLS
 from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
 from varma.db.models import AllowListInstrument, ControlState, Employee, Permission
 from varma.db.seed import MI_SLUG
@@ -47,7 +49,7 @@ def test_addendum_a_limits_are_board_set(session):
         assert row["board_set"] is True
     snap = engine.snapshot()
     assert snap["trading_mode"] == "LIVE_BLOCKED"
-    assert snap["allow_list"] == []
+    assert set(snap["allow_list"]) == set(ADDENDUM_E_SYMBOLS)
     assert snap["currency"] == "GBP"
     assert snap["timezone"] == "Europe/London"
     assert snap["addendum"]["does_not_switch_to_paper"] is True
@@ -72,7 +74,7 @@ def test_observability_shows_addendum_a_values_and_kill_switch(client):
     assert body["paper_ledger"]["fills"] == 0
     assert body["paper_ledger"]["simulated_capital_gbp"] == 1000
     assert body["controls"]["trading_mode"] == "LIVE_BLOCKED"
-    assert body["controls"]["allow_list"] == []
+    assert set(body["controls"]["allow_list"]) == set(ADDENDUM_E_SYMBOLS)
 
 
 def test_employees_cannot_write_limits(client):
@@ -98,23 +100,23 @@ def test_employees_cannot_write_limits(client):
     )
     assert ceo.status_code == 403
     after = client.get("/controls").json()
-    assert after["allow_list"] == []
+    assert set(after["allow_list"]) == set(ADDENDUM_E_SYMBOLS)
     assert after["trading_mode"] == "LIVE_BLOCKED"
     assert after["numeric_limits"][0]["source"] == ADDENDUM_A_LABEL
 
 
-def test_empty_allow_list_still_denies_with_limits(session):
+def test_unknown_ticker_still_denies_with_limits(session):
     emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     session.query(Permission).filter_by(subject_id=emp.id, action="place_order").one().allowed = True
     session.commit()
     d = ControlEngine(session).place_order(
         actor_id=emp.id,
         actor_type="employee",
-        order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        order={"symbol": "ZZQQ", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
     )
     assert d.allowed is False
-    assert d.reason == "EMPTY_ALLOW_LIST"
-    assert session.query(AllowListInstrument).count() == 0
+    assert d.reason == "SYMBOL_NOT_ON_ALLOW_LIST"
+    assert session.query(AllowListInstrument).count() == len(ADDENDUM_E_SYMBOLS)
 
 
 def test_live_still_blocked_with_limits(client):
@@ -164,6 +166,7 @@ def test_seventh_order_in_a_day_denies(session):
                 "notional_gbp": 10,
                 "execution_port": "SIMULATOR",
             },
+            at=SESSION_OPEN,
         )
         assert d.allowed is True, d.reason
     seventh = engine.place_order(
@@ -176,6 +179,7 @@ def test_seventh_order_in_a_day_denies(session):
             "notional_gbp": 10,
             "execution_port": "SIMULATOR",
         },
+        at=SESSION_OPEN,
     )
     assert seventh.allowed is False
     assert seventh.reason == "MAX_ORDERS_PER_DAY"
@@ -197,7 +201,7 @@ def test_kill_switch_denies_orders(session):
     assert BROKER_PAPER_LOADED is False
 
 
-def test_board_cannot_switch_to_paper_while_allow_list_empty(client):
+def test_board_cannot_switch_to_paper_mode(client):
     r = client.post(
         "/controls/write",
         headers=BOARD_HEADERS,

@@ -80,6 +80,23 @@ BOARD_JOBS: tuple[dict[str, Any], ...] = (
         "is_live_trade": False,
         "is_live_approval": False,
     },
+    {
+        "id": "run-flatten-us-close",
+        "label": "Flatten paper before US cash close",
+        "method": "POST",
+        "path": "/routines/run-flatten-us-close",
+        "cli": "python -m varma.routines.run_flatten_us_close",
+        "sample": False,
+        "is_live_trade": False,
+        "is_live_approval": False,
+        "internal_simulator_flatten": True,
+        "flatten_at": "US_REGULAR_CASH_CLOSE",
+        "flatten_not_at": "LONDON_CASH_CLOSE",
+        "paper_fills": True,
+        "fills": False,
+        "allow_list_not_required_for_flatten": True,
+        "daemon": False,
+    },
 )
 
 
@@ -88,6 +105,15 @@ def runnable_jobs_catalog() -> dict[str, Any]:
     for job in BOARD_JOBS:
         item = dict(job)
         item.update(JOB_SAFETY_FLAGS)
+        if job["id"] == "run-flatten-us-close":
+            item["paper_fills"] = True
+            item["fills"] = False
+            item["internal_simulator_flatten"] = True
+            item["broker_fills"] = False
+            item["allow_list_not_required_for_flatten"] = True
+            item["flatten_at"] = "US_REGULAR_CASH_CLOSE"
+            item["flatten_not_at"] = "LONDON_CASH_CLOSE"
+            item["daemon"] = False
         items.append(item)
     catalog = {
         "read_only_list": True,
@@ -97,11 +123,13 @@ def runnable_jobs_catalog() -> dict[str, Any]:
             "Board Member can run these on-demand jobs via POST from the right-hand "
             "panel or the API. Not GET /observability. Employees are denied. CLI "
             "entry points still work. Running a job does not load BROKER_PAPER or "
-            "LIVE, does not change trading_mode, and does not fill paper/live orders. "
+            "LIVE, does not change trading_mode, and does not fill against a broker. "
+            "Flatten-before-US-close uses the internal paper simulator only. "
             "After a run, the same panel refreshes from the database."
         ),
     }
     catalog.update(JOB_SAFETY_FLAGS)
+    catalog["fills"] = False
     return catalog
 
 
@@ -126,4 +154,21 @@ def with_job_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
         "broker_paper_status": ports["broker_paper"]["status"],
         "live_status": ports["live"]["status"],
     }
+    return out
+
+
+def with_flatten_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
+    """Safety flags for the US-close flatten job. Internal simulator only."""
+    out = with_job_safety(session, result)
+    fills = int(result.get("flatten_fills") or 0)
+    out["job_safety"]["fills"] = False
+    out["job_safety"]["paper_fills"] = fills > 0
+    out["job_safety"]["live_fills"] = False
+    out["job_safety"]["internal_simulator_flatten"] = True
+    out["job_safety"]["broker_fills"] = False
+    out["job_safety"]["allow_list_not_required"] = True
+    out["job_safety"]["flatten_at"] = "US_REGULAR_CASH_CLOSE"
+    out["job_safety"]["flatten_not_at"] = "LONDON_CASH_CLOSE"
+    out["job_safety"]["loads_broker_ports"] = False
+    out["job_safety"]["changes_trading_mode"] = False
     return out

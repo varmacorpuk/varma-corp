@@ -12,7 +12,14 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from varma import __version__
-from varma.clock import describe_0630_weekday_routine, describe_0730_company_meeting, describe_nightly_memory_filter, now_london
+from varma.clock import (
+    describe_0630_weekday_routine,
+    describe_0730_company_meeting,
+    describe_flatten_us_close,
+    describe_nightly_memory_filter,
+    describe_paper_session,
+    now_london,
+)
 from varma.controls.engine import ControlEngine
 from varma.db.engine import get_session_factory, init_db, storage_from_url
 from varma.db.models import (
@@ -39,7 +46,8 @@ from varma.routines.run_challenge import run_challenge
 from varma.routines.run_nightly_filter import run_nightly_filter
 from varma.routines.run_risk_deny import run_risk_deny
 from varma.routines.run_0730_meeting import run_0730_meeting
-from varma.routines.board_jobs import with_job_safety
+from varma.routines.run_flatten_us_close import run_flatten_us_close
+from varma.routines.board_jobs import with_flatten_safety, with_job_safety
 from varma.skills.challenge_sample_thesis import challenge_review_to_dict
 from varma.skills.prepare_daily_intelligence_brief import brief_to_dict
 from varma.skills.prepare_sample_thesis import thesis_to_dict
@@ -362,6 +370,36 @@ def create_app() -> FastAPI:
     ) -> dict[str, Any]:
         return with_job_safety(session, run_0730_meeting(session, started_by="board-member"))
 
+    @app.post("/routines/run-flatten-us-close")
+    def api_run_flatten_us_close(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return with_flatten_safety(
+            session,
+            run_flatten_us_close(session, started_by="board-member"),
+        )
+
+    @app.get("/routines/flatten-us-close-schedule")
+    def flatten_us_close_schedule() -> dict[str, Any]:
+        return {
+            "schedule": "before US regular cash close",
+            "timezone": "Europe/London",
+            "flatten_at": "US_REGULAR_CASH_CLOSE",
+            "flatten_not_at": "LONDON_CASH_CLOSE",
+            "daemon": False,
+            "overnight_holds": False,
+            "us_after_hours": False,
+            "extended_hours": False,
+            "description": describe_flatten_us_close(),
+            "session": describe_paper_session(),
+            "cli": "python -m varma.routines.run_flatten_us_close",
+            "writes_controls": False,
+            "get_observability_flattens": False,
+            "internal_simulator": True,
+            "broker": False,
+        }
+
     @app.get("/routines/0730-meeting-schedule")
     def company_meeting_schedule() -> dict[str, Any]:
         return {
@@ -487,10 +525,13 @@ def create_app() -> FastAPI:
                 "height": 200,
                 "style": "placeholder-pixel-2d",
                 "rooms": [
-                    {"id": "research", "label": "Research desk"},
-                    {"id": "ceo", "label": "CEO desk"},
-                    {"id": "challenge", "label": "Challenge desk"},
-                    {"id": "risk", "label": "Risk desk"},
+                    {"id": "research", "label": "Research desk", "person": "Asha Patel · Research"},
+                    {"id": "ceo", "label": "CEO desk", "person": "Jordan Hale · CEO"},
+                    {"id": "challenge", "label": "Challenge desk", "person": "Sam Okeke · Challenge"},
+                    {"id": "risk", "label": "Risk desk", "person": "Elena Voss · Risk"},
+                    {"id": "trader", "label": "Trader desk", "person": "Chris Adeyemi · Trader"},
+                    {"id": "quant", "label": "Quant desk", "person": "Nina Kapoor · Quant"},
+                    {"id": "technology", "label": "Technology desk", "person": "Owen Blake · Technology"},
                 ],
             },
             "board_observability": {
@@ -517,6 +558,8 @@ def create_app() -> FastAPI:
                     "kill_switch",
                     "evaluation",
                     "paper_ledger",
+                    "paper_session",
+                    "addendum_c",
                 ],
             },
         }

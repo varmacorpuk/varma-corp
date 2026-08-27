@@ -16,6 +16,7 @@ from varma.db.models import (
     SampleThesis,
 )
 from varma.memory.stores import MemoryStores
+from varma.controls.addendum_f import ALL_STAFF_SLUGS
 from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG, handoff_to_dict
 from varma.ports.llm import get_llm
 from varma.skills.challenge_sample_thesis import challenge_review_to_dict
@@ -23,7 +24,7 @@ from varma.skills.prepare_daily_intelligence_brief import brief_to_dict
 from varma.skills.prepare_sample_thesis import thesis_to_dict
 from varma.skills.review_unsafe_path import risk_decision_to_dict
 
-NO_LIVE_APPROVAL_SLUGS = {CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG}
+NO_LIVE_APPROVAL_SLUGS = set(ALL_STAFF_SLUGS)
 
 
 class EmployeeRuntime:

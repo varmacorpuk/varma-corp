@@ -1,4 +1,4 @@
-from tests.conftest import BOARD_HEADERS, EMPLOYEE_HEADERS
+from tests.conftest import BOARD_HEADERS, EMPLOYEE_HEADERS, SESSION_OPEN
 from varma.clock import now_london
 from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
 from varma.db.models import (
@@ -64,9 +64,10 @@ def test_simulator_denies_empty_allow_list_live_kill_switch_and_limits(session):
     empty = engine.place_order(
         actor_id=emp.id,
         actor_type="employee",
-        order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        order={"symbol": "ZZQQ", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        at=SESSION_OPEN,
     )
-    assert empty.reason == "EMPTY_ALLOW_LIST"
+    assert empty.reason == "SYMBOL_NOT_ON_ALLOW_LIST"
 
     live = engine.place_order(
         actor_id=emp.id,
@@ -104,6 +105,7 @@ def test_simulator_fills_when_allow_list_has_test_symbol(session):
         actor_id=emp.id,
         actor_type="employee",
         order={"symbol": "AAPL", "side": "buy", "quantity": 0.5, "notional_gbp": 50, "execution_port": "SIMULATOR"},
+        at=SESSION_OPEN,
     )
     assert d.allowed is True
     assert d.reason == "PAPER_FILL_SIMULATED"
@@ -122,14 +124,14 @@ def test_simulator_fills_when_allow_list_has_test_symbol(session):
     assert paper.reason == "BROKER_PAPER_NOT_LOADED"
 
 
-def test_place_order_api_still_denies_empty_allow_list(client):
+def test_place_order_api_denies_unknown_ticker(client):
     r = client.post(
         "/execution/place-order",
         headers=BOARD_HEADERS,
-        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        json={"symbol": "ZZQQ", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
     )
     assert r.status_code == 403
-    assert r.json()["detail"]["reason"] == "EMPTY_ALLOW_LIST"
+    assert r.json()["detail"]["reason"] == "SYMBOL_NOT_ON_ALLOW_LIST"
     employee = client.post(
         "/execution/place-order",
         headers=EMPLOYEE_HEADERS,

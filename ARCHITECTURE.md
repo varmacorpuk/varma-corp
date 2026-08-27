@@ -37,8 +37,8 @@ Board Member UI  (office canvas + RIGHT-HAND PANEL + approvals)
    Chat  -->  same employee runtime   (Talk is an OPEN BOARD DECISION; off in this slice)
         |
 Company Kernel
-   Identity, Employees (Research, CEO, Challenge, Risk — door titles; MI slug stable)
-   Permissions, trading_mode=LIVE_BLOCKED, empty allow_list
+   Identity, Employees (person · department: Asha Patel · Research, Jordan Hale · CEO, Sam Okeke · Challenge, Elena Voss · Risk, Chris Adeyemi · Trader, Nina Kapoor · Quant, Owen Blake · Technology)
+   Permissions, trading_mode=LIVE_BLOCKED, Board Addendum E PAPER allow_list
    Skills, Routines (on-demand via Board panel POST / CLI; no 24/7 daemon)
    Memory (employee / organisation / evidence)
    Nightly Europe/London working-context filter (archive working; evidence append-only; no control writes)

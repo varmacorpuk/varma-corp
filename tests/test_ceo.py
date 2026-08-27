@@ -14,7 +14,7 @@ def test_persistent_ceo_identity(session):
     assert ceo.display_name
     assert "Chief Executive" in ceo.role_title
     assert ceo.is_primary_agent == 1
-    assert asha.display_name == "Research"
+    assert asha.display_name == "Asha Patel · Research"
     assert asha.person_name == "Asha Patel"
     deny_live = (
         session.query(Permission)
@@ -39,9 +39,9 @@ def test_employees_include_ceo_and_asha(client):
     assert ceo["cannot_approve_live_trading"] is True
     assert ceo["is_meeting_brief_recipient"] is True
     asha = next(e for e in r.json() if e["slug"] == MI_SLUG)
-    assert asha["display_name"] == "Research"
+    assert asha["display_name"] == "Asha Patel · Research"
     assert asha["person_name"] == "Asha Patel"
-    assert asha["cannot_approve_live_trading"] is False
+    assert asha["cannot_approve_live_trading"] is True
 
 
 def test_brief_handoff_to_ceo(session):
@@ -103,7 +103,7 @@ def test_ceo_cannot_place_order(session):
         order={"symbol": "AAPL", "execution_port": "SIMULATOR"},
     )
     assert d.allowed is False
-    assert d.reason in {"NO_PERMISSION", "EMPTY_ALLOW_LIST"}
+    assert d.reason in {"NO_PERMISSION", "SYMBOL_NOT_ON_ALLOW_LIST"}
 
 
 def test_chat_to_ceo_hits_same_runtime(session):

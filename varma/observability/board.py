@@ -12,12 +12,18 @@ from sqlalchemy.orm import Session
 from varma.clock import (
     describe_0630_weekday_routine,
     describe_0730_company_meeting,
+    describe_flatten_us_close,
     describe_nightly_memory_filter,
+    describe_paper_session,
 )
 from varma.controls.addendum_a import ADDENDUM_A_LABEL, CURRENCY, TIMEZONE, addendum_a_public
+from varma.controls.addendum_c import ADDENDUM_C_LABEL, addendum_c_public
+from varma.controls.addendum_e import ADDENDUM_E_LABEL, addendum_e_public
+from varma.controls.addendum_f import ADDENDUM_F_LABEL, addendum_f_public
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
 from varma.controls.kill_switch import kill_switch_state
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
+from varma.paper.flatten import flatten_run_to_dict
 from varma.paper.ledger import PaperLedger, evaluation_snapshot
 from varma.paper.simulator import simulator_assumptions
 from varma.ports.execution import execution_port_status
@@ -34,6 +40,7 @@ from varma.db.models import (
     MemoryOrg,
     PaperAccount,
     PaperFill,
+    PaperFlattenRun,
     PaperOrder,
     PaperPosition,
     RiskDecision,
@@ -117,11 +124,16 @@ class BoardObservability:
             "currency": control_snap.get("currency", CURRENCY),
             "timezone": control_snap.get("timezone", TIMEZONE),
             "addendum": control_snap.get("addendum") or addendum_a_public(),
+            "addendum_c": control_snap.get("addendum_c") or addendum_c_public(),
+            "addendum_e": control_snap.get("addendum_e") or addendum_e_public(),
+            "addendum_f": control_snap.get("addendum_f") or addendum_f_public(),
+            "paper_session": self._paper_session(control_snap),
             "missing_numeric_limits": self._missing_numeric_limits(control_snap),
             "numeric_limits": self._numeric_limits(control_snap),
             "kill_switch": self._kill_switch(control_snap),
             "evaluation": self._evaluation(),
             "paper_ledger": self._paper_ledger(control_snap),
+            "paper_flatten": self._paper_flatten(),
             "controls": self._control_snapshot(control_snap),
             "paper_gate": self._paper_gate(control_snap),
             "execution_ports": self._execution_ports(control_snap),
@@ -241,9 +253,75 @@ class BoardObservability:
             "does_not_switch_to_paper_mode": True,
             "note": (
                 "Internal paper ledger. Not a broker. Empty allow-list ⇒ no orders. "
-                "trading_mode stays LIVE_BLOCKED."
+                "trading_mode stays LIVE_BLOCKED. Flatten ALL paper before US regular "
+                "cash close (Board Addendum C). Do not flatten at London cash close."
             ),
         }
+
+    def _paper_session(self, control_snap: dict[str, Any]) -> dict[str, Any]:
+        addendum = dict(control_snap.get("addendum_c") or addendum_c_public())
+        session_status = dict(control_snap.get("paper_session") or addendum.get("session") or {})
+        settings = list(control_snap.get("control_settings") or self.controls.setting_rows())
+        return {
+            "read_only": True,
+            "source": "database",
+            "board_set": True,
+            "values_invented": False,
+            "addendum": ADDENDUM_C_LABEL,
+            "company_clock": "Europe/London",
+            "uk_cash_open": "08:00",
+            "uk_cash_open_tz": "Europe/London",
+            "us_regular_cash_close": "16:00",
+            "us_regular_cash_close_tz": "America/New_York",
+            "us_close_converted_not_hardcoded": True,
+            "flatten_at": "US_REGULAR_CASH_CLOSE",
+            "flatten_not_at": "LONDON_CASH_CLOSE",
+            "flatten_at_london_cash_close": False,
+            "overnight_holds": False,
+            "us_after_hours": False,
+            "extended_hours": False,
+            "daemon": False,
+            "get_observability_flattens": False,
+            "empty_allow_list_denies_new_orders": True,
+            "flatten_does_not_require_allow_list": True,
+            "internal_simulator": True,
+            "broker": False,
+            "session": session_status,
+            "control_settings": settings,
+            "cli": "python -m varma.routines.run_flatten_us_close",
+            "method": "POST",
+            "path": "/routines/run-flatten-us-close",
+            "description": describe_paper_session(),
+            "flatten_description": describe_flatten_us_close(),
+            "employees_cannot_write": True,
+        }
+
+    def _paper_flatten(self) -> dict[str, Any]:
+        row = self.session.query(PaperFlattenRun).order_by(PaperFlattenRun.ran_at.desc()).first()
+        data: dict[str, Any] = {
+            "read_only": True,
+            "source": "database",
+            "writes_controls": False,
+            "daemon": False,
+            "get_observability_flattens": False,
+            "flatten_at": "US_REGULAR_CASH_CLOSE",
+            "flatten_not_at": "LONDON_CASH_CLOSE",
+            "internal_simulator": True,
+            "broker": False,
+            "run": flatten_run_to_dict(row) if row else None,
+        }
+        if row is None:
+            data["note"] = (
+                "No flatten-before-US-close run stored yet. "
+                "Board Member: POST /routines/run-flatten-us-close or "
+                "python -m varma.routines.run_flatten_us_close"
+            )
+        else:
+            data["note"] = (
+                "Latest on-demand flatten-before-US-close from the database. "
+                "Internal simulator only. GET /observability does not flatten."
+            )
+        return data
 
     def _control_snapshot(self, control_snap: dict[str, Any]) -> dict[str, Any]:
         return {
@@ -286,7 +364,7 @@ class BoardObservability:
             "read_only": True,
             "source": "database",
             "writes_controls": False,
-            "paper_status": "not started (trading_mode LIVE_BLOCKED; empty allow-list)",
+            "paper_status": "internal simulator ledger (trading_mode LIVE_BLOCKED; Addendum E PAPER allow-list)",
             "paper_started": False,
             "paper_mode_switched": False,
             "paper_execution_implemented": True,
@@ -316,13 +394,12 @@ class BoardObservability:
                 "paper_duration_threshold",
             ],
             "note": (
-                "trading_mode stays LIVE_BLOCKED. Do not switch to PAPER while the "
-                "execution allow-list is empty. Internal paper fill simulator is the "
-                "paper ledger. Empty allow-list ⇒ no orders. Success metric is Board "
-                "Addendum A: a successful trade is a CLOSED paper trade with profit > 0; "
-                "evaluation trigger is win rate > 50% AND book profitable. Do not "
-                "auto-switch LIVE. Paper duration remains an OPEN BOARD DECISION. "
-                "Silence is not approval."
+                "trading_mode stays LIVE_BLOCKED. Internal paper fill simulator is the "
+                "paper ledger. PAPER allow-list is Board Addendum E 2026-08-27. LIVE and "
+                "BROKER_PAPER remain UNLOADED. Success metric is Board Addendum A: a "
+                "successful trade is a CLOSED paper trade with profit > 0; evaluation "
+                "trigger is win rate > 50% AND book profitable. Do not auto-switch LIVE. "
+                "Paper duration remains an OPEN BOARD DECISION. Silence is not approval."
             ),
         }
 
@@ -575,6 +652,22 @@ class BoardObservability:
                     "path": "/routines/run-0730-meeting",
                     "cli": "python -m varma.routines.run_0730_meeting",
                     "description": describe_0730_company_meeting(),
+                },
+                "flatten_us_close": {
+                    "schedule": "before US regular cash close",
+                    "timezone": "Europe/London",
+                    "daemon": False,
+                    "flatten_at": "US_REGULAR_CASH_CLOSE",
+                    "flatten_not_at": "LONDON_CASH_CLOSE",
+                    "overnight_holds": False,
+                    "method": "POST",
+                    "path": "/routines/run-flatten-us-close",
+                    "cli": "python -m varma.routines.run_flatten_us_close",
+                    "description": describe_flatten_us_close(),
+                    "session": describe_paper_session(),
+                    "get_observability_flattens": False,
+                    "internal_simulator": True,
+                    "broker": False,
                 },
             },
             "note": (

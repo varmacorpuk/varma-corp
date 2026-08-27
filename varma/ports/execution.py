@@ -128,11 +128,22 @@ class ExecutionPort:
     def live_loaded(self) -> bool:
         return LIVE_PORT_LOADED
 
-    def place_order(self, *, actor_id: str, actor_type: str, order: dict[str, Any]) -> Decision:
+    def place_order(
+        self,
+        *,
+        actor_id: str,
+        actor_type: str,
+        order: dict[str, Any],
+        at=None,
+    ) -> Decision:
         order = dict(order)
         order.setdefault("execution_port", "SIMULATOR")
         port_name = str(order["execution_port"] or "SIMULATOR")
         # Do not construct PaperBrokerAdapter or LiveBrokerAdapter.
         if port_name in UNLOADED_EXECUTION_PORTS:
-            return self.engine.place_order(actor_id=actor_id, actor_type=actor_type, order=order)
-        return self.engine.place_order(actor_id=actor_id, actor_type=actor_type, order=order)
+            return self.engine.place_order(
+                actor_id=actor_id, actor_type=actor_type, order=order, at=at
+            )
+        return self.engine.place_order(
+            actor_id=actor_id, actor_type=actor_type, order=order, at=at
+        )

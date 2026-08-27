@@ -98,7 +98,7 @@ class FakeLLM:
                 },
                 {
                     "id": "live_blocked",
-                    "claim": "trading_mode is LIVE_BLOCKED. No numeric limits are set. Empty allow-list cannot execute.",
+                    "claim": "trading_mode is LIVE_BLOCKED. PAPER allow-list is Board Addendum E. Gold is not authorised.",
                 },
                 {
                     "id": "no_gold",
@@ -164,8 +164,30 @@ class FakeLLM:
             reply = (
                 f"{name} ({role}). Deny-path: {decision.get('decision') or 'no decision yet'}. "
                 f"I deny unsafe and out-of-policy paths. I cannot approve live trading. "
-                f"LIVE is blocked. Empty allow-list cannot execute. Gold is not authorised. "
-                f"A SAMPLE thesis is not an order. You asked: {message[:280]}"
+                f"LIVE is blocked. PAPER allow-list is Board Addendum E. Gold is not authorised. "
+                f"A SAMPLE thesis is not an order. Risk is independent of Trader. "
+                f"You asked: {message[:280]}"
+            )
+            return {"text": reply, "cost_units": 1}
+        if slug == "trader":
+            reply = (
+                f"{name} ({role}). I cannot write locks or approve live trading. "
+                f"Risk stays independent of Trader. LIVE and BROKER_PAPER remain UNLOADED. "
+                f"You asked: {message[:280]}"
+            )
+            return {"text": reply, "cost_units": 1}
+        if slug == "quant-strategy":
+            reply = (
+                f"{name} ({role}). I cannot write locks or approve live trading. "
+                f"Challenge stays independent of Quant. A sample is not an order. "
+                f"You asked: {message[:280]}"
+            )
+            return {"text": reply, "cost_units": 1}
+        if slug == "technology":
+            reply = (
+                f"{name} ({role}). I cannot write locks or approve live trading. "
+                f"The office is a projection. The database is the ledger. "
+                f"You asked: {message[:280]}"
             )
             return {"text": reply, "cost_units": 1}
         if brief:
