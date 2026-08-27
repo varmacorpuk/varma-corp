@@ -243,9 +243,11 @@ class ControlEngine:
         if allow and symbol not in allow:
             return self._deny("SYMBOL_NOT_ON_ALLOW_LIST", actor_id, order)
 
-        # Distinct from PAPER_EXECUTION_CLOSED so these three cannot silently
-        # fill at Grand Opening. Addendum C flatten is unchanged.
-        if lse_hold_blocks(self.session, symbol):
+        # After London cash close only. Not a 16:30 flatten default.
+        # Distinct from PAPER_EXECUTION_CLOSED so these three cannot fill in
+        # the London-close-to-US-close window until Board picks. Addendum C
+        # flatten stays US regular cash close.
+        if lse_hold_blocks(self.session, symbol, at=now):
             return self._deny_lse_session_unset(actor_id, order)
 
         if closed:
@@ -405,7 +407,7 @@ class ControlEngine:
         return Decision(False, reason, details)
 
     def _deny_lse_session_unset(self, actor_id: str, order: dict[str, Any]) -> Decision:
-        """Fail-closed LSE hold. Not a rewrite of Addendum C. Not a US listing."""
+        """After-London-cash-close LSE hold. Not a rewrite of Addendum C. Not a US listing."""
         return self._deny(
             LSE_SESSION_RULE_REASON,
             actor_id,
@@ -413,7 +415,9 @@ class ControlEngine:
             {
                 "fail_closed": True,
                 "session_rule": "UNSET",
-                "cannot_silently_fill_at_grand_opening": True,
+                "deny_after_london_cash_close": True,
+                "deny_until_resolved": True,
+                "cannot_silently_fill_after_london_cash_close": True,
                 "addendum_c_not_rewritten": True,
                 "split_flatten_clocks": False,
                 "flatten_at": "US_REGULAR_CASH_CLOSE",

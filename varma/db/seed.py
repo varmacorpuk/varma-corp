@@ -365,10 +365,11 @@ def seed_board_addendum_c(session: Session) -> None:
 
 
 def seed_lse_session_hold(session: Session) -> None:
-    """Fail-closed hold on SHEL.L / AZN.L / ULVR.L until Board picks a session rule.
+    """UNSET session rule: SHEL.L / AZN.L / ULVR.L deny after London cash close.
 
-    Does not rewrite Addendum C flatten. Does not invent US listings.
-    Employees cannot write this. Distinct from PAPER_EXECUTION_CLOSED.
+    Does not rewrite Addendum C flatten (still US close, not 16:30).
+    Does not invent US listings. Employees cannot write this.
+    Distinct from PAPER_EXECUTION_CLOSED.
     """
     now = now_london()
     for key, value, unit in LSE_HOLD_SETTINGS:

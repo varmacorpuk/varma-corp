@@ -2,6 +2,7 @@ from tests.conftest import (
     BOARD_HEADERS,
     CEO_HEADERS,
     EMPLOYEE_HEADERS,
+    LONDON_CASH_CLOSE,
     QUANT_HEADERS,
     RISK_HEADERS,
     SESSION_OPEN,
@@ -18,6 +19,7 @@ from varma.controls.lse_session import (
     LSE_SESSION_RULE_KEY,
     LSE_SESSION_RULE_REASON,
     LSE_SESSION_RULE_UNSET,
+    lse_hold_blocks,
 )
 from varma.db.models import ControlSetting, ControlState, Employee, PaperFill, Permission
 from varma.db.seed import MI_SLUG
@@ -41,11 +43,13 @@ def _grant_place(session):
     return emp
 
 
-def test_lse_three_deny_while_closed_with_distinct_hold(session):
+def test_lse_hold_is_not_all_day_before_london_cash_close(session):
     emp = _grant_place(session)
     engine = ControlEngine(session)
     assert session.get(ControlSetting, LSE_SESSION_RULE_KEY).value == LSE_SESSION_RULE_UNSET
     assert engine.paper_execution_closed() is True
+    assert lse_hold_blocks(session, "SHEL.L", at=SESSION_OPEN) is False
+    assert lse_hold_blocks(session, "AAPL", at=SESSION_OPEN) is False
     for symbol in LSE_HOLD_SYMBOLS:
         d = engine.place_order(
             actor_id=emp.id,
@@ -54,14 +58,8 @@ def test_lse_three_deny_while_closed_with_distinct_hold(session):
             at=SESSION_OPEN,
         )
         assert d.allowed is False
-        assert d.reason == LSE_SESSION_RULE_REASON
-        assert d.reason != PAPER_EXECUTION_CLOSED_REASON
-        assert d.details["fail_closed"] is True
-        assert d.details["cannot_silently_fill_at_grand_opening"] is True
-        assert d.details["addendum_c_not_rewritten"] is True
-        assert d.details["split_flatten_clocks"] is False
-        assert d.details["invented_us_listings"] is False
-        assert d.details["paper_execution_closed"] is True
+        assert d.reason == PAPER_EXECUTION_CLOSED_REASON
+        assert d.reason != LSE_SESSION_RULE_REASON
     aapl = engine.place_order(
         actor_id=emp.id,
         actor_type="employee",
@@ -74,7 +72,42 @@ def test_lse_three_deny_while_closed_with_distinct_hold(session):
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
 
 
-def test_lse_hold_survives_hypothetical_paper_open(session):
+def test_lse_three_deny_after_london_cash_close(session):
+    emp = _grant_place(session)
+    engine = ControlEngine(session)
+    assert lse_hold_blocks(session, "SHEL.L", at=LONDON_CASH_CLOSE) is True
+    assert lse_hold_blocks(session, "AAPL", at=LONDON_CASH_CLOSE) is False
+    for symbol in LSE_HOLD_SYMBOLS:
+        d = engine.place_order(
+            actor_id=emp.id,
+            actor_type="employee",
+            order={"symbol": symbol, "side": "buy", "notional_gbp": 10, "execution_port": "SIMULATOR"},
+            at=LONDON_CASH_CLOSE,
+        )
+        assert d.allowed is False
+        assert d.reason == LSE_SESSION_RULE_REASON
+        assert d.reason != PAPER_EXECUTION_CLOSED_REASON
+        assert d.details["fail_closed"] is True
+        assert d.details["deny_after_london_cash_close"] is True
+        assert d.details["deny_until_resolved"] is True
+        assert d.details["cannot_silently_fill_after_london_cash_close"] is True
+        assert d.details["addendum_c_not_rewritten"] is True
+        assert d.details["split_flatten_clocks"] is False
+        assert d.details["invented_us_listings"] is False
+        assert d.details["paper_execution_closed"] is True
+    aapl = engine.place_order(
+        actor_id=emp.id,
+        actor_type="employee",
+        order={"symbol": "AAPL", "side": "buy", "notional_gbp": 10, "execution_port": "SIMULATOR"},
+        at=LONDON_CASH_CLOSE,
+    )
+    assert aapl.allowed is False
+    assert aapl.reason == PAPER_EXECUTION_CLOSED_REASON
+    assert session.query(PaperFill).count() == 0
+    assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
+
+
+def test_lse_hold_survives_hypothetical_paper_open_after_london_close(session):
     emp = _grant_place(session)
     paper = session.get(ControlSetting, "paper_execution")
     paper.value = "OPEN"
@@ -85,11 +118,11 @@ def test_lse_hold_survives_hypothetical_paper_open(session):
         actor_id=emp.id,
         actor_type="employee",
         order={"symbol": "SHEL.L", "side": "buy", "notional_gbp": 10, "execution_port": "SIMULATOR"},
-        at=SESSION_OPEN,
+        at=LONDON_CASH_CLOSE,
     )
     assert d.allowed is False
     assert d.reason == LSE_SESSION_RULE_REASON
-    assert d.details["cannot_silently_fill_at_grand_opening"] is True
+    assert d.details["cannot_silently_fill_after_london_cash_close"] is True
     assert session.query(PaperFill).count() == 0
 
 
@@ -105,9 +138,12 @@ def test_no_invented_us_listings_and_addendum_c_unrewritten(session):
     assert snap["addendum_c"]["flatten_at_london_cash_close"] is False
     assert snap["lse_session"]["session_rule_unset"] is True
     assert snap["lse_session"]["split_flatten_clocks"] is False
+    assert snap["lse_session"]["deny_after_london_cash_close"] is True
+    assert snap["lse_session"]["deny_all_day"] is False
     assert snap["lse_session"]["invented_us_listings"] is False
     gate = BoardObservability(session).snapshot()["paper_gate"]
     assert gate["lse_session_rule_unset"] is True
+    assert gate["deny_after_london_cash_close"] is True
     assert gate["split_flatten_clocks"] is False
     assert gate["paper_execution_closed"] is True
 
@@ -135,6 +171,8 @@ def test_employees_cannot_write_lse_session_rule(client):
     assert board.status_code == 403
     setting = client.get("/controls").json()
     assert setting["lse_session"]["session_rule"] == LSE_SESSION_RULE_UNSET
+    assert setting["lse_session"]["split_flatten_clocks"] is False
+    assert setting["lse_session"]["deny_after_london_cash_close"] is True
     assert setting["trading_mode"] == "LIVE_BLOCKED"
     trader = client.post(
         "/execution/place-order",
@@ -142,7 +180,11 @@ def test_employees_cannot_write_lse_session_rule(client):
         json={"symbol": "AZN.L", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
     )
     assert trader.status_code == 403
-    assert trader.json()["detail"]["reason"] == LSE_SESSION_RULE_REASON
+    # Wall-clock: after 16:30 London → LSE hold; before → PAPER_EXECUTION_CLOSED.
+    assert trader.json()["detail"]["reason"] in (
+        LSE_SESSION_RULE_REASON,
+        PAPER_EXECUTION_CLOSED_REASON,
+    )
     us = client.post(
         "/execution/place-order",
         headers=TRADER_HEADERS,
