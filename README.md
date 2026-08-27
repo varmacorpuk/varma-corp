@@ -28,6 +28,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 20. Same panel: Board-only confirmation that BROKER_PAPER and LIVE execution ports remain UNLOADED. Status only. No fills. Constructing or using those ports is denied.
 21. On-demand 07:30 Europe/London company meeting record: Board Member API or documented CLI writes a meeting artefact to the database from existing handoffs (MI brief, CEO pack, Challenge SAMPLE, Risk DENY). Shown read-only in Board observability. Not a trade. Not LIVE approval. Not a daemon. Employees cannot start LIVE from a meeting.
 22. Latest 07:30 meeting attendance list: the four existing employees only (MI, CEO, Challenge, Risk). Not a 12-employee roster. Read-only in Board observability.
+23. Board Member can run the existing on-demand jobs from the right-hand Board observability panel (POST, not GET /observability): morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter. Employees are denied. Running a job does not load broker ports, change trading_mode, or fill paper/live orders. After a run the same panel refreshes from the database. CLI entry points still work.
 
 ## System separation
 
@@ -69,13 +70,13 @@ One client for Mac and Windows (Electron). Browser also works in development.
 
 Then open http://127.0.0.1:5173
 
-Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (control snapshot, missing numeric-limit keys, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, latest 07:30 company meeting record, cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. Observability is read-only.
+Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (on-demand job runs, control snapshot, missing numeric-limit keys, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, latest 07:30 company meeting record, cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Board Member can run the existing on-demand jobs from that panel. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. GET /observability is read-only. Job runs are Board-only POST endpoints.
 
 ## 06:30 Europe/London routine
 
 Documented weekday schedule: 06:30 Europe/London, output due before the 07:30 company meeting (Documents 02, 09, 18). The CEO is the meeting recipient of that pack.
 
-This slice does not start a 24/7 daemon scheduler. Run on demand:
+This slice does not start a 24/7 daemon scheduler. Run on demand from the Board observability panel, or:
 
     python3 -m varma.routines.run_brief
 
@@ -110,7 +111,7 @@ OPEN BOARD DECISIONS left unset (must not be invented): numeric paper limits; pa
 
 ## Challenge and Risk (this slice)
 
-On demand, not a 24/7 daemon:
+On demand, not a 24/7 daemon. Board Member right-hand panel, API, or documented CLI:
 
     python3 -m varma.routines.run_challenge
     python3 -m varma.routines.run_risk_deny
@@ -121,7 +122,7 @@ On demand, not a 24/7 daemon:
 
 ## Nightly Europe/London memory filter
 
-On demand, not a 24/7 daemon:
+On demand, not a 24/7 daemon. Board Member right-hand panel, API, or documented CLI:
 
     python3 -m varma.routines.run_nightly_filter
 
@@ -133,7 +134,7 @@ On demand, not a 24/7 daemon:
 
 ## 07:30 Europe/London company meeting
 
-On demand, not a 24/7 daemon. Board Member or documented CLI:
+On demand, not a 24/7 daemon. Board Member right-hand panel, API, or documented CLI:
 
     python3 -m varma.routines.run_0730_meeting
 
@@ -158,6 +159,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 - Board-only paper-gate status: PAPER not started / `LIVE_BLOCKED` / no execution. Paper duration/success thresholds remain unset OPEN BOARD DECISIONS.
 - Board-only execution-port status: BROKER_PAPER and LIVE remain UNLOADED. Status only. No fills. Constructing or using those ports is denied.
 - Latest on-demand 07:30 company meeting record (read-only): not a trade, not LIVE approval, employees cannot start LIVE from it. Attendance is the four existing employees only — not a 12-employee roster.
+- Board-only on-demand job runs from this same panel: morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter. POST `/routines/run-*`, not GET `/observability`. Employees are denied. Running a job does not load BROKER_PAPER or LIVE, does not change `trading_mode`, and does not fill paper/live orders. After a run the panel refreshes from the database. CLI entry points still work.
 - Board-only employee status bubbles. Click an employee (floor or bubble name) to open that person in the same right-hand panel.
 - Visible without clicking an employee. A Board observability entry returns to this view.
 - Read-only. It does not write controls, `trading_mode`, allow-list, or permissions. Chat is hidden on this view.
@@ -166,7 +168,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 
 ## Next slice
 
-Still no paper/live execution and no 12-employee roster. BROKER_PAPER and LIVE remain UNLOADED. No fills.
+Still no paper/live execution and no 12-employee roster. BROKER_PAPER and LIVE remain UNLOADED. No fills. Approve LIVE remains impossible.
 
 ## Specs
 
@@ -176,4 +178,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; on-demand 07:30 company meeting record from existing handoffs (not a trade, not LIVE approval, employees cannot start LIVE from it) with attendance of the four existing employees only; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, latest company meeting, status bubbles, documented routine schedules, missing numeric-limit keys, control snapshot, paper-gate status (PAPER not started), UNLOADED BROKER_PAPER and LIVE execution ports (status only, no fills), and employee chat history; constructing or using BROKER_PAPER/LIVE is denied; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.
+Covers: LIVE mode denied; empty allow-list cannot execute; missing limits deny; employee cannot write controls; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; on-demand 07:30 company meeting record from existing handoffs (not a trade, not LIVE approval, employees cannot start LIVE from it) with attendance of the four existing employees only; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, latest company meeting, status bubbles, documented routine schedules, missing numeric-limit keys, control snapshot, paper-gate status (PAPER not started), UNLOADED BROKER_PAPER and LIVE execution ports (status only, no fills), and employee chat history; Board Member can run the five on-demand jobs from the right-hand panel via POST (employees denied; GET /observability does not run jobs; running a job does not load broker ports, change trading_mode, or fill orders); constructing or using BROKER_PAPER/LIVE is denied; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; FakeLLM only.

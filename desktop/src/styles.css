@@ -53,6 +53,9 @@ html, body { margin: 0; height: 100%; font-family: "IBM Plex Sans", "Segoe UI", 
 .right-panel h3 { font-size: 14px; margin-bottom: 4px; }
 .panel-nav { display: flex; gap: 8px; margin: 0 0 12px; }
 .panel-nav button { font-size: 12px; padding: 6px 10px; }
+.job-runs { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 12px; }
+.job-run { text-align: left; }
+.job-run:disabled { opacity: 0.6; cursor: wait; }
 .meta { font-size: 12px; color: #333; }
 .brief { background: #f7f1e3; padding: 8px; border: 1px solid #d9c9a8; font-size: 13px; }
 .ledger-row { font-size: 12px; border-bottom: 1px solid #e6dcc8; padding: 6px 0; }

@@ -16,14 +16,14 @@
     <section class="office-pane" aria-label="Virtual office">
       <div class="office-caption">2D office (placeholder pixels). Office is a projection, not the source of truth. Click never grants authority.</div>
       <canvas id="office-floor" width="640" height="400"></canvas>
-      <p class="hint">Click an employee or status bubble for their work, or Board observability in the right-hand panel. The office stays visible. No covering overlay.</p>
+      <p class="hint">Click an employee or status bubble for their work, or Board observability in the right-hand panel. Run on-demand jobs from that panel. The office stays visible. No covering overlay.</p>
     </section>
     <aside id="right-panel" class="right-panel" aria-label="Right-hand information panel">
       <h2>Information</h2>
       <nav class="panel-nav" aria-label="Panel views">
         <button type="button" id="board-observability-btn">Board observability</button>
       </nav>
-      <p id="panel-placeholder">Board observability (control snapshot, missing numeric-limit keys, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, latest 07:30 company meeting record, cost ledger, evidence, nightly filter, organisation-memory titles, 07:30 meeting pack, status bubbles) loads here from the database without clicking an employee. Select Asha Patel, the CEO, Challenge, or Risk on the floor for their work. Chat reaches the same employee runtime. Talk/voice is disabled (OPEN BOARD DECISION). AI employees do not approve live trading. This panel does not write controls.</p>
+      <p id="panel-placeholder">Board observability (on-demand job runs, control snapshot, missing numeric-limit keys, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, latest 07:30 company meeting record, cost ledger, evidence, nightly filter, organisation-memory titles, 07:30 meeting pack, status bubbles) loads here from the database without clicking an employee. Select Asha Patel, the CEO, Challenge, or Risk on the floor for their work. Chat reaches the same employee runtime. Talk/voice is disabled (OPEN BOARD DECISION). AI employees do not approve live trading. This panel does not write controls. Job runs are Board-only POST endpoints, not GET /observability.</p>
       <div id="panel-body" hidden></div>
       <form id="chat-form" hidden>
         <label for="chat-input">Chat with selected employee</label>
