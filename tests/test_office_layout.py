@@ -19,6 +19,8 @@ def test_right_hand_panel_not_overlay():
     assert "Board Member" in HTML
     assert "Board observability" in HTML
     assert "covering overlay" in HTML.lower() or "no covering overlay" in HTML.lower()
+    assert "#chat-form[hidden]" in CSS
+    assert "display: none" in CSS
 
 
 def test_office_click_opens_panel_logic():
@@ -35,3 +37,4 @@ def test_office_click_opens_panel_logic():
     assert "/observability" in JS
     assert "board-observability-btn" in JS
     assert "writes controls" in JS.lower() or "does not write controls" in JS.lower()
+    assert "chatForm.hidden = true" in JS.replace(" ", "") or "chatForm.hidden=true" in JS.replace(" ", "")
