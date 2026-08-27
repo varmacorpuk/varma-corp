@@ -1,4 +1,4 @@
-.PHONY: test api brief challenge risk-deny memory-filter desktop install
+.PHONY: test api brief challenge risk-deny memory-filter meeting desktop install
 
 install:
 	python3 -m pip install -r requirements.txt
@@ -20,6 +20,9 @@ risk-deny:
 
 memory-filter:
 	python3 -m varma.routines.run_nightly_filter
+
+meeting:
+	python3 -m varma.routines.run_0730_meeting
 
 desktop:
 	cd desktop && python3 -m http.server 5173 --bind 127.0.0.1

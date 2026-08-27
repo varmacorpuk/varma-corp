@@ -12,7 +12,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from varma import __version__
-from varma.clock import describe_0630_weekday_routine, describe_nightly_memory_filter, now_london
+from varma.clock import describe_0630_weekday_routine, describe_0730_company_meeting, describe_nightly_memory_filter, now_london
 from varma.controls.engine import ControlEngine
 from varma.db.engine import get_session_factory, init_db, storage_from_url
 from varma.db.models import (
@@ -38,6 +38,7 @@ from varma.routines.run_brief import run_brief
 from varma.routines.run_challenge import run_challenge
 from varma.routines.run_nightly_filter import run_nightly_filter
 from varma.routines.run_risk_deny import run_risk_deny
+from varma.routines.run_0730_meeting import run_0730_meeting
 from varma.skills.challenge_sample_thesis import challenge_review_to_dict
 from varma.skills.prepare_daily_intelligence_brief import brief_to_dict
 from varma.skills.prepare_sample_thesis import thesis_to_dict
@@ -299,6 +300,27 @@ def create_app() -> FastAPI:
     ) -> dict[str, Any]:
         return run_nightly_filter(session)
 
+    @app.post("/routines/run-0730-meeting")
+    def api_run_0730_meeting(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return run_0730_meeting(session, started_by="board-member")
+
+    @app.get("/routines/0730-meeting-schedule")
+    def company_meeting_schedule() -> dict[str, Any]:
+        return {
+            "schedule": "07:30 weekdays",
+            "timezone": "Europe/London",
+            "daemon": False,
+            "is_trade": False,
+            "is_live_approval": False,
+            "cannot_start_live": True,
+            "description": describe_0730_company_meeting(),
+            "cli": "python -m varma.routines.run_0730_meeting",
+            "writes_controls": False,
+        }
+
     @app.get("/routines/nightly-filter-schedule")
     def nightly_filter_schedule() -> dict[str, Any]:
         return {
@@ -432,6 +454,7 @@ def create_app() -> FastAPI:
                     "controls",
                     "paper_gate",
                     "execution_ports",
+                    "company_meeting",
                 ],
             },
         }

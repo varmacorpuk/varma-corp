@@ -40,3 +40,14 @@ def describe_0630_weekday_routine() -> str:
         "On-demand runs use the same skill. This slice does not start a "
         "daemon scheduler; invoke via CLI or API."
     )
+
+
+def describe_0730_company_meeting() -> str:
+    return (
+        "07:30 Europe/London company meeting (Documents 02, 09, 18). "
+        "On-demand via Board Member API or documented CLI. "
+        "Writes a meeting artefact to the database from existing handoffs "
+        "(MI brief, CEO pack, Challenge SAMPLE, Risk DENY). "
+        "Not a trade. Not LIVE approval. Not a daemon. "
+        "Employees cannot start LIVE from a meeting."
+    )

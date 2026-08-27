@@ -226,6 +226,35 @@ class IntelligenceBrief(Base):
     no_execution_authority: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class CompanyMeeting(Base):
+    """On-demand 07:30 Europe/London company meeting record. Database artefact. Not a trade."""
+
+    __tablename__ = "company_meetings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    ran_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    timezone: Mapped[str] = mapped_column(String(40), default="Europe/London")
+    schedule: Mapped[str] = mapped_column(String(80), default="07:30 weekdays")
+    daemon: Mapped[bool] = mapped_column(Boolean, default=False)
+    started_by: Mapped[str] = mapped_column(String(80), nullable=False)
+    brief_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    ceo_handoff_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    thesis_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    challenge_review_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    risk_decision_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    brief_headline: Mapped[str | None] = mapped_column(String(240), nullable=True)
+    ceo_handoff_status: Mapped[str] = mapped_column(String(32), default="not")
+    challenge_status: Mapped[str] = mapped_column(String(32), default="not")
+    risk_status: Mapped[str] = mapped_column(String(32), default="not")
+    trading_mode_at_run: Mapped[str] = mapped_column(String(32), nullable=False)
+    is_trade: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_live_approval: Mapped[bool] = mapped_column(Boolean, default=False)
+    cannot_start_live: Mapped[bool] = mapped_column(Boolean, default=True)
+    live_started: Mapped[bool] = mapped_column(Boolean, default=False)
+    writes_controls: Mapped[bool] = mapped_column(Boolean, default=False)
+    notes: Mapped[str] = mapped_column(Text, default="")
+
+
 class Handoff(Base):
     """Meeting / workflow handoff artefact. Database is source of truth, not the desktop."""
 
