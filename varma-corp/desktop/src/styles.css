@@ -1,0 +1,61 @@
+/* Layout: office left, information panel RIGHT. Not an overlay. Office remains visible. */
+:root {
+  --ink: #1b1b18;
+  --paper: #f4efe4;
+  --panel: #fffdf8;
+  --accent: #2f5d50;
+  --warn: #8b1e1e;
+  --tile: #c5d5c0;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: var(--paper); color: var(--ink); }
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: #111;
+  color: #f4efe4;
+}
+.brand { font-weight: 700; letter-spacing: 0.08em; }
+.role { flex: 1; font-size: 14px; }
+.mode { background: var(--warn); color: white; padding: 4px 10px; font-size: 13px; }
+.workspace {
+  display: flex;
+  height: calc(100vh - 88px);
+  min-height: 420px;
+}
+.office-pane {
+  flex: 1 1 62%;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.office-caption, .hint { font-size: 12px; color: #444; }
+#office-floor {
+  flex: 1;
+  width: 100%;
+  background: #6b8f71;
+  image-rendering: pixelated;
+  cursor: pointer;
+  border: 4px solid #2b2b2b;
+}
+#right-panel, .right-panel {
+  flex: 0 0 38%;
+  max-width: 440px;
+  background: var(--panel);
+  border-left: 4px solid #2b2b2b;
+  padding: 16px;
+  overflow: auto;
+}
+.right-panel h2 { margin-top: 0; font-size: 16px; }
+.right-panel h3 { font-size: 14px; margin-bottom: 4px; }
+.meta { font-size: 12px; color: #333; }
+.brief { background: #f7f1e3; padding: 8px; border: 1px solid #d9c9a8; font-size: 13px; }
+#chat-form { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+#chat-form textarea { font: inherit; }
+button { background: var(--accent); color: white; border: 0; padding: 8px 12px; cursor: pointer; }
+.talk-disabled { font-size: 12px; color: #666; }
+footer { padding: 6px 12px; font-size: 11px; background: #ece4d4; }
+.bubble-note { font-size: 12px; }

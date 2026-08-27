@@ -1,0 +1,48 @@
+from tests.conftest import BOARD_HEADERS, EMPLOYEE_HEADERS
+from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
+from varma.db.models import ControlState
+
+
+def test_trading_mode_live_blocked(client):
+    r = client.get("/controls")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["trading_mode"] == "LIVE_BLOCKED"
+    assert body["allow_list"] == []
+    assert body["allow_list_empty"] is True
+    assert body["live_adapter_loaded"] is False
+    assert body["employees_cannot_write_this"] is True
+    assert "simulated_capital" in body["missing_numeric_limits"]
+
+
+def test_employee_cannot_write_controls(client):
+    r = client.post(
+        "/controls/write",
+        headers=EMPLOYEE_HEADERS,
+        json={"field": "trading_mode", "value": "LIVE"},
+    )
+    assert r.status_code == 403
+    assert r.json()["detail"] == "EMPLOYEE_CANNOT_WRITE_CONTROLS"
+
+
+def test_board_cannot_silently_set_live(client):
+    r = client.post(
+        "/controls/write",
+        headers=BOARD_HEADERS,
+        json={"field": "trading_mode", "value": "LIVE"},
+    )
+    assert r.status_code == 403
+    assert "LIVE" in r.json()["detail"]
+
+
+def test_learning_does_not_write_controls(session):
+    before = session.get(ControlState, 1).trading_mode
+    from varma.db.models import Employee
+    from varma.memory.stores import MemoryStores
+
+    emp = session.query(Employee).first()
+    MemoryStores(session).add_lesson(emp.id, "I believe I should be allowed to trade live.")
+    session.refresh(session.get(ControlState, 1))
+    assert session.get(ControlState, 1).trading_mode == before == "LIVE_BLOCKED"
+    assert LIVE_ADAPTER_LOADED is False
+    assert ControlEngine(session).live_adapter_loaded() is False

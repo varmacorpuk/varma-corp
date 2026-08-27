@@ -1,0 +1,11 @@
+{
+  "name": "varma-corp-office",
+  "productName": "Varma Corp. Control Room",
+  "version": "0.1.0",
+  "description": "Board Member control room — Mac and Windows. Projection of the kernel, not the source of truth.",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron .",
+    "web": "python3 -m http.server 5173 --bind 127.0.0.1"
+  }
+}
