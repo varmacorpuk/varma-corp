@@ -80,6 +80,8 @@ def test_board_observability_api_is_read_only(client):
     assert "meeting_artefacts" in office["board_observability"]["includes"]
     assert "status_bubbles" in office["board_observability"]["includes"]
     assert "routines" in office["board_observability"]["includes"]
+    assert "missing_numeric_limits" in office["board_observability"]["includes"]
+    assert "controls" in office["board_observability"]["includes"]
 
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
@@ -310,6 +312,131 @@ def test_observability_routine_schedules_api_board_only(client):
     assert post.status_code == 403
     assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
     assert client.get("/controls").json()["trading_mode"] == "LIVE_BLOCKED"
+
+
+def test_observability_missing_numeric_limit_keys_board_only(session):
+    from varma.controls.engine import REQUIRED_LIMIT_KEYS
+    from varma.db.models import NumericLimit
+
+    before_mode = session.get(ControlState, 1).trading_mode
+    before_allow = [r.symbol for r in session.query(AllowListInstrument).all()]
+    snap = BoardObservability(session).snapshot()
+    missing = snap["missing_numeric_limits"]
+    assert missing["read_only"] is True
+    assert missing["source"] == "database"
+    assert missing["open_board_decision"] is True
+    assert missing["values_invented"] is False
+    assert missing["values_shown"] is False
+    assert missing["deny_execution_when_missing"] is True
+    assert missing["required_keys"] == list(REQUIRED_LIMIT_KEYS)
+    assert missing["unset_keys"] == list(REQUIRED_LIMIT_KEYS)
+    assert missing["all_unset"] is True
+    assert "value" not in missing
+    assert "values" not in missing
+    for key in REQUIRED_LIMIT_KEYS:
+        assert key not in missing
+        assert missing.get(key) is None
+    assert session.query(NumericLimit).count() == 0
+    assert snap["writes_controls"] is False
+    assert session.get(ControlState, 1).trading_mode == before_mode == "LIVE_BLOCKED"
+    assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow == []
+    assert LIVE_ADAPTER_LOADED is False
+
+
+def test_observability_does_not_show_limit_values_even_if_row_exists(session):
+    from varma.clock import now_london
+    from varma.controls.engine import REQUIRED_LIMIT_KEYS
+    from varma.db.models import NumericLimit
+
+    session.add(
+        NumericLimit(
+            key="simulated_capital",
+            value="DO-NOT-DISPLAY",
+            set_by="test-must-not-surface",
+            set_at=now_london(),
+        )
+    )
+    session.commit()
+    snap = BoardObservability(session).snapshot()
+    missing = snap["missing_numeric_limits"]
+    assert "simulated_capital" not in missing["unset_keys"]
+    assert missing["unset_keys"] == [k for k in REQUIRED_LIMIT_KEYS if k != "simulated_capital"]
+    blob = str(missing)
+    assert "DO-NOT-DISPLAY" not in blob
+    assert "test-must-not-surface" not in blob
+    assert "value" not in missing
+    assert snap["controls"]["trading_mode"] == "LIVE_BLOCKED"
+    assert snap["writes_controls"] is False
+
+
+def test_observability_control_snapshot_board_only(client):
+    denied = client.get("/observability", headers=EMPLOYEE_HEADERS)
+    assert denied.status_code == 401
+    for headers in (CEO_HEADERS, CHALLENGE_HEADERS, RISK_HEADERS):
+        assert client.get("/observability", headers=headers).status_code == 401
+
+    body = client.get("/observability", headers=BOARD_HEADERS).json()
+    controls = body["controls"]
+    assert controls["read_only"] is True
+    assert controls["source"] == "database"
+    assert controls["writes_controls"] is False
+    assert controls["employees_cannot_write_controls"] is True
+    assert controls["trading_mode"] == "LIVE_BLOCKED"
+    assert controls["allow_list"] == []
+    assert controls["allow_list_empty"] is True
+    assert controls["live_adapter_loaded"] is False
+    assert body["employees_cannot_write_controls"] is True
+    missing = body["missing_numeric_limits"]
+    assert "simulated_capital" in missing["unset_keys"]
+    assert missing["values_shown"] is False
+    assert missing["open_board_decision"] is True
+
+    post = client.post(
+        "/observability",
+        headers=BOARD_HEADERS,
+        json={"trading_mode": "LIVE", "allow_list": ["AAPL"], "simulated_capital": 1},
+    )
+    assert post.status_code == 403
+    assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
+    after = client.get("/observability", headers=BOARD_HEADERS).json()
+    assert after["controls"]["trading_mode"] == "LIVE_BLOCKED"
+    assert after["controls"]["allow_list"] == []
+    assert after["missing_numeric_limits"]["unset_keys"] == missing["unset_keys"]
+    assert client.get("/controls").json()["trading_mode"] == "LIVE_BLOCKED"
+    assert LIVE_ADAPTER_LOADED is False
+
+
+def test_observability_missing_limits_still_deny_execution(session):
+    from varma.clock import now_london
+    from varma.db.models import Employee, NumericLimit, Permission
+    from varma.db.seed import MI_SLUG
+
+    BoardObservability(session).snapshot()
+    emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
+    session.query(Permission).filter_by(subject_id=emp.id, action="place_order").one().allowed = True
+    session.add(
+        AllowListInstrument(
+            symbol="AAPL",
+            venue="NASDAQ",
+            approved_by="board-member",
+            approved_at=now_london(),
+        )
+    )
+    session.commit()
+    snap = BoardObservability(session).snapshot()
+    assert snap["missing_numeric_limits"]["unset_keys"]
+    assert snap["missing_numeric_limits"]["deny_execution_when_missing"] is True
+    assert session.query(NumericLimit).count() == 0
+    d = ControlEngine(session).place_order(
+        actor_id=emp.id,
+        actor_type="employee",
+        order={"symbol": "AAPL", "execution_port": "SIMULATOR"},
+    )
+    assert d.allowed is False
+    assert d.reason == "MISSING_NUMERIC_LIMITS"
+    assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
+    assert LIVE_ADAPTER_LOADED is False
+
 
 
 

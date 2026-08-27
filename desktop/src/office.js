@@ -156,6 +156,10 @@
     const thesis = pack.challenge_sample_thesis || {};
     const bubbles = data.status_bubbles || [];
     const routines = data.routines || {};
+    const missing = data.missing_numeric_limits || {};
+    const unsetKeys = missing.unset_keys || [];
+    const controls = data.controls || {};
+    const allowList = controls.allow_list || [];
     const costRows = costs.length
       ? costs
           .map(
@@ -224,10 +228,29 @@
           : ""
       }
     `;
+    const missingRows = unsetKeys.length
+      ? unsetKeys
+          .map(
+            (key) =>
+              `<div class="ledger-row">${escapeHtml(key)} — unset (OPEN BOARD DECISION)</div>`
+          )
+          .join("")
+      : "<p class=\"meta\">No missing numeric-limit keys.</p>";
+    const allowRows = allowList.length
+      ? allowList
+          .map((symbol) => `<div class="ledger-row">${escapeHtml(symbol)}</div>`)
+          .join("")
+      : "<p class=\"meta\">Allow-list is empty. Empty allow-list cannot execute.</p>";
     return `
       <h3>Board observability</h3>
       <p class="meta">Read-only. Source: ${escapeHtml(data.source || "database")}. This view does not write controls, trading_mode, allow-list, or permissions.</p>
-      <p class="meta">trading_mode: ${escapeHtml(data.trading_mode || "")} · allow-list empty: ${data.allow_list_empty} · LIVE adapter: ${data.live_adapter_loaded}</p>
+      <h3>Control snapshot</h3>
+      <p class="meta">trading_mode: ${escapeHtml(controls.trading_mode || data.trading_mode || "")} · allow-list empty: ${controls.allow_list_empty === undefined ? data.allow_list_empty : controls.allow_list_empty} · LIVE adapter: ${controls.live_adapter_loaded === undefined ? data.live_adapter_loaded : controls.live_adapter_loaded}</p>
+      <p class="meta">Employees cannot write controls: ${controls.employees_cannot_write_controls !== false}. Board Member is the human authority. This view is read-only.</p>
+      ${allowRows}
+      <h3>Missing numeric limits</h3>
+      <p class="meta">OPEN BOARD DECISIONS. Keys only — values are not invented here. Missing limits DENY execution.</p>
+      ${missingRows}
       <p class="meta">${escapeHtml(data.cost_cap_label || "TEMPORARY DEVELOPMENT DEFAULT cost cap. Not a Board-approved budget.")}</p>
       <h3>07:30 meeting pack</h3>
       <p class="meta">${escapeHtml(pack.meeting || "07:30 Europe/London company meeting")} · MI brief: ${escapeHtml(pack.brief_headline || "not")} · CEO handoff: ${escapeHtml(pack.ceo_handoff_status || "not")} · Challenge SAMPLE thesis: ${escapeHtml(thesis.status || "not")} · Risk: ${escapeHtml(pack.risk_status || "not")}</p>

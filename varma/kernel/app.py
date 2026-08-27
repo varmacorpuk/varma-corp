@@ -427,6 +427,8 @@ def create_app() -> FastAPI:
                     "meeting_artefacts",
                     "status_bubbles",
                     "routines",
+                    "missing_numeric_limits",
+                    "controls",
                 ],
             },
         }

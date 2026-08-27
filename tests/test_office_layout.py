@@ -49,4 +49,10 @@ def test_office_click_opens_panel_logic():
     assert "data-employee-slug" in JS
     assert "/employees/" in JS and "/chat" in JS
     assert "Chat history" in JS or "chat history" in JS.lower()
+    assert "Missing numeric limits" in JS
+    assert "OPEN BOARD DECISION" in JS
+    assert "Control snapshot" in JS
+    assert "employees cannot write controls" in JS.lower()
+    assert "unset_keys" in JS
+    assert "allow_list" in JS
     assert "#chat-form[hidden]" in CSS
