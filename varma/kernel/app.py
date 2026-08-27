@@ -580,6 +580,7 @@ def _employee_public(e: Employee) -> dict[str, Any]:
         "id": e.id,
         "slug": e.slug,
         "display_name": e.display_name,
+        "person_name": e.person_name or "",
         "role_title": e.role_title,
         "department": e.department,
         "status": e.status,

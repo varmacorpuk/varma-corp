@@ -18,13 +18,18 @@ class Base(DeclarativeBase):
 
 
 class Employee(Base):
-    """Persistent primary-agent identity. An LLM call is an invocation, not the employee."""
+    """Persistent primary-agent identity. An LLM call is an invocation, not the employee.
+
+    display_name is the Board door/title (CEO, Research, Challenge, Risk).
+    person_name is an optional internal person name and is not the door label.
+    """
 
     __tablename__ = "employees"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     slug: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    person_name: Mapped[str] = mapped_column(String(120), default="")
     role_title: Mapped[str] = mapped_column(String(160), nullable=False)
     department: Mapped[str] = mapped_column(String(120), nullable=False)
     personality: Mapped[str] = mapped_column(Text, default="")

@@ -37,7 +37,7 @@ Board Member UI  (office canvas + RIGHT-HAND PANEL + approvals)
    Chat  -->  same employee runtime   (Talk is an OPEN BOARD DECISION; off in this slice)
         |
 Company Kernel
-   Identity, Employees (MI, CEO, Challenge, Risk)
+   Identity, Employees (Research, CEO, Challenge, Risk — door titles; MI slug stable)
    Permissions, trading_mode=LIVE_BLOCKED, empty allow_list
    Skills, Routines (on-demand via Board panel POST / CLI; no 24/7 daemon)
    Memory (employee / organisation / evidence)

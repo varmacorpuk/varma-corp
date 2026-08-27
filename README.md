@@ -7,7 +7,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 ## What this slice proves
 
 1. FastAPI kernel: health, Board Member auth stub, control tables (permissions, empty allow-list, trading_mode=LIVE_BLOCKED). Employees cannot write those tables.
-2. Four persistent employees: Market Intelligence / Research Analyst (Asha Patel), CEO, Challenge, and Risk. LLM calls are invocations, not the employee.
+2. Four persistent employees: Research (Market Intelligence; slug `market-intelligence-research`; internal person_name Asha Patel is not the door label), CEO, Challenge, and Risk. LLM calls are invocations, not the employee. Office doors/titles are CEO, Research, Challenge, Risk. Talk is disabled.
 3. Skill prepare_daily_intelligence_brief. FakeLLM for tests. Optional LLM env is unused by default.
 4. On-demand brief plus a documented 06:30 Europe/London weekday routine.
 5. Independent verification of the brief (required fields, source+timestamp, freshness, TEMPORARY cost cap).
@@ -72,7 +72,7 @@ One client for Mac and Windows (Electron). Browser also works in development.
 
 Then open http://127.0.0.1:5173
 
-Click Asha Patel, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (on-demand job runs, Board Addendum A limits, kill switch, paper ledger, evaluation ledger, control snapshot, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, latest 07:30 company meeting record, cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Board Member can run the existing on-demand jobs from that panel and can halt/reset the kill switch. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. GET /observability is read-only. Job runs and the kill switch are Board-only POST endpoints.
+Click Research, the CEO, Challenge, or Risk. The right-hand panel shows work (produced brief, meeting inbox, SAMPLE thesis, challenge review, or Risk DENY). Board observability (on-demand job runs, Board Addendum A limits, kill switch, paper ledger, evaluation ledger, control snapshot, paper-gate status, UNLOADED BROKER_PAPER and LIVE execution ports, latest 07:30 company meeting record, cost ledger, recent evidence, nightly filter, organisation-memory titles, 07:30 meeting pack status, status bubbles) loads in that same panel without clicking an employee, and via the Board observability entry. Board Member can run the existing on-demand jobs from that panel and can halt/reset the kill switch. Office stays visible. Chat uses the same employee runtime. Talk is disabled. CEO, Challenge, and Risk cannot approve LIVE. GET /observability is read-only. Job runs and the kill switch are Board-only POST endpoints.
 
 ## 06:30 Europe/London routine
 
@@ -161,9 +161,9 @@ On demand, not a 24/7 daemon. Board Member right-hand panel, API, or documented 
 - Cadence: 07:30 weekdays, timezone Europe/London (Documents 02, 09, 18).
 - Writes a meeting artefact (`company_meetings`) from existing handoffs: MI brief, CEO pack, Challenge SAMPLE, Risk DENY.
 - Not a trade. Not LIVE approval. Does not write controls. Does not start LIVE.
-- Employees cannot start LIVE from a meeting. Asha/CEO/Challenge/Risk cannot run the meeting via the API.
+- Employees cannot start LIVE from a meeting. Research/CEO/Challenge/Risk cannot run the meeting via the API.
 - Latest meeting is shown read-only in Board observability. Artefact lives in the database, not on the desktop.
-- Attendance is the four existing employees only (Asha Patel / MI, CEO, Challenge, Risk). Not a 12-employee roster. Board Member is the human, not an employee attendee.
+- Attendance is the four existing employees only (Research, CEO, Challenge, Risk). Not a 12-employee roster. Board Member is the human, not an employee attendee.
 
 ## Board observability (this slice)
 

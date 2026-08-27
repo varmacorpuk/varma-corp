@@ -18,7 +18,8 @@ def test_persistent_challenge_and_risk_identities(session):
     ceo = session.query(Employee).filter_by(slug=CEO_SLUG).one()
     assert challenge.is_primary_agent == 1
     assert risk.is_primary_agent == 1
-    assert asha.display_name == "Asha Patel"
+    assert asha.display_name == "Research"
+    assert asha.person_name == "Asha Patel"
     assert "Chief Executive" in ceo.role_title
     for emp in (challenge, risk):
         assert (

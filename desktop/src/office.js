@@ -369,7 +369,7 @@
     if (slug === "ceo") return "Ask the CEO…";
     if (slug === "challenge") return "Ask Challenge…";
     if (slug === "risk") return "Ask Risk…";
-    return "Ask the analyst…";
+    return "Ask Research…";
   }
 
   async function selectEmployee(emp) {
@@ -604,7 +604,7 @@
       employees = [
         {
           slug: "market-intelligence-research",
-          display_name: "Asha Patel",
+          display_name: "Research",
           status_bubble: "OFFLINE",
           office_x: 96,
           office_y: 108,

@@ -14,7 +14,8 @@ def test_persistent_ceo_identity(session):
     assert ceo.display_name
     assert "Chief Executive" in ceo.role_title
     assert ceo.is_primary_agent == 1
-    assert asha.display_name == "Asha Patel"
+    assert asha.display_name == "Research"
+    assert asha.person_name == "Asha Patel"
     deny_live = (
         session.query(Permission)
         .filter_by(subject_id=ceo.id, action="approve_live")
@@ -38,6 +39,8 @@ def test_employees_include_ceo_and_asha(client):
     assert ceo["cannot_approve_live_trading"] is True
     assert ceo["is_meeting_brief_recipient"] is True
     asha = next(e for e in r.json() if e["slug"] == MI_SLUG)
+    assert asha["display_name"] == "Research"
+    assert asha["person_name"] == "Asha Patel"
     assert asha["cannot_approve_live_trading"] is False
 
 

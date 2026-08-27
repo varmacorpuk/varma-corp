@@ -112,6 +112,7 @@ class EmployeeRuntime:
                 "id": self.employee.id,
                 "slug": self.employee.slug,
                 "display_name": self.employee.display_name,
+                "person_name": self.employee.person_name or "",
                 "role_title": self.employee.role_title,
                 "department": self.employee.department,
                 "status": self.employee.status,

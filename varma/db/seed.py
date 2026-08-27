@@ -37,6 +37,15 @@ from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG
 
 MI_SLUG = "market-intelligence-research"
 
+# Board door/title lock. display_name is the office door label, not a person name.
+BOARD_DOOR_NAMES = (
+    (MI_SLUG, "Research"),
+    (CEO_SLUG, "CEO"),
+    (CHALLENGE_SLUG, "Challenge"),
+    (RISK_SLUG, "Risk"),
+)
+RESEARCH_PERSON_NAME = "Asha Patel"
+
 # TEMPORARY DEVELOPMENT DEFAULT watchlist. Listed stocks/equities only.
 # NOT the execution allow-list. Not Board-approved universe membership (OPEN).
 TEMPORARY_WATCHLIST = (
@@ -63,7 +72,8 @@ def seed_if_empty(session: Session) -> None:
     if mi is None:
         mi = Employee(
             slug=MI_SLUG,
-            display_name="Asha Patel",
+            display_name="Research",
+            person_name="Asha Patel",
             role_title="Market Intelligence / Research Analyst",
             department="Market Intelligence / Research",
             personality=(
@@ -154,6 +164,7 @@ def seed_if_empty(session: Session) -> None:
     _seed_ceo(session)
     _seed_challenge(session)
     _seed_risk(session)
+    _apply_board_door_names(session)
 
     if session.query(WatchlistItem).count() == 0:
         for symbol, name, venue in TEMPORARY_WATCHLIST:
@@ -234,6 +245,22 @@ def seed_board_addendum_a(session: Session) -> None:
         )
 
     session.flush()
+
+
+def _apply_board_door_names(session: Session) -> None:
+    """Board naming lock: doors/titles are CEO, Research, Challenge, Risk.
+
+    slug stays stable. Asha Patel is an internal person_name only, not the door.
+    """
+    for slug, door in BOARD_DOOR_NAMES:
+        emp = session.query(Employee).filter_by(slug=slug).one_or_none()
+        if emp is None:
+            continue
+        emp.display_name = door
+        if slug == MI_SLUG:
+            emp.person_name = RESEARCH_PERSON_NAME
+        elif not emp.person_name:
+            emp.person_name = ""
 
 
 def _seed_ceo(session: Session) -> None:
