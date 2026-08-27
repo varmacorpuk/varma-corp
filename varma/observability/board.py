@@ -33,7 +33,12 @@ from varma.db.models import (
     SampleThesis,
 )
 from varma.meetings.handoff import CEO_SLUG
-from varma.meetings.company_meeting import latest_meeting_pack, meeting_to_dict
+from varma.meetings.company_meeting import (
+    ATTENDEE_SLUGS,
+    attendees_for,
+    latest_meeting_pack,
+    meeting_to_dict,
+)
 from varma.memory.filter import filter_run_to_dict
 from varma.memory.filter import filter_run_to_dict
 from varma.memory.stores import MemoryStores
@@ -382,7 +387,9 @@ class BoardObservability:
             "cannot_start_live": True,
             "writes_controls": False,
             "cli": "python -m varma.routines.run_0730_meeting",
-            "run": meeting_to_dict(row) if row else None,
+            "run": meeting_to_dict(row, attendees_for(self.session, row.id)) if row else None,
+            "attendee_slugs_documented": list(ATTENDEE_SLUGS),
+            "not_a_twelve_employee_roster": True,
         }
         if row is None:
             data["note"] = (

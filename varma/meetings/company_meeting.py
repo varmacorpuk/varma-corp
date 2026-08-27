@@ -18,6 +18,7 @@ from varma.db.models import (
     AllowListInstrument,
     ChallengeReview,
     CompanyMeeting,
+    CompanyMeetingAttendee,
     ControlState,
     Employee,
     Evidence,
@@ -28,13 +29,17 @@ from varma.db.models import (
     RiskDecision,
     SampleThesis,
 )
-from varma.meetings.handoff import CEO_SLUG
+from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG
+
+MI_SLUG = "market-intelligence-research"
 
 MEETING_LABEL = "07:30 Europe/London company meeting"
 SCHEDULE = "07:30 weekdays"
 TIMEZONE = "Europe/London"
 CLI = "python -m varma.routines.run_0730_meeting"
 MEETING_ACTOR = "0730-company-meeting"
+# Documented 07:30 attendees: the four existing employees only. Not a 12-person roster.
+ATTENDEE_SLUGS = (MI_SLUG, CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG)
 
 
 def _permission_fingerprint(session: Session) -> list[tuple[str, str, bool]]:
@@ -116,7 +121,31 @@ def latest_meeting_pack(session: Session) -> dict[str, Any]:
     }
 
 
-def meeting_to_dict(row: CompanyMeeting) -> dict[str, Any]:
+def attendee_to_dict(row: CompanyMeetingAttendee) -> dict[str, Any]:
+    return {
+        "employee_id": row.employee_id,
+        "slug": row.slug,
+        "display_name": row.display_name,
+        "role_title": row.role_title,
+        "department": row.department,
+        "cannot_approve_live": bool(row.cannot_approve_live),
+        "is_board_member": bool(row.is_board_member),
+        "read_only": True,
+    }
+
+
+def attendees_for(session: Session, meeting_id: str) -> list[CompanyMeetingAttendee]:
+    rows = (
+        session.query(CompanyMeetingAttendee)
+        .filter_by(meeting_id=meeting_id)
+        .all()
+    )
+    order = {slug: i for i, slug in enumerate(ATTENDEE_SLUGS)}
+    return sorted(rows, key=lambda r: order.get(r.slug, 99))
+
+
+def meeting_to_dict(row: CompanyMeeting, attendees: list[CompanyMeetingAttendee] | None = None) -> dict[str, Any]:
+    attendee_rows = attendees if attendees is not None else []
     return {
         "id": row.id,
         "ran_at": row.ran_at.isoformat() if row.ran_at else None,
@@ -144,6 +173,10 @@ def meeting_to_dict(row: CompanyMeeting) -> dict[str, Any]:
         "cli": CLI,
         "sample_not_a_live_trade": True,
         "employees_cannot_start_live": True,
+        "attendees": [attendee_to_dict(a) for a in attendee_rows],
+        "attendee_count": len(attendee_rows),
+        "roster_size": 4,
+        "not_a_twelve_employee_roster": True,
     }
 
 
@@ -181,6 +214,7 @@ class CompanyMeetingRunner:
         )
         self.session.add(row)
         self.session.flush()
+        attendees = _record_attendees(self.session, row.id)
         self.session.add(
             Evidence(
                 kind="company_meeting_ran",
@@ -200,6 +234,9 @@ class CompanyMeetingRunner:
                         "thesis_id": row.thesis_id,
                         "challenge_review_id": row.challenge_review_id,
                         "risk_decision_id": row.risk_decision_id,
+                        "attendee_slugs": [a.slug for a in attendees],
+                        "attendee_count": len(attendees),
+                        "not_a_twelve_employee_roster": True,
                     }
                 ),
                 created_at=now_london(),
@@ -220,7 +257,28 @@ class CompanyMeetingRunner:
         if after["trading_mode"] == "LIVE":
             raise RuntimeError("COMPANY_MEETING_MUST_NOT_START_LIVE")
         self.session.commit()
-        data = meeting_to_dict(row)
+        data = meeting_to_dict(row, attendees)
         data["live_still_blocked"] = row.trading_mode_at_run == "LIVE_BLOCKED"
         data["description"] = describe_0730_company_meeting()
         return data
+
+
+def _record_attendees(session: Session, meeting_id: str) -> list[CompanyMeetingAttendee]:
+    """Snapshot the four existing employees. Do not invent a 12-person roster."""
+    recorded: list[CompanyMeetingAttendee] = []
+    for slug in ATTENDEE_SLUGS:
+        emp = session.query(Employee).filter_by(slug=slug).one()
+        row = CompanyMeetingAttendee(
+            meeting_id=meeting_id,
+            employee_id=emp.id,
+            slug=emp.slug,
+            display_name=emp.display_name,
+            role_title=emp.role_title,
+            department=emp.department,
+            cannot_approve_live=True,
+            is_board_member=False,
+        )
+        session.add(row)
+        recorded.append(row)
+    session.flush()
+    return recorded

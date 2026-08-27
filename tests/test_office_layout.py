@@ -65,4 +65,7 @@ def test_office_click_opens_panel_logic():
     assert "07:30 company meeting record" in JS
     assert "company_meeting" in JS
     assert "cannot start LIVE" in JS
+    assert "Attendance" in JS
+    assert "not a 12-employee roster" in JS
+    assert "attendees" in JS
     assert "#chat-form[hidden]" in CSS

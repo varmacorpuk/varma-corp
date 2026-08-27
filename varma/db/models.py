@@ -255,6 +255,22 @@ class CompanyMeeting(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
 
 
+class CompanyMeetingAttendee(Base):
+    """Attendance for a 07:30 meeting. The four existing employees only. Not a 12-person roster."""
+
+    __tablename__ = "company_meeting_attendees"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    meeting_id: Mapped[str] = mapped_column(String(36), ForeignKey("company_meetings.id"), nullable=False)
+    employee_id: Mapped[str] = mapped_column(String(36), ForeignKey("employees.id"), nullable=False)
+    slug: Mapped[str] = mapped_column(String(80), nullable=False)
+    display_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    role_title: Mapped[str] = mapped_column(String(160), nullable=False)
+    department: Mapped[str] = mapped_column(String(120), nullable=False)
+    cannot_approve_live: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_board_member: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
 class Handoff(Base):
     """Meeting / workflow handoff artefact. Database is source of truth, not the desktop."""
 
