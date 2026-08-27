@@ -1,12 +1,12 @@
 """Deterministic control engine. Employees propose; the engine permits or denies.
 
 LIVE adapter is not loaded unless trading_mode is LIVE and a Board approval exists.
-This slice never loads a live adapter. Empty allow-list cannot execute.
+This slice never loads a live adapter. Unknown tickers and gold deny.
 Numeric limits are Board Addendum A 2026-08-27 (Board-set). Missing limits deny.
-Employees cannot write control tables.
+PAPER allow-list is Board Addendum E 2026-08-27. Employees cannot write control tables.
 
-trading_mode stays LIVE_BLOCKED. This slice does not switch to PAPER because
-the execution allow-list is still empty. Empty allow-list ⇒ no orders.
+trading_mode stays LIVE_BLOCKED. Internal paper fill simulator is the paper ledger.
+Do not load LIVE or BROKER_PAPER.
 """
 
 from __future__ import annotations
@@ -23,9 +23,18 @@ from varma.controls.addendum_a import (
     TIMEZONE,
     addendum_a_public,
 )
+from varma.controls.addendum_c import (
+    ADDENDUM_C_LABEL,
+    addendum_c_public,
+    paper_desk_open,
+    paper_session_status,
+)
+from varma.controls.addendum_e import addendum_e_public
+from varma.controls.addendum_f import addendum_f_public
 from varma.db.models import (
     AllowListInstrument,
     BoardApproval,
+    ControlSetting,
     ControlState,
     Evidence,
     NumericLimit,
@@ -50,6 +59,9 @@ LIMIT_WRITE_FIELDS = set(REQUIRED_LIMIT_KEYS) | {
     "allow_list",
     "kill_switch",
     "evaluation_policy",
+    "paper_session",
+    "addendum_c",
+    "control_settings",
 }
 
 
@@ -107,6 +119,23 @@ class ControlEngine:
             )
         return items
 
+    def setting_rows(self) -> list[dict[str, Any]]:
+        items: list[dict[str, Any]] = []
+        rows = self.session.query(ControlSetting).order_by(ControlSetting.key.asc()).all()
+        for row in rows:
+            items.append(
+                {
+                    "key": row.key,
+                    "value": row.value,
+                    "unit": row.unit or "",
+                    "set_by": row.set_by,
+                    "set_at": row.set_at.isoformat() if row.set_at else None,
+                    "source": row.source or ADDENDUM_C_LABEL,
+                    "board_set": True,
+                }
+            )
+        return items
+
     def has_permission(self, subject_id: str, action: str) -> bool:
         row = (
             self.session.query(Permission)
@@ -131,12 +160,20 @@ class ControlEngine:
             return False
         return LIVE_ADAPTER_LOADED
 
-    def place_order(self, *, actor_id: str, actor_type: str, order: dict[str, Any]) -> Decision:
-        """Employees propose. Empty allow-list, LIVE, kill switch, and limits deny.
+    def place_order(
+        self,
+        *,
+        actor_id: str,
+        actor_type: str,
+        order: dict[str, Any],
+        at=None,
+    ) -> Decision:
+        """Employees propose. Empty allow-list, LIVE, kill switch, limits, and closed session deny.
 
         When all gates pass, the internal paper fill simulator is the paper ledger.
         BROKER_PAPER and LIVE remain UNLOADED. trading_mode stays LIVE_BLOCKED.
         """
+        now = at or now_london()
         state = self.state()
         symbol = str(order.get("symbol") or "")
         execution_port = str(order.get("execution_port") or "SIMULATOR")
@@ -170,6 +207,10 @@ class ControlEngine:
         if state.kill_switch:
             return self._deny("KILL_SWITCH", actor_id, order)
 
+        # Gold is never an execution universe, even if someone writes it onto the list.
+        if symbol.upper() in {"XAU", "XAUUSD", "GOLD", "GC"}:
+            return self._deny("GOLD_NOT_AUTHORISED", actor_id, order)
+
         # Even the internal simulator requires a Board-set allow-list and limits.
         allow = self.allow_list_symbols()
         if not allow:
@@ -177,9 +218,6 @@ class ControlEngine:
 
         if symbol not in allow:
             return self._deny("SYMBOL_NOT_ON_ALLOW_LIST", actor_id, order)
-
-        if symbol.upper() in {"XAU", "XAUUSD", "GOLD", "GC"}:
-            return self._deny("GOLD_NOT_AUTHORISED", actor_id, order)
 
         missing = self.missing_limits()
         if missing:
@@ -198,18 +236,18 @@ class ControlEngine:
         from varma.paper.ledger import PaperLedger
 
         ledger = PaperLedger(self.session)
-        ledger.ensure_account()
+        ledger.ensure_account(at=now)
         max_orders = self.limit_value("max_orders_per_day")
-        if max_orders is not None and ledger.orders_today() >= int(max_orders):
+        if max_orders is not None and ledger.orders_today(at=now) >= int(max_orders):
             return self._deny(
                 "MAX_ORDERS_PER_DAY",
                 actor_id,
                 order,
-                {"orders_today": ledger.orders_today(), "max_orders_per_day": int(max_orders)},
+                {"orders_today": ledger.orders_today(at=now), "max_orders_per_day": int(max_orders)},
             )
 
         max_daily_loss = self.limit_value("max_daily_loss")
-        pnl = ledger.london_day_pnl()
+        pnl = ledger.london_day_pnl(at=now)
         if max_daily_loss is not None and pnl <= -abs(max_daily_loss):
             maybe_auto_trip(self.session, actor_id=actor_id)
             return self._deny(
@@ -219,12 +257,27 @@ class ControlEngine:
                 {"london_day_pnl_gbp": pnl, "max_daily_loss": max_daily_loss},
             )
 
+        session_status = paper_session_status(now)
+        if not paper_desk_open(now):
+            reason = session_status.get("closed_reason") or "PAPER_SESSION_CLOSED"
+            return self._deny(
+                reason,
+                actor_id,
+                order,
+                {
+                    "paper_session": session_status,
+                    "overnight": bool(session_status.get("overnight")),
+                    "flatten_at": session_status.get("flatten_at"),
+                    "source": ADDENDUM_C_LABEL,
+                },
+            )
+
         if execution_port != "SIMULATOR":
             return self._deny("EXECUTION_PORT_NOT_SIMULATOR", actor_id, order)
 
         from varma.paper.simulator import PaperFillSimulator
 
-        decision = PaperFillSimulator(self.session).fill(actor_id=actor_id, order=order)
+        decision = PaperFillSimulator(self.session).fill(actor_id=actor_id, order=order, at=now)
         maybe_auto_trip(self.session, actor_id=actor_id)
         return decision
 
@@ -259,8 +312,10 @@ class ControlEngine:
         if field == "trading_mode" and value == "PAPER":
             return Decision(
                 False,
-                "TRADING_MODE_STAYS_LIVE_BLOCKED_EMPTY_ALLOW_LIST",
+                "TRADING_MODE_STAYS_LIVE_BLOCKED_PAPER_LEDGER_IS_INTERNAL_SIMULATOR",
             )
+        if field == "allow_list":
+            return Decision(False, "ALLOW_LIST_IS_BOARD_ADDENDUM_E_EMPLOYEES_CANNOT_WRITE")
         if field in LIMIT_WRITE_FIELDS:
             # Board Addendum A already wrote the numeric limits. Generic write is not
             # the kill-switch endpoint. Employees never reach here.
@@ -282,10 +337,19 @@ class ControlEngine:
             "currency": CURRENCY,
             "timezone": TIMEZONE,
             "addendum": addendum_a_public(),
+            "addendum_c": addendum_c_public(),
+            "addendum_e": addendum_e_public(),
+            "addendum_f": addendum_f_public(),
+            "paper_session": paper_session_status(),
+            "control_settings": self.setting_rows(),
             "live_adapter_loaded": self.live_adapter_loaded(),
             "broker_paper_loaded": BROKER_PAPER_LOADED,
             "live_gate": "PAPER → EVALUATION → LIVE-TRADING RECOMMENDATION → BOARD REVIEW → EXPLICIT BOARD APPROVAL → LIVE",
-            "note": "Silence, elapsed time, paper success, and employee confidence are not approval.",
+            "note": (
+                "Silence, elapsed time, paper success, and employee confidence are not approval. "
+                "PAPER allow-list is Board Addendum E. trading_mode stays LIVE_BLOCKED. "
+                "Internal simulator is the paper ledger. LIVE and BROKER_PAPER remain UNLOADED."
+            ),
         }
 
     def _deny(self, reason: str, actor_id: str, order: dict[str, Any], extra: dict | None = None) -> Decision:

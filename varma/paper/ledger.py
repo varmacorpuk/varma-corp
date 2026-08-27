@@ -42,9 +42,10 @@ class PaperLedger:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def ensure_account(self) -> PaperAccount:
+    def ensure_account(self, *, at=None) -> PaperAccount:
         row = self.session.get(PaperAccount, 1)
-        today = london_day()
+        today = london_day(at)
+        now = at or now_london()
         if row is None:
             row = PaperAccount(
                 id=1,
@@ -55,7 +56,7 @@ class PaperLedger:
                 equity_at_day_start=SIMULATED_CAPITAL,
                 london_day=today,
                 source=ADDENDUM_A_LABEL,
-                updated_at=now_london(),
+                updated_at=now,
             )
             self.session.add(row)
             self.session.flush()
@@ -64,12 +65,12 @@ class PaperLedger:
             equity = self.equity()
             row.london_day = today
             row.equity_at_day_start = equity
-            row.updated_at = now_london()
+            row.updated_at = now
             self.session.flush()
         return row
 
-    def account(self) -> PaperAccount:
-        return self.ensure_account()
+    def account(self, *, at=None) -> PaperAccount:
+        return self.ensure_account(at=at)
 
     def mark_price(self, symbol: str) -> float:
         rows = FakeMarketData().delayed_prices([symbol])
@@ -89,20 +90,21 @@ class PaperLedger:
         cash = acc.cash if acc else SIMULATED_CAPITAL
         return _round_gbp(cash + self.positions_market_value())
 
-    def london_day_pnl(self) -> float:
+    def london_day_pnl(self, *, at=None) -> float:
         acc = self.session.get(PaperAccount, 1)
         if acc is None:
             return 0.0
-        start = acc.equity_at_day_start if acc.london_day == london_day() else self.equity()
+        start = acc.equity_at_day_start if acc.london_day == london_day(at) else self.equity()
         return _round_gbp(self.equity() - start)
 
-    def orders_today(self) -> int:
-        day = london_day()
+    def orders_today(self, *, at=None) -> int:
+        day = london_day(at)
         return (
             self.session.query(PaperOrder)
             .filter(
                 PaperOrder.london_day == day,
                 PaperOrder.status.in_(("OPEN", "FILLED", "CANCELLED")),
+                PaperOrder.is_flatten.is_(False),
             )
             .count()
         )
@@ -110,9 +112,9 @@ class PaperLedger:
     def open_orders(self) -> list[PaperOrder]:
         return self.session.query(PaperOrder).filter_by(status="OPEN").all()
 
-    def cancel_open_paper_orders(self, *, reason: str) -> int:
+    def cancel_open_paper_orders(self, *, reason: str, at=None) -> int:
         """Cancel OPEN paper orders only. Never flatten live. There is no live."""
-        now = now_london()
+        now = at or now_london()
         n = 0
         for row in self.open_orders():
             row.status = "CANCELLED"

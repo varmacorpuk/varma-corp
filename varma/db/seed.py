@@ -1,7 +1,10 @@
-"""Seed persistent identities, TEMPORARY watchlist, and Board Addendum A 2026-08-27.
+"""Seed persistent identities, Board Addenda A/C/E/F, and TEMPORARY watchlist.
 
-Numeric limits are Board-set (labelled), not invented silent defaults.
-Does not seed an execution allow-list. trading_mode stays LIVE_BLOCKED.
+Numeric limits are Board Addendum A 2026-08-27 (Board-set).
+Paper session is Board Addendum C 2026-08-27 (UK open through US close).
+PAPER allow-list is Board Addendum E 2026-08-27 (Board-set).
+Staff display is Board Addendum F 2026-08-27 (person · department).
+trading_mode stays LIVE_BLOCKED. LIVE and BROKER_PAPER remain UNLOADED.
 """
 
 from __future__ import annotations
@@ -21,7 +24,26 @@ from varma.controls.addendum_a import (
     SUCCESSFUL_TRADE_DEFINITION,
     TIMEZONE,
 )
+from varma.controls.addendum_c import (
+    ADDENDUM_C_LABEL,
+    ADDENDUM_C_SET_BY,
+    ADDENDUM_C_SETTINGS,
+)
+from varma.controls.addendum_e import (
+    ADDENDUM_E_INSTRUMENTS,
+    ADDENDUM_E_LABEL,
+    ADDENDUM_E_SET_BY,
+)
+from varma.controls.addendum_f import (
+    QUANT_SLUG,
+    TECH_SLUG,
+    TRADER_SLUG,
+    format_staff_display,
+    staff_display_for_slug,
+)
 from varma.db.models import (
+    AllowListInstrument,
+    ControlSetting,
     ControlState,
     Employee,
     EvaluationPolicy,
@@ -37,12 +59,15 @@ from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG
 
 MI_SLUG = "market-intelligence-research"
 
-# Board door/title lock. display_name is the office door label, not a person name.
+# Door/role stays the job title. display_name is "First Last · Department" (Addendum F).
 BOARD_DOOR_NAMES = (
     (MI_SLUG, "Research"),
     (CEO_SLUG, "CEO"),
     (CHALLENGE_SLUG, "Challenge"),
     (RISK_SLUG, "Risk"),
+    (TRADER_SLUG, "Trader"),
+    (QUANT_SLUG, "Quant"),
+    (TECH_SLUG, "Technology"),
 )
 RESEARCH_PERSON_NAME = "Asha Patel"
 
@@ -72,10 +97,10 @@ def seed_if_empty(session: Session) -> None:
     if mi is None:
         mi = Employee(
             slug=MI_SLUG,
-            display_name="Research",
-            person_name="Asha Patel",
+            display_name=staff_display_for_slug(MI_SLUG),
+            person_name=RESEARCH_PERSON_NAME,
             role_title="Market Intelligence / Research Analyst",
-            department="Market Intelligence / Research",
+            department="Research",
             personality=(
                 "Calm, source-first, distinguishes fact from commentary. "
                 "Does not overclaim. Personality never overrides controls."
@@ -164,7 +189,10 @@ def seed_if_empty(session: Session) -> None:
     _seed_ceo(session)
     _seed_challenge(session)
     _seed_risk(session)
-    _apply_board_door_names(session)
+    _seed_trader(session)
+    _seed_quant(session)
+    _seed_technology(session)
+    _apply_addendum_f_display(session)
 
     if session.query(WatchlistItem).count() == 0:
         for symbol, name, venue in TEMPORARY_WATCHLIST:
@@ -179,6 +207,8 @@ def seed_if_empty(session: Session) -> None:
             )
 
     seed_board_addendum_a(session)
+    seed_board_addendum_c(session)
+    seed_board_addendum_e(session)
     session.commit()
 
 
@@ -186,8 +216,8 @@ def seed_board_addendum_a(session: Session) -> None:
     """Write Board Addendum A 2026-08-27 into control tables.
 
     These are Board-set values, labelled as such. Not invented silent defaults.
-    Does not write an execution allow-list. Does not switch trading_mode to PAPER
-    or LIVE. Empty allow-list still denies orders.
+    Does not switch trading_mode to PAPER or LIVE. PAPER allow-list is Addendum E.
+    Unknown tickers still deny. Gold still denies.
     """
     now = now_london()
     for key, value, unit in ADDENDUM_A_LIMITS:
@@ -247,20 +277,75 @@ def seed_board_addendum_a(session: Session) -> None:
     session.flush()
 
 
-def _apply_board_door_names(session: Session) -> None:
-    """Board naming lock: doors/titles are CEO, Research, Challenge, Risk.
+def seed_board_addendum_c(session: Session) -> None:
+    """Write Board Addendum C 2026-08-27 into control tables.
 
-    slug stays stable. Asha Patel is an internal person_name only, not the door.
+    Paper desk: UK cash open through US regular cash close (Europe/London clock).
+    Flatten ALL paper before US regular cash close. Do NOT flatten at London close.
+    Does not write an execution allow-list. Does not switch trading_mode.
     """
-    for slug, door in BOARD_DOOR_NAMES:
+    now = now_london()
+    for key, value, unit in ADDENDUM_C_SETTINGS:
+        row = session.get(ControlSetting, key)
+        if row is None:
+            session.add(
+                ControlSetting(
+                    key=key,
+                    value=value,
+                    unit=unit,
+                    set_by=ADDENDUM_C_SET_BY,
+                    set_at=now,
+                    source=ADDENDUM_C_LABEL,
+                )
+            )
+        elif row.value in (None, ""):
+            row.value = value
+            row.unit = unit
+            row.set_by = ADDENDUM_C_SET_BY
+            row.set_at = now
+            row.source = ADDENDUM_C_LABEL
+    session.flush()
+
+
+def seed_board_addendum_e(session: Session) -> None:
+    """Write Board Addendum E 2026-08-27 PAPER execution allow-list.
+
+    Board-set. Employees including the CEO cannot write this list.
+    Does not load LIVE or BROKER_PAPER. Does not switch trading_mode.
+    """
+    now = now_london()
+    for symbol, venue in ADDENDUM_E_INSTRUMENTS:
+        row = session.query(AllowListInstrument).filter_by(symbol=symbol).one_or_none()
+        if row is None:
+            session.add(
+                AllowListInstrument(
+                    symbol=symbol,
+                    venue=venue,
+                    approved_by=ADDENDUM_E_SET_BY,
+                    approved_at=now,
+                )
+            )
+    session.flush()
+
+
+def _apply_addendum_f_display(session: Session) -> None:
+    """Board Addendum F: display_name is person · department, not a job-only label.
+
+    Door/role stays the job title (department). person_name is the person.
+    """
+    from varma.controls.addendum_f import STAFF_PEOPLE
+
+    for slug, (person, department) in STAFF_PEOPLE.items():
         emp = session.query(Employee).filter_by(slug=slug).one_or_none()
         if emp is None:
             continue
-        emp.display_name = door
-        if slug == MI_SLUG:
-            emp.person_name = RESEARCH_PERSON_NAME
-        elif not emp.person_name:
-            emp.person_name = ""
+        emp.person_name = person
+        emp.department = department
+        emp.display_name = format_staff_display(person, department)
+
+
+def _apply_board_door_names(session: Session) -> None:
+    _apply_addendum_f_display(session)
 
 
 def _seed_ceo(session: Session) -> None:
@@ -270,9 +355,10 @@ def _seed_ceo(session: Session) -> None:
         return
     ceo = Employee(
         slug=CEO_SLUG,
-        display_name="CEO",
+        display_name=staff_display_for_slug(CEO_SLUG),
+        person_name="Jordan Hale",
         role_title="Chief Executive Officer",
-        department="CEO / Management",
+        department="CEO",
         personality=(
             "Operational, holds the meeting pack, does not treat a brief as a trade. "
             "Does not approve live trading. Personality never overrides controls."
@@ -349,9 +435,10 @@ def _seed_challenge(session: Session) -> None:
         return
     emp = Employee(
         slug=CHALLENGE_SLUG,
-        display_name="Challenge",
+        display_name=staff_display_for_slug(CHALLENGE_SLUG),
+        person_name="Sam Okeke",
         role_title="Challenge",
-        department="Challenge / Research Quality",
+        department="Challenge",
         personality=(
             "Sceptical, assumption-hunting, distinguishes a SAMPLE thesis from an order. "
             "Does not approve live trading. Personality never overrides controls."
@@ -410,9 +497,10 @@ def _seed_risk(session: Session) -> None:
         return
     emp = Employee(
         slug=RISK_SLUG,
-        display_name="Risk",
+        display_name=staff_display_for_slug(RISK_SLUG),
+        person_name="Elena Voss",
         role_title="Risk",
-        department="Risk / Controls",
+        department="Risk",
         personality=(
             "Policy-first, deny unsafe paths, does not treat a SAMPLE thesis as an order. "
             "Does not approve live trading. Personality never overrides controls."
@@ -449,9 +537,9 @@ def _seed_risk(session: Session) -> None:
             employee_id=emp.id,
             kind="lesson",
             content=(
-                "Unsafe paths are denied. LIVE is blocked. The allow-list is empty. "
+                "Unsafe paths are denied. LIVE is blocked. PAPER allow-list is Board Addendum E. "
                 "Gold is FUTURE SCOPE ONLY. A SAMPLE thesis is not an order. "
-                "Risk cannot approve live trading."
+                "Risk cannot approve live trading. Risk is independent of Trader."
             ),
             created_at=now_london(),
         )
@@ -461,3 +549,144 @@ def _seed_risk(session: Session) -> None:
         emp.id,
         extra=(("run_skill:review_unsafe_path", True),),
     )
+
+
+def _seed_trader(session: Session) -> None:
+    """Persistent Trader identity. Cannot write locks or approve LIVE. Risk stays independent."""
+    emp = session.query(Employee).filter_by(slug=TRADER_SLUG).one_or_none()
+    if emp is not None:
+        return
+    emp = Employee(
+        slug=TRADER_SLUG,
+        display_name=staff_display_for_slug(TRADER_SLUG),
+        person_name="Chris Adeyemi",
+        role_title="Trader",
+        department="Trader",
+        personality=(
+            "Execution-minded, stays inside Board locks. Does not approve live trading. "
+            "Personality never overrides controls."
+        ),
+        responsibilities=(
+            "Paper-desk execution proposals inside Board locks. "
+            "Cannot write control tables, allow-list, limits, or trading_mode. "
+            "Cannot approve LIVE. Risk stays independent of Trader."
+        ),
+        authority_boundaries=(
+            "No live-trading approval — Board Member only (Document 11). "
+            "No control writes. No allow-list writes. Risk is independent of Trader. "
+            "LIVE and BROKER_PAPER remain UNLOADED."
+        ),
+        status="AVAILABLE",
+        status_bubble="AVAILABLE",
+        office_x=160,
+        office_y=160,
+        is_primary_agent=1,
+        created_at=now_london(),
+    )
+    session.add(emp)
+    session.flush()
+    session.add(
+        MemoryEmployee(
+            employee_id=emp.id,
+            kind="lesson",
+            content=(
+                "Trader cannot write locks or approve LIVE. "
+                "Risk is independent of Trader. Paper allow-list is Board Addendum E."
+            ),
+            created_at=now_london(),
+        )
+    )
+    _deny_live_and_execution(session, emp.id)
+
+
+def _seed_quant(session: Session) -> None:
+    """Persistent Quant identity. Cannot write locks or approve LIVE. Challenge stays independent."""
+    emp = session.query(Employee).filter_by(slug=QUANT_SLUG).one_or_none()
+    if emp is not None:
+        return
+    emp = Employee(
+        slug=QUANT_SLUG,
+        display_name=staff_display_for_slug(QUANT_SLUG),
+        person_name="Nina Kapoor",
+        role_title="Quant/Strategy",
+        department="Quant",
+        personality=(
+            "Model-first, distinguishes a sample from an order. Does not approve live trading. "
+            "Personality never overrides controls."
+        ),
+        responsibilities=(
+            "Quant/Strategy analysis. Cannot write control tables or the allow-list. "
+            "Cannot approve LIVE. Challenge stays independent of Quant."
+        ),
+        authority_boundaries=(
+            "No live-trading approval — Board Member only (Document 11). "
+            "No control writes. Challenge is independent of Quant and does not "
+            "report through this seat."
+        ),
+        status="AVAILABLE",
+        status_bubble="AVAILABLE",
+        office_x=120,
+        office_y=40,
+        is_primary_agent=1,
+        created_at=now_london(),
+    )
+    session.add(emp)
+    session.flush()
+    session.add(
+        MemoryEmployee(
+            employee_id=emp.id,
+            kind="lesson",
+            content=(
+                "Quant cannot write locks or approve LIVE. "
+                "Challenge stays independent of Quant."
+            ),
+            created_at=now_london(),
+        )
+    )
+    _deny_live_and_execution(session, emp.id)
+
+
+def _seed_technology(session: Session) -> None:
+    """Persistent Technology identity. Cannot write locks or approve LIVE."""
+    emp = session.query(Employee).filter_by(slug=TECH_SLUG).one_or_none()
+    if emp is not None:
+        return
+    emp = Employee(
+        slug=TECH_SLUG,
+        display_name=staff_display_for_slug(TECH_SLUG),
+        person_name="Owen Blake",
+        role_title="Technology",
+        department="Technology",
+        personality=(
+            "Systems-first, keeps the kernel maintainable. Does not approve live trading. "
+            "Personality never overrides controls."
+        ),
+        responsibilities=(
+            "Technology and self-maintenance of the company kernel. "
+            "Cannot write control tables, allow-list, or trading_mode. Cannot approve LIVE."
+        ),
+        authority_boundaries=(
+            "No live-trading approval — Board Member only (Document 11). "
+            "No execution. No control writes. No Mac installers in this slice."
+        ),
+        status="AVAILABLE",
+        status_bubble="AVAILABLE",
+        office_x=250,
+        office_y=120,
+        is_primary_agent=1,
+        created_at=now_london(),
+    )
+    session.add(emp)
+    session.flush()
+    session.add(
+        MemoryEmployee(
+            employee_id=emp.id,
+            kind="lesson",
+            content=(
+                "Technology cannot write locks or approve LIVE. "
+                "The office is a projection. The database is the ledger."
+            ),
+            created_at=now_london(),
+        )
+    )
+    _deny_live_and_execution(session, emp.id)

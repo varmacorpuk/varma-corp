@@ -66,7 +66,7 @@ def test_company_meeting_records_existing_handoffs(session):
     assert meeting["live_started"] is False
     assert meeting["sample_not_a_live_trade"] is True
     assert session.get(ControlState, 1).trading_mode == before_mode == "LIVE_BLOCKED"
-    assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow == []
+    assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow
     assert LIVE_ADAPTER_LOADED is False
     assert ControlEngine(session).live_adapter_loaded() is False
     assert ControlEngine(session).broker_paper_loaded() is False
@@ -186,7 +186,7 @@ def test_company_meeting_runner_does_not_write_controls(session):
     before_mode = session.get(ControlState, 1).trading_mode
     CompanyMeetingRunner(session).run(started_by="cli")
     assert session.get(ControlState, 1).trading_mode == before_mode == "LIVE_BLOCKED"
-    assert session.query(AllowListInstrument).count() == 0
+    assert session.query(AllowListInstrument).count() == 10
     snap = BoardObservability(session).snapshot()
     assert snap["company_meeting"]["run"]["writes_controls"] is False
     assert snap["writes_controls"] is False
@@ -201,7 +201,7 @@ def test_company_meeting_attendance_is_the_four_employees(session):
     from varma.db.seed import MI_SLUG
     from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG
 
-    assert session.query(Employee).count() == 4
+    assert session.query(Employee).count() == 7
     meeting = run_0730_meeting(session, started_by="cli")
     slugs = [a["slug"] for a in meeting["attendees"]]
     assert slugs == [MI_SLUG, CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG]
@@ -209,9 +209,9 @@ def test_company_meeting_attendance_is_the_four_employees(session):
     assert meeting["roster_size"] == 4
     assert meeting["not_a_twelve_employee_roster"] is True
     assert session.query(CompanyMeetingAttendee).filter_by(meeting_id=meeting["id"]).count() == 4
-    assert session.query(Employee).count() == 4
+    assert session.query(Employee).count() == 7
     names = {a["display_name"] for a in meeting["attendees"]}
-    assert names == {"Research", "CEO", "Challenge", "Risk"}
+    assert names == {"Asha Patel · Research", "Jordan Hale · CEO", "Sam Okeke · Challenge", "Elena Voss · Risk"}
     assert "board-member" not in slugs
     snap = BoardObservability(session).snapshot()["company_meeting"]
     assert [a["slug"] for a in snap["run"]["attendees"]] == slugs

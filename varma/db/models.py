@@ -20,8 +20,8 @@ class Base(DeclarativeBase):
 class Employee(Base):
     """Persistent primary-agent identity. An LLM call is an invocation, not the employee.
 
-    display_name is the Board door/title (CEO, Research, Challenge, Risk).
-    person_name is an optional internal person name and is not the door label.
+    display_name is person · department (Board Addendum F), e.g. "Jordan Hale · CEO".
+    person_name is the person. department/door is the job title.
     """
 
     __tablename__ = "employees"
@@ -78,6 +78,47 @@ class AllowListInstrument(Base):
     venue: Mapped[str] = mapped_column(String(32), default="")
     approved_by: Mapped[str] = mapped_column(String(80), nullable=False)
     approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class ControlSetting(Base):
+    """Board-set non-numeric control-table values (Addendum C session locks).
+
+    Employees cannot write this table. Values are labelled, not invented silent defaults.
+    """
+
+    __tablename__ = "control_settings"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(String(80), nullable=False)
+    unit: Mapped[str] = mapped_column(String(40), default="")
+    set_by: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    set_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    source: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+
+class PaperFlattenRun(Base):
+    """On-demand flatten-before-US-close run. Database artefact. Not a daemon."""
+
+    __tablename__ = "paper_flatten_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    ran_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    timezone: Mapped[str] = mapped_column(String(40), default="Europe/London")
+    flatten_at: Mapped[str] = mapped_column(String(40), default="US_REGULAR_CASH_CLOSE")
+    flatten_not_at: Mapped[str] = mapped_column(String(40), default="LONDON_CASH_CLOSE")
+    cancelled_open_paper_orders: Mapped[int] = mapped_column(Integer, default=0)
+    closed_positions: Mapped[int] = mapped_column(Integer, default=0)
+    flatten_fills: Mapped[int] = mapped_column(Integer, default=0)
+    positions_remaining: Mapped[int] = mapped_column(Integer, default=0)
+    trading_mode_before: Mapped[str] = mapped_column(String(32), nullable=False)
+    trading_mode_after: Mapped[str] = mapped_column(String(32), nullable=False)
+    allow_list_empty: Mapped[bool] = mapped_column(Boolean, default=True)
+    daemon: Mapped[bool] = mapped_column(Boolean, default=False)
+    writes_controls: Mapped[bool] = mapped_column(Boolean, default=False)
+    broker_paper_loaded: Mapped[bool] = mapped_column(Boolean, default=False)
+    live_loaded: Mapped[bool] = mapped_column(Boolean, default=False)
+    started_by: Mapped[str] = mapped_column(String(80), default="board-member")
+    notes: Mapped[str] = mapped_column(Text, default="")
 
 
 class NumericLimit(Base):
@@ -157,6 +198,7 @@ class PaperOrder(Base):
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancel_reason: Mapped[str] = mapped_column(Text, default="")
     notes: Mapped[str] = mapped_column(Text, default="")
+    is_flatten: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class PaperFill(Base):

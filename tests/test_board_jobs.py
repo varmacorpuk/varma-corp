@@ -5,6 +5,7 @@ from tests.conftest import (
     EMPLOYEE_HEADERS,
     RISK_HEADERS,
 )
+from varma.controls.addendum_e import ADDENDUM_E_SYMBOLS
 from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
 from varma.db.models import AllowListInstrument, ControlState
 from varma.observability.board import BoardObservability
@@ -18,7 +19,8 @@ EMPLOYEE_SETS = (EMPLOYEE_HEADERS, CEO_HEADERS, CHALLENGE_HEADERS, RISK_HEADERS)
 def _assert_execution_untouched(client, session=None):
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
-    assert controls["allow_list"] == []
+    assert set(controls["allow_list"]) == set(ADDENDUM_E_SYMBOLS)
+    assert controls["allow_list_empty"] is False
     assert controls["live_adapter_loaded"] is False
     assert controls["broker_paper_loaded"] is False
     assert LIVE_ADAPTER_LOADED is False
@@ -26,7 +28,7 @@ def _assert_execution_untouched(client, session=None):
     assert LIVE_PORT_LOADED is False
     if session is not None:
         assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
-        assert [r.symbol for r in session.query(AllowListInstrument).all()] == []
+        assert set(r.symbol for r in session.query(AllowListInstrument).all()) == set(ADDENDUM_E_SYMBOLS)
         assert ControlEngine(session).live_adapter_loaded() is False
         assert ControlEngine(session).broker_paper_loaded() is False
 
@@ -42,7 +44,7 @@ def _assert_job_safety(body):
     assert safety["not_get_observability"] is True
     assert safety["trading_mode"] == "LIVE_BLOCKED"
     assert safety["trading_mode_unchanged"] is True
-    assert safety["allow_list_empty"] is True
+    assert safety["allow_list_empty"] is False
     assert safety["broker_paper_loaded"] is False
     assert safety["live_adapter_loaded"] is False
     assert safety["broker_paper_status"] == "UNLOADED"
@@ -69,11 +71,18 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
     assert "Run Risk deny-path" in labels
     assert "Run 07:30 meeting record" in labels
     assert "Run nightly memory filter" in labels
+    assert "Flatten paper before US cash close" in labels
     for row in jobs["items"]:
         assert row["method"] == "POST"
         assert row["path"] != "/observability"
         assert row["cli"].startswith("python -m varma.routines.")
         assert row["loads_broker_ports"] is False
+        if row["id"] == "run-flatten-us-close":
+            assert row["internal_simulator_flatten"] is True
+            assert row["flatten_at"] == "US_REGULAR_CASH_CLOSE"
+            assert row["paper_fills"] is True
+        else:
+            assert row["paper_fills"] is False
         assert row["fills"] is False
 
     assert empty["meeting_pack"]["brief_headline"] is None
@@ -196,6 +205,7 @@ def test_board_job_catalog_matches_cli(session):
     assert clis["run-risk-deny"] == "python -m varma.routines.run_risk_deny"
     assert clis["run-0730-meeting"] == "python -m varma.routines.run_0730_meeting"
     assert clis["run-nightly-filter"] == "python -m varma.routines.run_nightly_filter"
+    assert clis["run-flatten-us-close"] == "python -m varma.routines.run_flatten_us_close"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert snap["writes_controls"] is False
     assert LIVE_ADAPTER_LOADED is False

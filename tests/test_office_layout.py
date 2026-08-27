@@ -83,15 +83,26 @@ def test_office_click_opens_panel_logic():
     assert "/routines/run-risk-deny" in JS
     assert "/routines/run-0730-meeting" in JS
     assert "/routines/run-nightly-filter" in JS
+    assert "/routines/run-flatten-us-close" in JS
+    assert "Board Addendum C" in JS
+    assert "US_REGULAR_CASH_CLOSE" in JS or "US cash close" in JS
+    assert "not London close" in JS or "Do NOT flatten at London" in JS
+    assert "GET /observability does not flatten" in JS
     assert "runBoardJob" in JS
     assert 'method: "POST"' in JS or "method: \"POST\"" in JS or 'method: "POST"' in JS.replace(" ", "")
     assert "showBoardObservability" in JS
     assert "GET /observability does not run jobs" in JS
-    assert "Ask Research" in JS
-    assert 'display_name: "Research"' in JS
-    assert 'display_name: "Asha Patel"' not in JS
-    assert "Select Research" in HTML
-    assert "Select Asha Patel" not in HTML
+    assert "Ask Asha Patel · Research" in JS
+    assert 'display_name: "Asha Patel · Research"' in JS
+    assert 'display_name: "Jordan Hale · CEO"' in JS
+    assert 'display_name: "Sam Okeke · Challenge"' in JS
+    assert 'display_name: "Elena Voss · Risk"' in JS
+    assert 'display_name: "Chris Adeyemi · Trader"' in JS
+    assert 'display_name: "Nina Kapoor · Quant"' in JS
+    assert 'display_name: "Owen Blake · Technology"' in JS
+    assert 'display_name: "Research"' not in JS
+    assert "Select Asha Patel · Research" in HTML
+    assert "Select Research, the CEO" not in HTML
     assert "talk-disabled" in HTML
     assert "Approve LIVE" not in HTML
     assert 'id="approve-live"' not in HTML.lower()

@@ -51,5 +51,5 @@ def test_chat_history_is_board_only_and_from_database(client):
     assert any("body" in r and r["body"] for r in rows)
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
-    assert controls["allow_list"] == []
+    assert "AAPL" in controls["allow_list"]
 

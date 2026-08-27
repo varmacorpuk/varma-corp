@@ -46,6 +46,9 @@
     desk(400, 70, "CEO");
     desk(30, 50, "CHALLENGE");
     desk(480, 250, "RISK");
+    desk(280, 250, "TRADER");
+    desk(200, 40, "QUANT");
+    desk(500, 140, "TECH");
 
     employees.forEach((e) => {
       const x = (e.office_x || 96) * 2;
@@ -78,7 +81,19 @@
       ctx.fillRect(x - 6, y - 6, 16 * s + 12, 24 * s + 12);
     }
     const body =
-      kind === "ceo" ? "#1d3557" : kind === "challenge" ? "#6b3a2a" : kind === "risk" ? "#8b1e1e" : "#2f5d50";
+      kind === "ceo"
+        ? "#1d3557"
+        : kind === "challenge"
+          ? "#6b3a2a"
+          : kind === "risk"
+            ? "#8b1e1e"
+            : kind === "trader"
+              ? "#3d5a80"
+              : kind === "quant-strategy"
+                ? "#4a3f6b"
+                : kind === "technology"
+                  ? "#2c3e50"
+                  : "#2f5d50";
     const hair = kind === "ceo" ? "#1a1a1a" : "#2b2118";
     px(4, 2, hair, 8, 6);
     px(5, 4, "#e6c8a8", 6, 6);
@@ -104,7 +119,7 @@
   function drawName(x, y, name) {
     ctx.fillStyle = "#111";
     ctx.font = "10px monospace";
-    ctx.fillText(String(name || "").slice(0, 16), x - 4, y + 28 * sprite.scale / 4 + 20);
+    ctx.fillText(String(name || "").slice(0, 28), x - 4, y + 28 * sprite.scale / 4 + 20);
   }
 
   canvas.addEventListener("click", (ev) => {
@@ -165,6 +180,10 @@
     const killSwitch = data.kill_switch || {};
     const evaluation = data.evaluation || {};
     const paperLedger = data.paper_ledger || {};
+    const paperSession = data.paper_session || {};
+    const paperFlatten = data.paper_flatten || {};
+    const flattenRun = paperFlatten.run;
+    const addendumC = data.addendum_c || {};
     const assumptions = paperLedger.assumptions || {};
     const controls = data.controls || {};
     const allowList = controls.allow_list || [];
@@ -228,10 +247,12 @@
     const briefSched = documented.brief || {};
     const filterSched = documented.nightly_filter || {};
     const meetingSched = documented.company_meeting || {};
+    const flattenSched = documented.flatten_us_close || {};
     const dbRoutines = routines.items || [];
     const routineRows = `
       <div class="ledger-row">06:30 weekday brief · ${escapeHtml(briefSched.timezone || "Europe/London")} · daemon: ${briefSched.daemon === true} · ${escapeHtml(briefSched.cli || "python -m varma.routines.run_brief")}<br /><span class="meta">${escapeHtml(briefSched.description || "")}</span></div>
       <div class="ledger-row">07:30 company meeting · ${escapeHtml(meetingSched.timezone || "Europe/London")} · daemon: ${meetingSched.daemon === true} · is_trade: ${meetingSched.is_trade === true} · ${escapeHtml(meetingSched.cli || "python -m varma.routines.run_0730_meeting")}<br /><span class="meta">${escapeHtml(meetingSched.description || "")}</span></div>
+      <div class="ledger-row">Flatten paper before US cash close · ${escapeHtml(flattenSched.timezone || "Europe/London")} · daemon: ${flattenSched.daemon === true} · flatten_at: ${escapeHtml(flattenSched.flatten_at || "US_REGULAR_CASH_CLOSE")} · not London close · ${escapeHtml(flattenSched.cli || "python -m varma.routines.run_flatten_us_close")}<br /><span class="meta">${escapeHtml(flattenSched.description || "")}</span></div>
       <div class="ledger-row">Nightly memory filter · ${escapeHtml(filterSched.timezone || "Europe/London")} · daemon: ${filterSched.daemon === true} · writes_controls: ${filterSched.writes_controls === true} · ${escapeHtml(filterSched.cli || "")}<br /><span class="meta">${escapeHtml(filterSched.description || "")}</span></div>
       ${
         dbRoutines.length
@@ -264,7 +285,7 @@
       ? allowList
           .map((symbol) => `<div class="ledger-row">${escapeHtml(symbol)}</div>`)
           .join("")
-      : "<p class=\"meta\">Allow-list is empty. Empty allow-list cannot execute.</p>";
+      : "<p class=\"meta\">Allow-list is Board Addendum E (PAPER membership). LIVE still denied.</p>";
     return `
       <h3>Board observability</h3>
       <p class="meta">Read-only. Source: ${escapeHtml(data.source || "database")}. This view does not write controls, trading_mode, allow-list, or permissions. GET /observability does not run jobs.</p>
@@ -277,8 +298,16 @@
       <p class="meta">Employees cannot write controls: ${controls.employees_cannot_write_controls !== false}. Board Member is the human authority. This view is read-only except Board-only job runs and the kill switch.</p>
       ${allowRows}
       <h3>Board Addendum A 2026-08-27 (Board-set)</h3>
-      <p class="meta">Currency: GBP · Timezone: Europe/London. These VALUES are Board-set, not invented silent defaults. Employees cannot write limits. Empty allow-list still denies execution. trading_mode stays LIVE_BLOCKED.</p>
+      <p class="meta">Currency: GBP · Timezone: Europe/London. These VALUES are Board-set, not invented silent defaults. Employees cannot write limits. Unknown tickers deny. trading_mode stays LIVE_BLOCKED.</p>
       ${limitRows}
+      <h3>Board Addendum C 2026-08-27 (paper session)</h3>
+      <p class="meta">Desk open: UK cash open 08:00 Europe/London through US regular cash close 16:00 America/New_York converted onto the Europe/London clock (not hardcoded 21:00). Flatten ALL paper before US close. Do NOT flatten at London cash close. Overnight: ${paperSession.overnight_holds === true}. US after-hours: ${paperSession.us_after_hours === true}. Extended hours: ${paperSession.extended_hours === true}. Daemon: ${paperSession.daemon === true}.</p>
+      <p class="meta">GET /observability does not flatten. Flatten uses the internal simulator, not a broker. Empty allow-list still denies new orders. ${escapeHtml(addendumC.label || "Board Addendum C 2026-08-27")}</p>
+      ${
+        flattenRun
+          ? `<div class="ledger-row">Last flatten: cancelled ${escapeHtml(String(flattenRun.cancelled_open_paper_orders ?? 0))} open orders · closed ${escapeHtml(String(flattenRun.closed_positions ?? 0))} positions · remaining ${escapeHtml(String(flattenRun.positions_remaining ?? 0))} · ${escapeHtml(flattenRun.ran_at || "")}</div>`
+          : `<p class="meta">${escapeHtml(paperFlatten.note || "No flatten-before-US-close run stored yet.")}</p>`
+      }
       <h3>Kill switch</h3>
       <p class="meta">Halted: ${killSwitch.halted === true} · paper equity: ${escapeHtml(String(killSwitch.paper_equity_gbp ?? paperLedger.equity_gbp ?? ""))} GBP · London-day P&amp;L: ${escapeHtml(String(killSwitch.london_day_pnl_gbp ?? paperLedger.london_day_pnl_gbp ?? ""))} GBP</p>
       <p class="meta">${escapeHtml(killSwitch.halt_if || "halt if paper equity &lt;= 800 GBP OR London-day P&amp;L &lt;= -50 GBP")}. Board Member can halt without an AI employee. On halt: cancel open PAPER orders only; never load LIVE; never flatten live.</p>
@@ -292,7 +321,7 @@
       <p class="meta">EVALUATION: ${escapeHtml(paperGate.evaluation_status || "not")} · LIVE-trading recommendation: ${escapeHtml(paperGate.live_trading_recommendation || "not")} · Board review: ${escapeHtml(paperGate.board_review || "not")} · explicit Board approval: ${escapeHtml(paperGate.explicit_board_approval || "not")}</p>
       <p class="meta">Success: ${escapeHtml(paperGate.successful_trade_definition || evaluation.successful_trade_definition || "CLOSED paper trade with profit &gt; 0")}. Trigger: win rate &gt; 50% AND book profitable. Auto-switch LIVE: ${paperGate.evaluation_auto_switch_live === true}. Paper duration remains an OPEN BOARD DECISION. Silence is not approval.</p>
       <h3>Paper ledger (internal simulator)</h3>
-      <p class="meta">Not a broker. BROKER_PAPER and LIVE remain UNLOADED. Empty allow-list ⇒ no orders. Simulated capital: ${escapeHtml(String(paperLedger.simulated_capital_gbp ?? "1000"))} GBP · cash: ${escapeHtml(String(paperLedger.cash_gbp ?? ""))} · equity: ${escapeHtml(String(paperLedger.equity_gbp ?? ""))} · fills: ${escapeHtml(String(paperLedger.fills ?? 0))}</p>
+      <p class="meta">Not a broker. BROKER_PAPER and LIVE remain UNLOADED. PAPER allow-list is Board Addendum E. Simulated capital: ${escapeHtml(String(paperLedger.simulated_capital_gbp ?? "1000"))} GBP · cash: ${escapeHtml(String(paperLedger.cash_gbp ?? ""))} · equity: ${escapeHtml(String(paperLedger.equity_gbp ?? ""))} · fills: ${escapeHtml(String(paperLedger.fills ?? 0))}</p>
       <p class="meta">Assumptions: spread ${escapeHtml(String(assumptions.spread_bps ?? 10))} bps · slippage ${escapeHtml(String(assumptions.slippage_bps ?? 5))} bps · commission ${escapeHtml(String(assumptions.commission_bps ?? 5))} bps. Fake delayed last treated as GBP (INTERNAL ASSUMPTION, no FX vendor).</p>
       <h3>Evaluation ledger</h3>
       <p class="meta">Closed trades: ${escapeHtml(String(evaluation.closed_trades ?? 0))} · profitable closes: ${escapeHtml(String(evaluation.profitable_closes ?? 0))} · win rate: ${escapeHtml(String(evaluation.win_rate ?? 0))} · book P&amp;L: ${escapeHtml(String(evaluation.book_pnl_gbp ?? 0))} GBP · trigger met: ${evaluation.evaluation_trigger_met === true} · auto-switch LIVE: ${evaluation.evaluation_auto_switch_live === true}</p>
@@ -314,7 +343,7 @@
       ${
         meetingRun
           ? `<div class="ledger-row">started_by: ${escapeHtml(meetingRun.started_by || "")} · CEO handoff: ${escapeHtml(meetingRun.ceo_handoff_status || "not")} · Challenge: ${escapeHtml(meetingRun.challenge_status || "not")} · Risk: ${escapeHtml(meetingRun.risk_status || "not")} · trading_mode: ${escapeHtml(meetingRun.trading_mode_at_run || "")}<br /><span class="meta">${escapeHtml(meetingRun.brief_headline || "no MI brief")} · ${escapeHtml(meetingRun.ran_at || "")} · live_started: ${meetingRun.live_started === true}</span></div>
-      <p class="meta">Attendance (four existing employees only — not a 12-employee roster). Board Member is the human, not an employee attendee. None of these employees can start LIVE.</p>
+      <p class="meta">Attendance (original four for 07:30 — not a 12-employee roster). Names are person · department. Board Member is the human, not an employee attendee. None of these employees can start LIVE.</p>
       ${
         (meetingRun.attendees || [])
           .map(
@@ -352,6 +381,7 @@
       { id: "run-risk-deny", label: "Run Risk deny-path", path: "/routines/run-risk-deny" },
       { id: "run-0730-meeting", label: "Run 07:30 meeting record", path: "/routines/run-0730-meeting" },
       { id: "run-nightly-filter", label: "Run nightly memory filter", path: "/routines/run-nightly-filter" },
+      { id: "run-flatten-us-close", label: "Flatten paper before US cash close", path: "/routines/run-flatten-us-close" },
     ];
     return (
       '<div class="job-runs">' +
@@ -365,11 +395,17 @@
     );
   }
 
-  function chatPlaceholder(slug) {
-    if (slug === "ceo") return "Ask the CEO…";
-    if (slug === "challenge") return "Ask Challenge…";
-    if (slug === "risk") return "Ask Risk…";
-    return "Ask Research…";
+  function chatPlaceholder(emp) {
+    const label = (emp && emp.display_name) || "";
+    if (label) return "Ask " + label + "…";
+    const slug = emp && emp.slug;
+    if (slug === "ceo") return "Ask Jordan Hale · CEO…";
+    if (slug === "challenge") return "Ask Sam Okeke · Challenge…";
+    if (slug === "risk") return "Ask Elena Voss · Risk…";
+    if (slug === "trader") return "Ask Chris Adeyemi · Trader…";
+    if (slug === "quant-strategy") return "Ask Nina Kapoor · Quant…";
+    if (slug === "technology") return "Ask Owen Blake · Technology…";
+    return "Ask Asha Patel · Research…";
   }
 
   async function selectEmployee(emp) {
@@ -379,7 +415,7 @@
     placeholder.hidden = true;
     panelBody.hidden = false;
     chatForm.hidden = false;
-    chatInput.placeholder = chatPlaceholder(emp.slug);
+    chatInput.placeholder = chatPlaceholder(emp);
     const work = await get("/employees/" + emp.slug + "/work");
     let history = [];
     try {
@@ -496,8 +532,11 @@
         return;
       }
       lastJobNote =
-        label +
-        " finished. Panel refreshed from the database. trading_mode unchanged. BROKER_PAPER and LIVE remain UNLOADED. No fills.";
+        path.indexOf("flatten") !== -1
+          ? label +
+            " finished. Internal simulator flatten only. Panel refreshed from the database. trading_mode unchanged. BROKER_PAPER and LIVE remain UNLOADED. No broker fills."
+          : label +
+            " finished. Panel refreshed from the database. trading_mode unchanged. BROKER_PAPER and LIVE remain UNLOADED. No fills.";
       jobRunning = false;
       await showBoardObservability();
     } catch (err) {
@@ -604,31 +643,52 @@
       employees = [
         {
           slug: "market-intelligence-research",
-          display_name: "Research",
+          display_name: "Asha Patel · Research",
           status_bubble: "OFFLINE",
           office_x: 96,
           office_y: 108,
         },
         {
           slug: "ceo",
-          display_name: "CEO",
+          display_name: "Jordan Hale · CEO",
           status_bubble: "OFFLINE",
           office_x: 220,
           office_y: 70,
         },
         {
           slug: "challenge",
-          display_name: "Challenge",
+          display_name: "Sam Okeke · Challenge",
           status_bubble: "OFFLINE",
           office_x: 40,
           office_y: 48,
         },
         {
           slug: "risk",
-          display_name: "Risk",
+          display_name: "Elena Voss · Risk",
           status_bubble: "OFFLINE",
           office_x: 255,
           office_y: 175,
+        },
+        {
+          slug: "trader",
+          display_name: "Chris Adeyemi · Trader",
+          status_bubble: "OFFLINE",
+          office_x: 160,
+          office_y: 160,
+        },
+        {
+          slug: "quant-strategy",
+          display_name: "Nina Kapoor · Quant",
+          status_bubble: "OFFLINE",
+          office_x: 120,
+          office_y: 40,
+        },
+        {
+          slug: "technology",
+          display_name: "Owen Blake · Technology",
+          status_bubble: "OFFLINE",
+          office_x: 250,
+          office_y: 120,
         },
       ];
       draw();

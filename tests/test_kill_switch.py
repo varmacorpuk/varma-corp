@@ -100,14 +100,6 @@ def test_auto_trip_on_equity_floor(session):
     session.commit()
     emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     session.query(Permission).filter_by(subject_id=emp.id, action="place_order").one().allowed = True
-    session.add(
-        AllowListInstrument(
-            symbol="AAPL",
-            venue="NASDAQ",
-            approved_by="test-only",
-            approved_at=now_london(),
-        )
-    )
     session.commit()
     assert PaperLedger(session).equity() <= 800
     d = ControlEngine(session).place_order(

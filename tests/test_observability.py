@@ -26,7 +26,7 @@ def test_board_reads_costs_and_evidence_from_database(session):
     assert empty["source"] == "database"
     assert empty["office_is_source_of_truth"] is False
     assert empty["trading_mode"] == "LIVE_BLOCKED"
-    assert empty["allow_list_empty"] is True
+    assert empty["allow_list_empty"] is False
     assert empty["live_adapter_loaded"] is False
     assert empty["cost_cap_is_board_budget"] is False
     assert "TEMPORARY" in empty["cost_cap_label"]
@@ -40,7 +40,7 @@ def test_board_reads_costs_and_evidence_from_database(session):
     kinds = {row["kind"] for row in snap["evidence"]["entries"]}
     assert "brief_produced" in kinds
     assert session.get(ControlState, 1).trading_mode == before_mode == "LIVE_BLOCKED"
-    assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow == []
+    assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow
     assert LIVE_ADAPTER_LOADED is False
     assert ControlEngine(session).live_adapter_loaded() is False
 
@@ -56,7 +56,7 @@ def test_board_observability_api_is_read_only(client):
     assert body["writes_controls"] is False
     assert body["source"] == "database"
     assert body["trading_mode"] == "LIVE_BLOCKED"
-    assert body["allow_list_empty"] is True
+    assert body["allow_list_empty"] is False
     assert body["live_adapter_loaded"] is False
     assert body["cost_cap_is_board_budget"] is False
     assert "TEMPORARY" in body["cost_cap_label"]
@@ -92,7 +92,7 @@ def test_board_observability_api_is_read_only(client):
 
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
-    assert controls["allow_list"] == []
+    assert "AAPL" in controls["allow_list"]
     assert controls["live_adapter_loaded"] is False
 
 
@@ -125,7 +125,7 @@ def test_employees_cannot_write_controls_via_observability(client):
 
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
-    assert controls["allow_list"] == []
+    assert "AAPL" in controls["allow_list"]
     assert controls["live_adapter_loaded"] is False
 
 
@@ -143,7 +143,7 @@ def test_observability_does_not_unblock_live(client):
     assert reason in {"LIVE_BLOCKED", "NO_PERMISSION", "EMPTY_ALLOW_LIST", "LIVE_ADAPTER_NOT_LOADED"}
     controls = client.get("/controls").json()
     assert controls["trading_mode"] == "LIVE_BLOCKED"
-    assert controls["allow_list"] == []
+    assert "AAPL" in controls["allow_list"]
     assert controls["live_adapter_loaded"] is False
 
 
@@ -230,7 +230,7 @@ def test_observability_status_bubbles_board_only(client):
     assert CEO_SLUG in slugs
     assert CHALLENGE_SLUG in slugs
     assert RISK_SLUG in slugs
-    assert len(body["status_bubbles"]) == 4
+    assert len(body["status_bubbles"]) == 7
     for row in body["status_bubbles"]:
         assert row["status_bubble"]
         assert row["read_only"] is True
@@ -352,7 +352,7 @@ def test_observability_missing_numeric_limit_keys_board_only(session):
     assert session.query(NumericLimit).count() == len(REQUIRED_LIMIT_KEYS)
     assert snap["writes_controls"] is False
     assert session.get(ControlState, 1).trading_mode == before_mode == "LIVE_BLOCKED"
-    assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow == []
+    assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow
     assert LIVE_ADAPTER_LOADED is False
 
 
@@ -383,8 +383,8 @@ def test_observability_control_snapshot_board_only(client):
     assert controls["writes_controls"] is False
     assert controls["employees_cannot_write_controls"] is True
     assert controls["trading_mode"] == "LIVE_BLOCKED"
-    assert controls["allow_list"] == []
-    assert controls["allow_list_empty"] is True
+    assert "AAPL" in controls["allow_list"]
+    assert controls["allow_list_empty"] is False
     assert controls["live_adapter_loaded"] is False
     assert body["employees_cannot_write_controls"] is True
     missing = body["missing_numeric_limits"]
@@ -403,7 +403,7 @@ def test_observability_control_snapshot_board_only(client):
     assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
     after = client.get("/observability", headers=BOARD_HEADERS).json()
     assert after["controls"]["trading_mode"] == "LIVE_BLOCKED"
-    assert after["controls"]["allow_list"] == []
+    assert "AAPL" in after["controls"]["allow_list"]
     assert after["missing_numeric_limits"]["unset_keys"] == missing["unset_keys"]
     assert client.get("/controls").json()["trading_mode"] == "LIVE_BLOCKED"
     assert LIVE_ADAPTER_LOADED is False
@@ -423,19 +423,11 @@ def test_observability_missing_limits_still_deny_execution(session):
     d = ControlEngine(session).place_order(
         actor_id=emp.id,
         actor_type="employee",
-        order={"symbol": "AAPL", "execution_port": "SIMULATOR"},
+        order={"symbol": "ZZQQ", "execution_port": "SIMULATOR"},
     )
     assert d.allowed is False
-    assert d.reason == "EMPTY_ALLOW_LIST"
+    assert d.reason == "SYMBOL_NOT_ON_ALLOW_LIST"
 
-    session.add(
-        AllowListInstrument(
-            symbol="AAPL",
-            venue="NASDAQ",
-            approved_by="board-member",
-            approved_at=now_london(),
-        )
-    )
     for row in session.query(NumericLimit).all():
         session.delete(row)
     session.commit()
@@ -464,7 +456,7 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert gate["read_only"] is True
     assert gate["source"] == "database"
     assert gate["writes_controls"] is False
-    assert gate["paper_status"].startswith("not started")
+    assert "LIVE_BLOCKED" in gate["paper_status"]
     assert gate["paper_started"] is False
     assert gate["paper_execution_implemented"] is True
     assert gate["internal_simulator"] is True
@@ -494,13 +486,13 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert post.status_code == 403
     assert post.json()["detail"] == "OBSERVABILITY_IS_READ_ONLY"
     after = client.get("/observability", headers=BOARD_HEADERS).json()["paper_gate"]
-    assert after["paper_status"].startswith("not started")
+    assert "LIVE_BLOCKED" in after["paper_status"]
     assert after["trading_mode"] == "LIVE_BLOCKED"
     assert after["execution"] is False
     live = client.post(
         "/execution/place-order",
         headers=BOARD_HEADERS,
-        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "LIVE"},
     )
     assert live.status_code == 403
     assert live.json()["detail"]["allowed"] is False

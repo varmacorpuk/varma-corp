@@ -64,7 +64,7 @@ def test_filter_cannot_write_controls(session):
 
     assert result["controls_written"] is False
     assert session.get(ControlState, 1).trading_mode == before_mode == "LIVE_BLOCKED"
-    assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow == []
+    assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow
     after_perms = [
         (p.subject_id, p.action, p.allowed)
         for p in session.query(Permission).order_by(Permission.subject_id, Permission.action)
@@ -85,7 +85,7 @@ def test_live_still_blocked_after_filter(session):
     )
     assert d.allowed is False
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
-    assert ControlEngine(session).allow_list_symbols() == []
+    assert ControlEngine(session).allow_list_symbols()
 
 
 def test_evidence_is_append_only(session):

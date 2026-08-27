@@ -80,9 +80,14 @@ class PaperFillSimulator:
         last = float(rows[0]["last"]) if rows else 1.0
         return last if last > 0 else 1.0
 
-    def fill(self, *, actor_id: str, order: dict[str, Any]) -> Decision:
-        """Simulate a paper fill. Caller has already passed control gates."""
-        self.ledger.ensure_account()
+    def fill(self, *, actor_id: str, order: dict[str, Any], at=None, is_flatten: bool = False) -> Decision:
+        """Simulate a paper fill. Caller has already passed control gates.
+
+        Flatten close-outs call this directly (session hygiene). They do not
+        require allow-list membership. New risk orders still go through ControlEngine.
+        """
+        now = at or now_london()
+        self.ledger.ensure_account(at=now)
         symbol = str(order.get("symbol") or "")
         side = str(order.get("side") or "buy").lower()
         if side not in {"buy", "sell"}:
@@ -102,8 +107,7 @@ class PaperFillSimulator:
         fill_price = round(fill_price, 6)
         notional = round(quantity * fill_price, 6)
         commission = round(notional * COMMISSION_BPS / 10000.0, 6)
-        day = london_day()
-        now = now_london()
+        day = london_day(now)
 
         paper_order = PaperOrder(
             symbol=symbol,
@@ -121,8 +125,9 @@ class PaperFillSimulator:
             execution_port="SIMULATOR",
             is_paper=True,
             is_live=False,
+            is_flatten=is_flatten,
             created_at=now,
-            notes=ASSUMPTIONS_NOTE,
+            notes=ASSUMPTIONS_NOTE if not is_flatten else "FLATTEN_BEFORE_US_REGULAR_CASH_CLOSE",
         )
         self.session.add(paper_order)
         self.session.flush()
@@ -169,9 +174,10 @@ class PaperFillSimulator:
             "execution_port": "SIMULATOR",
             "assumptions": simulator_assumptions(),
             "closed_trade_id": closed.id if closed else None,
-            "cash_gbp": self.ledger.account().cash,
+            "cash_gbp": self.ledger.account(at=now).cash,
             "equity_gbp": self.ledger.equity(),
-            "london_day_pnl_gbp": self.ledger.london_day_pnl(),
+            "london_day_pnl_gbp": self.ledger.london_day_pnl(at=now),
+            "is_flatten": is_flatten,
         }
         self._evidence("paper_fill_simulated", actor_id, details)
         return Decision(True, "PAPER_FILL_SIMULATED", details)

@@ -46,7 +46,18 @@ class FakeMarketData:
     def delayed_prices(self, symbols: list[str]) -> list[dict[str, Any]]:
         now = now_london()
         observed = now - timedelta(hours=28 if self.stale else 4)
-        last_px = {"AAPL": 190.0, "MSFT": 410.0, "SHEL.L": 27.5, "AZN.L": 112.0}
+        last_px = {
+            "AAPL": 190.0,
+            "MSFT": 410.0,
+            "NVDA": 120.0,
+            "AMZN": 180.0,
+            "GOOGL": 160.0,
+            "JPM": 200.0,
+            "JNJ": 150.0,
+            "SHEL.L": 27.5,
+            "AZN.L": 112.0,
+            "ULVR.L": 45.0,
+        }
         out = []
         for s in symbols:
             out.append(

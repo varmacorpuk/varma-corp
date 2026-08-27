@@ -18,7 +18,7 @@ def test_persistent_challenge_and_risk_identities(session):
     ceo = session.query(Employee).filter_by(slug=CEO_SLUG).one()
     assert challenge.is_primary_agent == 1
     assert risk.is_primary_agent == 1
-    assert asha.display_name == "Research"
+    assert asha.display_name == "Asha Patel · Research"
     assert asha.person_name == "Asha Patel"
     assert "Chief Executive" in ceo.role_title
     for emp in (challenge, risk):
@@ -106,7 +106,7 @@ def test_risk_denies_unsafe_path(session):
     assert "LIVE_BLOCKED" in result["reasons"] or result["control_engine_reason"] in {
         "LIVE_BLOCKED",
         "NO_PERMISSION",
-        "EMPTY_ALLOW_LIST",
+        "SYMBOL_NOT_ON_ALLOW_LIST",
         "GOLD_NOT_AUTHORISED",
         "LIVE_ADAPTER_NOT_LOADED",
     }

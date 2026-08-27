@@ -1,4 +1,5 @@
 from tests.conftest import BOARD_HEADERS, EMPLOYEE_HEADERS
+from varma.controls.addendum_e import ADDENDUM_E_SYMBOLS
 from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
 from varma.db.models import ControlState
 
@@ -8,8 +9,8 @@ def test_trading_mode_live_blocked(client):
     assert r.status_code == 200
     body = r.json()
     assert body["trading_mode"] == "LIVE_BLOCKED"
-    assert body["allow_list"] == []
-    assert body["allow_list_empty"] is True
+    assert set(body["allow_list"]) == set(ADDENDUM_E_SYMBOLS)
+    assert body["allow_list_empty"] is False
     assert body["live_adapter_loaded"] is False
     assert body["broker_paper_loaded"] is False
     assert body["employees_cannot_write_this"] is True
