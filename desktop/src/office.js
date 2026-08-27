@@ -184,6 +184,8 @@
     const paperFlatten = data.paper_flatten || {};
     const flattenRun = paperFlatten.run;
     const addendumC = data.addendum_c || {};
+    const addendumJ = data.addendum_j || {};
+    const backup = data.backup || {};
     const assumptions = paperLedger.assumptions || {};
     const controls = data.controls || {};
     const allowList = controls.allow_list || [];
@@ -248,12 +250,14 @@
     const filterSched = documented.nightly_filter || {};
     const meetingSched = documented.company_meeting || {};
     const flattenSched = documented.flatten_us_close || {};
+    const backupSched = documented.backup || {};
     const dbRoutines = routines.items || [];
     const routineRows = `
       <div class="ledger-row">06:30 weekday brief · ${escapeHtml(briefSched.timezone || "Europe/London")} · daemon: ${briefSched.daemon === true} · ${escapeHtml(briefSched.cli || "python -m varma.routines.run_brief")}<br /><span class="meta">${escapeHtml(briefSched.description || "")}</span></div>
       <div class="ledger-row">07:30 company meeting · ${escapeHtml(meetingSched.timezone || "Europe/London")} · daemon: ${meetingSched.daemon === true} · is_trade: ${meetingSched.is_trade === true} · ${escapeHtml(meetingSched.cli || "python -m varma.routines.run_0730_meeting")}<br /><span class="meta">${escapeHtml(meetingSched.description || "")}</span></div>
       <div class="ledger-row">Flatten paper before US cash close · ${escapeHtml(flattenSched.timezone || "Europe/London")} · daemon: ${flattenSched.daemon === true} · flatten_at: ${escapeHtml(flattenSched.flatten_at || "US_REGULAR_CASH_CLOSE")} · not London close · ${escapeHtml(flattenSched.cli || "python -m varma.routines.run_flatten_us_close")}<br /><span class="meta">${escapeHtml(flattenSched.description || "")}</span></div>
       <div class="ledger-row">Nightly memory filter · ${escapeHtml(filterSched.timezone || "Europe/London")} · daemon: ${filterSched.daemon === true} · writes_controls: ${filterSched.writes_controls === true} · ${escapeHtml(filterSched.cli || "")}<br /><span class="meta">${escapeHtml(filterSched.description || "")}</span></div>
+      <div class="ledger-row">Company backup · ${escapeHtml(backupSched.timezone || "Europe/London")} · daemon: ${backupSched.daemon === true} · after US close / end of London evening · owner: ${escapeHtml(backupSched.owner_display_name || "Owen Blake · Technology")} · ${escapeHtml(backupSched.cli || "python -m varma.routines.run_backup")}<br /><span class="meta">${escapeHtml(backupSched.description || "")}</span></div>
       ${
         dbRoutines.length
           ? dbRoutines
@@ -318,6 +322,9 @@
       <p class="meta">Employees cannot reset the kill switch.</p>
       <h3>Board Addendum I 2026-08-27 (CLOSED until Grand Opening)</h3>
       <p class="meta">The company is CLOSED. Nothing is trading. Not paper, not live. PAPER execution is CLOSED. Allow-list E exists but cannot be used for fills until Hari's explicit Grand Opening PAPER yes. £1000 is the FUTURE paper starting book only. Addendum A numbers are stored but unused until open. LIVE still blocked. Never auto-switch. Silence is not approval. First paper trade path is not implemented.</p>
+      <h3>Board Addendum J 2026-08-27 (company backup)</h3>
+      <p class="meta">Company records are not on the Board Member laptop and not in GitHub. GitHub is code only. System of record: ${escapeHtml(backup.system_of_record || "database")}. Encrypted at rest: ${backup.encrypted_at_rest !== false}. Owner: ${escapeHtml(backup.owner_display_name || addendumJ.owner_display_name || "Owen Blake · Technology")}. Owen cannot write trading_mode, allow-list, or open the firm. Schedule: ${escapeHtml(backup.schedule || "daily after US close / end of London evening")} · daemon: ${backup.daemon === true}.</p>
+      <p class="meta">Included: paper ledger, evidence, organisational memory, control snapshots. Excluded: secrets, live broker credentials (must not exist yet). Employees including the CEO cannot download secrets. Last successful backup: ${escapeHtml(backup.last_successful_backup_at || "none")}. Last failure: ${escapeHtml(backup.last_failure_at || "none")}${backup.last_failure_reason ? " · " + escapeHtml(backup.last_failure_reason) : ""}.</p>
       <h3>Paper gate</h3>
       <p class="meta">PAPER: ${escapeHtml(paperGate.paper_status || "not started")} · trading_mode: ${escapeHtml(paperGate.trading_mode || data.trading_mode || "")} · execution: ${paperGate.execution === true} · paper_execution_closed: ${paperGate.paper_execution_closed !== false} · internal simulator: ${paperGate.internal_simulator === true}</p>
       <p class="meta">EVALUATION: ${escapeHtml(paperGate.evaluation_status || "not")} · LIVE-trading recommendation: ${escapeHtml(paperGate.live_trading_recommendation || "not")} · Board review: ${escapeHtml(paperGate.board_review || "not")} · explicit Board approval: ${escapeHtml(paperGate.explicit_board_approval || "not")}</p>
@@ -384,6 +391,7 @@
       { id: "run-0730-meeting", label: "Run 07:30 meeting record", path: "/routines/run-0730-meeting" },
       { id: "run-nightly-filter", label: "Run nightly memory filter", path: "/routines/run-nightly-filter" },
       { id: "run-flatten-us-close", label: "Flatten paper before US cash close", path: "/routines/run-flatten-us-close" },
+      { id: "run-backup", label: "Run company backup now", path: "/routines/run-backup" },
     ];
     return (
       '<div class="job-runs">' +

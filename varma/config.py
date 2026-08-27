@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     llm_provider: str = "fake"
     llm_api_key: str | None = None  # unused by default; never commit a live key
     board_member_stub_token: str = "dev-board-member"
+    # Encrypted-at-rest backup key. Never commit. Not a live broker credential.
+    backup_encryption_key: str | None = None
     api_host: str = "127.0.0.1"
     api_port: int = 8000
 

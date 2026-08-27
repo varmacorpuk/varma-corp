@@ -72,6 +72,7 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
     assert "Run 07:30 meeting record" in labels
     assert "Run nightly memory filter" in labels
     assert "Flatten paper before US cash close" in labels
+    assert "Run company backup now" in labels
     for row in jobs["items"]:
         assert row["method"] == "POST"
         assert row["path"] != "/observability"
@@ -89,6 +90,7 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
     assert empty["meeting_pack"]["brief_headline"] is None
     assert empty["nightly_filter"]["run"] is None
     assert empty["company_meeting"]["run"] is None
+    assert empty["backup"]["last_successful_backup_at"] is None
     assert empty["meeting_pack"]["risk_denied"] is False
 
     again = client.get("/observability", headers=BOARD_HEADERS).json()
@@ -207,6 +209,7 @@ def test_board_job_catalog_matches_cli(session):
     assert clis["run-0730-meeting"] == "python -m varma.routines.run_0730_meeting"
     assert clis["run-nightly-filter"] == "python -m varma.routines.run_nightly_filter"
     assert clis["run-flatten-us-close"] == "python -m varma.routines.run_flatten_us_close"
+    assert clis["run-backup"] == "python -m varma.routines.run_backup"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert snap["writes_controls"] is False
     assert LIVE_ADAPTER_LOADED is False

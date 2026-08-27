@@ -71,6 +71,21 @@ def describe_paper_session() -> str:
     )
 
 
+def describe_company_backup() -> str:
+    return (
+        "Board Addendum J 2026-08-27: daily Europe/London backup after US close "
+        "/ end of London evening. On-demand via Board Member right-hand panel, "
+        "API, or documented CLI. This slice does not start a daemon scheduler. "
+        "Encrypted artefact stays in the database (same StoragePort). Not in "
+        "GitHub. Not on the Board Member laptop. Technology (Owen Blake · "
+        "Technology) owns the job and cannot write trading_mode, allow-list, "
+        "or open the firm. Included: paper ledger, evidence, organisational "
+        "memory, control snapshots. Excluded: secrets, live broker credentials "
+        "(which must not exist yet). Employees including the CEO cannot download "
+        "secrets. Does not fill orders."
+    )
+
+
 def describe_flatten_us_close() -> str:
     return (
         "Board Addendum C 2026-08-27: flatten ALL paper before US regular cash "

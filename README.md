@@ -28,10 +28,11 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 20. Same panel: Board-only confirmation that BROKER_PAPER and LIVE execution ports remain UNLOADED. No broker fills. Constructing or using those ports is denied. Internal simulator DENY all fills while PAPER execution is CLOSED, even for allow-listed tickers.
 21. On-demand 07:30 Europe/London company meeting record: Board Member API or documented CLI writes a meeting artefact to the database from existing handoffs (MI brief, CEO pack, Challenge SAMPLE, Risk DENY). Shown read-only in Board observability. Not a trade. Not LIVE approval. Not a daemon. Employees cannot start LIVE from a meeting.
 22. Latest 07:30 meeting attendance list: the four existing employees only (MI, CEO, Challenge, Risk). Not a 12-employee roster. Read-only in Board observability.
-23. Board Member can run the existing on-demand jobs from the right-hand Board observability panel (POST, not GET /observability): morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter. Employees are denied. Running a job does not load broker ports, change trading_mode, or fill paper/live orders. After a run the same panel refreshes from the database. CLI entry points still work.
+23. Board Member can run the existing on-demand jobs from the right-hand Board observability panel (POST, not GET /observability): morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter, company backup. Employees are denied. Running a job does not load broker ports, change trading_mode, or fill paper/live orders. After a run the same panel refreshes from the database. CLI entry points still work.
 24. Board-usable kill switch (Board Member only): halt if paper equity <= 800 GBP OR London-day P&L <= -50 GBP, or when the Board Member triggers halt without an AI employee. Addendum A numbers are stored but unused until Grand Opening PAPER. On halt: cancel open PAPER orders only; never load LIVE; never flatten live (there is no live). Employees cannot reset it.
 25. Evaluation ledger tables exist (closed trades, P&L, win rate of profitable closes) even when fills are zero because PAPER execution is CLOSED.
 26. Board Addendum I 2026-08-27: the company is CLOSED until Grand Opening. Nothing is trading. Not paper, not live. Two openings both require Hari's explicit yes (silence is not approval). This slice implements the CLOSED gate only — not the first paper trade path. No 07:30 diary invite to the Board Member; 07:30 may exist as an internal staff artefact and must not email or calendar-invite Hari. Do not flatten-as-if-there-were-positions.
+27. Board Addendum J 2026-08-27: company records are not on the Board Member's laptop and not in GitHub. GitHub is code only. System of record remains the database. Board-visible backup status (last successful backup time, last failure, included: paper ledger / evidence / organisational memory / control snapshots; excluded: secrets / live broker credentials which must not exist yet). Board-only job to run a backup now. Default schedule: daily Europe/London after US close / end of London evening. Encrypted at rest. Technology (Owen Blake · Technology) owns the job and cannot write trading_mode, allow-list, or open the firm. Employees including the CEO cannot download secrets. The backup job does not fill orders.
 
 ## System separation
 
@@ -60,6 +61,7 @@ From the repository root:
     python3 -m varma.routines.run_risk_deny
     python3 -m varma.routines.run_nightly_filter
     python3 -m varma.routines.run_0730_meeting
+    python3 -m varma.routines.run_backup
     python3 -m varma
 
 Health: http://127.0.0.1:8000/health
@@ -169,6 +171,19 @@ On demand, not a 24/7 daemon. Board Member right-hand panel, API, or documented 
 - Latest meeting is shown read-only in Board observability. Artefact lives in the database, not on the desktop.
 - Attendance is the four existing employees only (Research, CEO, Challenge, Risk). Not a 12-employee roster. Board Member is the human, not an employee attendee.
 
+## Company backup (Board Addendum J)
+
+On demand, not a 24/7 daemon. Board Member right-hand panel, API, or documented CLI:
+
+    python3 -m varma.routines.run_backup
+
+- Cadence: daily Europe/London, after US close / end of London evening. No invented clock hour.
+- Technology (Owen Blake · Technology) owns the job. Board Member runs it. Owen cannot write `trading_mode`, allow-list, or open the firm.
+- Encrypted artefact stays in the database (`backup_runs`). Same StoragePort. Not a second store. Not in GitHub. Not on the Board Member laptop.
+- Included: paper ledger, evidence, organisational memory, control snapshots.
+- Excluded: secrets, live broker credentials (which must not exist yet). Employees including the CEO cannot download secrets.
+- Does not fill orders. PAPER execution stays CLOSED. LIVE stays blocked.
+
 ## Board observability (this slice)
 
 The right-hand panel is a Board Member projection of the database, not a ledger of its own.
@@ -177,7 +192,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 - Latest nightly memory-filter run and organisation-memory titles (titles only) are read from the database.
 - 07:30 meeting pack status: latest MI brief headline, CEO handoff DELIVERED/not, Challenge SAMPLE thesis status, Risk DENIED/not.
 - 07:30 meeting artefact list (read-only): latest brief, CEO handoff, SAMPLE thesis, challenge review, Risk decision.
-- Board-only documented routine schedules: 06:30 weekday brief and nightly Europe/London filter (on-demand, no daemon, no invented nightly clock hour).
+- Board-only documented routine schedules: 06:30 weekday brief, nightly Europe/London filter, and daily backup after US close / end of London evening (on-demand, no daemon, no invented backup clock hour).
 - Board-only missing numeric-limit keys (empty after Addendum A) and Board-set VALUES (simulated_capital 1000 GBP, max_position 200 GBP, max_daily_loss 50 GBP, max_orders_per_day 6, kill-switch floors). Not invented silent defaults.
 - Board-only control snapshot: `trading_mode=LIVE_BLOCKED`, PAPER execution CLOSED (Board Addendum I), employees cannot write controls. Read-only except Board-only kill switch POST.
 - Board-only paper-gate status: company CLOSED until Grand Opening. PAPER execution CLOSED. £1000 is FUTURE paper starting book only. Allow-list E cannot fill until Hari's explicit yes. First paper trade path not implemented. Silence is not approval.
@@ -185,7 +200,8 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 - Board-only kill switch status and Board Member halt/reset. On halt: cancel open PAPER orders only. Employees cannot reset it. Addendum A numbers stored but unused until open.
 - Board-only evaluation ledger (closed trades, P&L, win rate) — zero fills is valid while PAPER execution is CLOSED.
 - Latest on-demand 07:30 company meeting record (read-only): internal staff artefact; no Board Member diary/calendar invite; not a trade, not LIVE approval, employees cannot start LIVE from it. Attendance is the four existing employees only — not a 12-employee roster.
-- Board-only on-demand job runs from this same panel: morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter. POST `/routines/run-*`, not GET `/observability`. Employees are denied. Running a job does not load BROKER_PAPER or LIVE, does not change `trading_mode`, and does not fill paper/live orders. After a run the panel refreshes from the database. CLI entry points still work.
+- Board-only on-demand job runs from this same panel: morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter, company backup. POST `/routines/run-*`, not GET `/observability`. Employees are denied. Running a job does not load BROKER_PAPER or LIVE, does not change `trading_mode`, and does not fill paper/live orders. After a run the panel refreshes from the database. CLI entry points still work.
+- Board-only backup status (Board Addendum J): last successful backup time, last failure, included (paper ledger, evidence, organisational memory, control snapshots), excluded (secrets, live broker credentials which must not exist yet). Encrypted at rest in the database. Not in GitHub. Not on the Board Member laptop. Technology (Owen Blake · Technology) owns the job and cannot write trading_mode, allow-list, or open the firm. Employees including the CEO cannot download secrets.
 - Board-only employee status bubbles. Click an employee (floor or bubble name) to open that person in the same right-hand panel.
 - Visible without clicking an employee. A Board observability entry returns to this view.
 - Read-only. It does not write controls, `trading_mode`, allow-list, or permissions. Chat is hidden on this view.
@@ -204,4 +220,4 @@ See ARCHITECTURE.md. Authoritative documents 00-18 are not copied into git.
 
     python3 -m pytest
 
-Covers: no fills while PAPER execution is CLOSED, even for allow-listed tickers; LIVE denied; BROKER_PAPER UNLOADED; gold denied; employees cannot open the firm; CEO cannot open the firm; Board Addendum I CLOSED gate; Board Addendum A limits are Board-set and shown (unused until open); kill switch remains Board-only; employees cannot write limits or reset the kill switch; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; on-demand 07:30 company meeting record from existing handoffs (internal staff artefact; no Board Member diary/calendar invite; not a trade, not LIVE approval) with attendance of the four existing employees only; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, latest company meeting, status bubbles, documented routine schedules, Board-set numeric-limit VALUES, kill-switch state, evaluation ledger (zero fills valid), control snapshot, paper-gate status (CLOSED), UNLOADED BROKER_PAPER and LIVE execution ports, and employee chat history; Board Member can run the on-demand jobs from the right-hand panel via POST (employees denied; GET /observability does not run jobs; running a job does not load broker ports, change trading_mode, or fill orders); constructing or using BROKER_PAPER/LIVE is denied; flatten-as-if-there-were-positions is a no-op while closed; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; display names stay First Last · Department; Talk off; FakeLLM only.
+Covers: no fills while PAPER execution is CLOSED, even for allow-listed tickers; LIVE denied; BROKER_PAPER UNLOADED; gold denied; employees cannot open the firm; CEO cannot open the firm; Board Addendum I CLOSED gate; Board Addendum J encrypted company backup in the database (not git, not the laptop; last success/failure visible; secrets and live broker credentials excluded; Technology owns the job and cannot write trading_mode, allow-list, or open the firm; employees including CEO cannot download secrets; backup job does not fill orders); Board Addendum A limits are Board-set and shown (unused until open); kill switch remains Board-only; employees cannot write limits or reset the kill switch; CEO/Challenge/Risk cannot approve LIVE; brief verification and handoff to CEO; SAMPLE thesis challenge; Risk deny-path; nightly memory filter archives working context without deleting evidence or writing controls; on-demand 07:30 company meeting record from existing handoffs (internal staff artefact; no Board Member diary/calendar invite; not a trade, not LIVE approval) with attendance of the four existing employees only; Board can read cost ledger, recent evidence, nightly filter run, organisation-memory titles, 07:30 meeting pack status, meeting artefact list, latest company meeting, status bubbles, documented routine schedules, Board-set numeric-limit VALUES, kill-switch state, evaluation ledger (zero fills valid), control snapshot, paper-gate status (CLOSED), UNLOADED BROKER_PAPER and LIVE execution ports, backup status, and employee chat history; Board Member can run the on-demand jobs from the right-hand panel via POST (employees denied; GET /observability does not run jobs; running a job does not load broker ports, change trading_mode, or fill orders); constructing or using BROKER_PAPER/LIVE is denied; flatten-as-if-there-were-positions is a no-op while closed; employees cannot use observability to write controls; watchlist is not the allow-list; office right-hand panel is not an overlay; display names stay First Last · Department; Talk off; FakeLLM only.

@@ -9,6 +9,12 @@ data/
 *.sqlite
 *.sqlite3
 
+# Encrypted backup keys and dump files — never commit company records
+*.key
+*.dump
+*.bak
+backups/
+
 # Python
 __pycache__/
 *.py[cod]
