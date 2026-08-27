@@ -137,6 +137,7 @@ class NightlyMemoryFilter:
                 created_at=now_london(),
             )
         )
+        self.session.flush()
 
         after = _controls_guard(self.session)
         if after["trading_mode"] != before["trading_mode"]:

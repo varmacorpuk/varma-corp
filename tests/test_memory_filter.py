@@ -44,7 +44,7 @@ def test_working_context_archived_evidence_kept(session):
     assert session.get(Evidence, prior_id) is not None
     evidence_ids_after = {r.id for r in session.query(Evidence).all()}
     assert evidence_ids_before <= evidence_ids_after
-    assert result["evidence_count_after"] >= result["evidence_count_before"]
+    assert result["evidence_count_after"] == result["evidence_count_before"] + 1
     assert result["evidence_deleted"] is False
     assert {r.id for r in session.query(MemoryEmployee).all()} == lesson_ids_before
     assert session.query(Evidence).filter_by(kind="nightly_filter_ran").count() >= 1
