@@ -10,11 +10,17 @@ def test_right_hand_panel_not_overlay():
     assert 'id="office-floor"' in HTML
     assert 'id="right-panel"' in HTML
     assert 'id="chat-form"' in HTML
+    assert 'id="board-observability-btn"' in HTML
     assert "Talk" not in HTML or "talk-disabled" in HTML
     assert "overlay" not in CSS.lower() or "not an overlay" in CSS.lower()
+    assert "position: fixed" not in CSS.lower()
     assert "display: flex" in CSS or "display:flex" in CSS.replace(" ", "")
     assert "#right-panel" in CSS
     assert "Board Member" in HTML
+    assert "Board observability" in HTML
+    assert "covering overlay" in HTML.lower() or "no covering overlay" in HTML.lower()
+    assert "#chat-form[hidden]" in CSS
+    assert "display: none" in CSS
 
 
 def test_office_click_opens_panel_logic():
@@ -27,3 +33,8 @@ def test_office_click_opens_panel_logic():
     assert "Ask the CEO" in JS or "ceo" in JS
     assert "right-panel" in HTML
     assert "covering overlay" in HTML.lower() or "no covering overlay" in HTML.lower()
+    assert "showBoardObservability" in JS
+    assert "/observability" in JS
+    assert "board-observability-btn" in JS
+    assert "writes controls" in JS.lower() or "does not write controls" in JS.lower()
+    assert "chatForm.hidden = true" in JS.replace(" ", "") or "chatForm.hidden=true" in JS.replace(" ", "")

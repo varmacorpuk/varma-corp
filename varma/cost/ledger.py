@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from varma.clock import now_london
@@ -34,3 +35,15 @@ class CostLedger:
 
     def within_cap(self, units: int) -> bool:
         return units <= self.cap
+
+    def recent(self, *, limit: int = 20) -> list[CostEntry]:
+        return (
+            self.session.query(CostEntry)
+            .order_by(CostEntry.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def total_units(self) -> int:
+        value = self.session.query(func.coalesce(func.sum(CostEntry.units), 0)).scalar()
+        return int(value or 0)

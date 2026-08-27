@@ -58,6 +58,14 @@ class MemoryStores:
         self.session.commit()
         return row
 
+    def recent_evidence(self, *, limit: int = 20) -> list[Evidence]:
+        return (
+            self.session.query(Evidence)
+            .order_by(Evidence.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
     def delete_evidence(self, evidence_id: str) -> None:
         raise RuntimeError("EVIDENCE_IS_APPEND_ONLY")
 

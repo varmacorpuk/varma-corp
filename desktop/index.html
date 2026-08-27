@@ -16,11 +16,14 @@
     <section class="office-pane" aria-label="Virtual office">
       <div class="office-caption">2D office (placeholder pixels). Office is a projection, not the source of truth. Click never grants authority.</div>
       <canvas id="office-floor" width="640" height="400"></canvas>
-      <p class="hint">Click an employee or status bubble → details appear in the right-hand panel. The office stays visible. No covering overlay.</p>
+      <p class="hint">Click an employee or status bubble for their work, or Board observability in the right-hand panel. The office stays visible. No covering overlay.</p>
     </section>
     <aside id="right-panel" class="right-panel" aria-label="Right-hand information panel">
       <h2>Information</h2>
-      <p id="panel-placeholder">Select Asha Patel, the CEO, Challenge, or Risk on the floor. Chat reaches the same employee runtime. Talk/voice is disabled (OPEN BOARD DECISION). AI employees do not approve live trading.</p>
+      <nav class="panel-nav" aria-label="Panel views">
+        <button type="button" id="board-observability-btn">Board observability</button>
+      </nav>
+      <p id="panel-placeholder">Board observability (cost ledger + recent evidence) loads here from the database without clicking an employee. Select Asha Patel, the CEO, Challenge, or Risk on the floor for their work. Chat reaches the same employee runtime. Talk/voice is disabled (OPEN BOARD DECISION). AI employees do not approve live trading. This panel does not write controls.</p>
       <div id="panel-body" hidden></div>
       <form id="chat-form" hidden>
         <label for="chat-input">Chat with selected employee</label>
