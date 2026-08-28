@@ -18,11 +18,16 @@ from varma.db.models import (
 )
 from varma.memory.stores import MEMORY_POINTERS, MemoryStores
 
-# TEMPORARY DEVELOPMENT DEFAULT — how many of an employee's most-recent lessons are
-# supplied to the model per invocation. Selective RETRIEVAL only: nothing is deleted,
-# memory-store semantics are unchanged, and the full lesson history stays in the
-# database. A permanent pruning/summarisation policy is a Board decision (not invented).
+# TEMPORARY DEVELOPMENT DEFAULTS — how many of an employee's most-recent memories are
+# supplied to the model per invocation (Board decision 2026-08-28: conservative,
+# recency-based selective RETRIEVAL only). Nothing is deleted, memory-store semantics
+# are unchanged, and the full durable history stays in the database (and in the full
+# Board observability view). These are reversible development optimisations, NOT a
+# permanent memory-pruning/retention policy. A semantic relevance ranker or summariser
+# would be a separate Board decision and is not invented here.
 LESSON_CONTEXT_LIMIT = 8
+WORKING_CONTEXT_LIMIT = 8
+ORG_TITLES_LIMIT = 8
 
 # Challenge does not inherit Quant belief. Risk does not inherit Trader belief.
 RELATIONSHIPS: tuple[tuple[str, str, str, str], ...] = (
@@ -198,10 +203,23 @@ class EmployeeBrain:
         pack["lessons"] = own_lessons
         pack["lessons_total"] = len(full_own)
         pack["lessons_truncated"] = len(own_lessons) < len(full_own)
-        pack["working"] = [
-            {"key": w.key, "value": w.value} for w in self.memory.working_get(employee.id)
-        ]
-        pack["org_knowledge_titles"] = [r.title for r in self.memory.org_titles()]
+        # Working memory: most-recent entries only (recency-selective). Full set stays
+        # in the database; nothing is deleted. Board observability still shows everything.
+        all_working = self.memory.working_get(employee.id)
+        working_recent = sorted(
+            all_working, key=lambda w: w.updated_at or now_london(), reverse=True
+        )[:WORKING_CONTEXT_LIMIT]
+        pack["working"] = [{"key": w.key, "value": w.value} for w in working_recent]
+        pack["working_total"] = len(all_working)
+        pack["working_truncated"] = len(working_recent) < len(all_working)
+
+        # Organisation-memory titles: most-recent only (org_titles() is newest-first).
+        # The authoritative full list remains available via Board observability.
+        all_org = self.memory.org_titles()
+        org_recent = all_org[:ORG_TITLES_LIMIT]
+        pack["org_knowledge_titles"] = [r.title for r in org_recent]
+        pack["org_titles_total"] = len(all_org)
+        pack["org_titles_truncated"] = len(org_recent) < len(all_org)
         pack["originator_beliefs_loaded"] = False
         pack["blank_prompt"] = False
         pack["independent_of_employee_ids"] = sorted(excluded_ids)
