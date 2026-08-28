@@ -247,6 +247,13 @@ class UnusedOptionalLLM:
 def get_llm() -> LLMPort:
     settings = get_settings()
     if settings.llm_provider in ("fake", "", "none"):
-        return FakeLLM()
-    # Even if someone sets a provider name, this slice does not bind a paid client.
-    return UnusedOptionalLLM()
+        inner: LLMPort = FakeLLM()
+    else:
+        # Even if someone sets a provider name, this slice does not bind a paid client.
+        inner = UnusedOptionalLLM()
+    # Non-invasive observability wrapper (PR #1). Transparent: same result, same
+    # provider_name; it only records deterministic AI-usage metadata around the call.
+    # It does not change model selection — FakeLLM remains the default.
+    from varma.observability.ai_usage import MeasuredLLM
+
+    return MeasuredLLM(inner)

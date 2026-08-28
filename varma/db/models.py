@@ -624,3 +624,32 @@ class SkillInvocation(Base):
     blank_prompt: Mapped[bool] = mapped_column(Boolean, default=False)
     independent_of_json: Mapped[str] = mapped_column(Text, default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class AICallLog(Base):
+    """Non-invasive AI-usage measurement (PR #1). Observational only.
+
+    Records deterministic metadata about each LLMPort.complete() call. It does not
+    change prompts, context, model selection, or employee behaviour. Sizes are real
+    character counts; estimated_tokens is a labelled deterministic heuristic
+    (chars/4), NOT a real vendor token count. FakeLLM has no real token metering, so
+    is_real_model stays False and fake_cost_units mirrors the FakeLLM accounting unit.
+    """
+
+    __tablename__ = "ai_call_log"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    task: Mapped[str] = mapped_column(String(80), nullable=False)
+    employee_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    employee_slug: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    provider: Mapped[str] = mapped_column(String(40), nullable=False)
+    is_real_model: Mapped[bool] = mapped_column(Boolean, default=False)
+    input_chars: Mapped[int] = mapped_column(Integer, default=0)
+    output_chars: Mapped[int] = mapped_column(Integer, default=0)
+    estimated_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    estimate_is_heuristic: Mapped[bool] = mapped_column(Boolean, default=True)
+    fake_cost_units: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    cache_hit: Mapped[bool] = mapped_column(Boolean, default=False)
+    measurement_note: Mapped[str] = mapped_column(Text, default="")
