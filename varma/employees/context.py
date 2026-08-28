@@ -45,6 +45,10 @@ PERSISTENT_KEYS: frozenset[str] = frozenset(
         "excluded_originator_lessons",
         "lessons_total",
         "lessons_truncated",
+        "working_total",
+        "working_truncated",
+        "org_titles_total",
+        "org_titles_truncated",
     }
 )
 
