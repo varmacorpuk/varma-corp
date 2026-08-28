@@ -43,6 +43,8 @@ PERSISTENT_KEYS: frozenset[str] = frozenset(
         "blank_prompt",
         "originator_beliefs_loaded",
         "excluded_originator_lessons",
+        "lessons_total",
+        "lessons_truncated",
     }
 )
 
@@ -52,6 +54,7 @@ DYNAMIC_KEYS: frozenset[str] = frozenset(
         "prices",
         "watchlist_label",
         "controls_hint",
+        "chat_recent",
         "thesis",
         "proposed",
         "policy",
