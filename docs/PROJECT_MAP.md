@@ -15,7 +15,7 @@ Authoritative specifications are **Documents 00–18**, which live **outside thi
 | `desktop/` | Static 2D "virtual office" UI (Electron/browser). Projection only, not source of truth |
 | `tests/` | Pytest suite (baseline: 153 tests) |
 | `scripts/` | Dev helper scripts (`dev.sh`) |
-| `docs/` | This map, spec index, glossary, `knowledge/index.json` (navigation only) |
+| `docs/` | `BUILD_STATE.md` (read first — current state/handover), this map, spec index, glossary, `knowledge/index.json` (navigation only) |
 | `data/` | TEMPORARY dev SQLite (gitignored). Not a system of record |
 | `docker-compose.yml` | Optional Postgres for the same StoragePort |
 | `README.md`, `ARCHITECTURE.md` | Overview + pointer to Documents 00–18 |
