@@ -124,7 +124,10 @@ class EmployeeRuntime:
         }
         packed.update(
             {
-                "controls": self.controls.snapshot(),
+                # PR #2: compact informational control hint instead of the full verbose
+                # snapshot. Controls remain enforced deterministically by ControlEngine;
+                # the chat runtime never used the full snapshot for reasoning.
+                "controls_hint": self.controls.constraints_hint(),
                 "latest_brief": brief_to_dict(brief) if brief else None,
                 "produced_brief": brief_to_dict(produced) if produced else None,
                 "received_brief": brief_to_dict(received) if received else None,
