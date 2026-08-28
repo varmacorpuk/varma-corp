@@ -47,9 +47,14 @@ class PrepareDailyIntelligenceBrief:
         news = self.data.news(symbols)
         prices = self.data.delayed_prices(symbols)
         invocation = self.brain.invocation(employee)
-        lessons = list(invocation.get("lessons") or [])
         state = self.controls.snapshot()
 
+        # PR #2 context slimming: send a compact, informational control hint instead
+        # of the full verbose ControlEngine.snapshot() (which was ~81% of this payload
+        # and is never read by the brief skill). `invocation` already carries the
+        # employee's lessons (persistent memory), so they are not duplicated here.
+        # `state` is still computed above and used deterministically below for the
+        # artefact's trading_mode_at_production and verification — controls unchanged.
         context = {
             **invocation,
             "employee": {
@@ -58,11 +63,10 @@ class PrepareDailyIntelligenceBrief:
                 "department": employee.department,
                 "authority_boundaries": employee.authority_boundaries,
             },
-            "lessons": lessons,
             "news": news,
             "prices": prices,
             "watchlist_label": "TEMPORARY DEVELOPMENT DEFAULT — NOT the execution allow-list",
-            "controls": state,
+            "controls_hint": self.controls.constraints_hint(),
         }
         raw = self.llm.complete(task=SKILL_NAME, context=context)
         llm_units = int(raw.get("cost_units") or 2)
