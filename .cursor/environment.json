@@ -1,0 +1,5 @@
+{
+  "name": "Varma Corp.",
+  "install": "python3 -m pip install -r requirements.txt\n[ -f .env ] || cp .env.example .env",
+  "start": "cd /workspace\nexport PYTHONPATH=.\n( cd desktop && python3 -m http.server 5173 --bind 127.0.0.1 & )\nexec python3 -m varma"
+}
