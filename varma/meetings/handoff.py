@@ -31,6 +31,26 @@ def get_ceo(session: Session) -> Employee:
     return get_employee(session, CEO_SLUG)
 
 
+def find_handoff(
+    session: Session,
+    *,
+    to_employee_id: str,
+    artefact_type: str,
+    artefact_id: str,
+) -> Handoff | None:
+    """Deterministic duplicate detection: an artefact is delivered to a recipient once."""
+    return (
+        session.query(Handoff)
+        .filter_by(
+            to_employee_id=to_employee_id,
+            artefact_type=artefact_type,
+            artefact_id=artefact_id,
+        )
+        .order_by(Handoff.created_at.desc())
+        .first()
+    )
+
+
 def deliver_handoff(
     session: Session,
     *,
@@ -43,6 +63,19 @@ def deliver_handoff(
     evidence_kind: str,
     status_bubble: str | None = None,
 ) -> Handoff:
+    # Idempotency (Stage 3): the same artefact delivered to the same recipient yields
+    # the existing durable handoff instead of a duplicate row (and no duplicate
+    # evidence). This uses existing columns only — no schema change. Legitimately new
+    # events (new artefact ids) are unaffected, so employee independence and normal
+    # routine behaviour are preserved.
+    existing = find_handoff(
+        session,
+        to_employee_id=to_employee.id,
+        artefact_type=artefact_type,
+        artefact_id=artefact_id,
+    )
+    if existing is not None:
+        return existing
     row = Handoff(
         from_employee_id=from_employee.id,
         to_employee_id=to_employee.id,

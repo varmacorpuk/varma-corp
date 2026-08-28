@@ -18,6 +18,12 @@ from varma.db.models import (
 )
 from varma.memory.stores import MEMORY_POINTERS, MemoryStores
 
+# TEMPORARY DEVELOPMENT DEFAULT — how many of an employee's most-recent lessons are
+# supplied to the model per invocation. Selective RETRIEVAL only: nothing is deleted,
+# memory-store semantics are unchanged, and the full lesson history stays in the
+# database. A permanent pruning/summarisation policy is a Board decision (not invented).
+LESSON_CONTEXT_LIMIT = 8
+
 # Challenge does not inherit Quant belief. Risk does not inherit Trader belief.
 RELATIONSHIPS: tuple[tuple[str, str, str, str], ...] = (
     (
@@ -178,11 +184,20 @@ class EmployeeBrain:
         excluded_ids = set(self.independent_of_ids(employee))
         if originator is not None:
             excluded_ids.add(originator.id)
-        own_lessons = [m.content for m in self.memory.employee_lessons(employee.id)]
+        # employee_lessons() returns oldest -> newest; the model only needs the most
+        # recent lessons (recency-selective retrieval). Nothing is deleted; the full
+        # set is still counted and used for the fail-closed independence check below.
+        full_own = [m.content for m in self.memory.employee_lessons(employee.id)]
+        if LESSON_CONTEXT_LIMIT and len(full_own) > LESSON_CONTEXT_LIMIT:
+            own_lessons = full_own[-LESSON_CONTEXT_LIMIT:]
+        else:
+            own_lessons = list(full_own)
         leaked = []
         for oid in excluded_ids:
             leaked.extend(m.content for m in self.memory.employee_lessons(oid))
         pack["lessons"] = own_lessons
+        pack["lessons_total"] = len(full_own)
+        pack["lessons_truncated"] = len(own_lessons) < len(full_own)
         pack["working"] = [
             {"key": w.key, "value": w.value} for w in self.memory.working_get(employee.id)
         ]
@@ -191,9 +206,10 @@ class EmployeeBrain:
         pack["blank_prompt"] = False
         pack["independent_of_employee_ids"] = sorted(excluded_ids)
         pack["excluded_originator_lessons"] = leaked
-        # Fail closed: own lessons must not be replaced by originator text.
+        # Fail closed over the FULL own-lesson set (not just the sent slice): an
+        # originator's belief must never have become this employee's own lesson.
         for belief in leaked:
-            if belief and belief in own_lessons:
+            if belief and belief in full_own:
                 raise RuntimeError("ORIGINATOR_BELIEF_MUST_NOT_BECOME_OWN_LESSON")
         return pack
 
