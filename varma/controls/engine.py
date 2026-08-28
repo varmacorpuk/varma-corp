@@ -363,6 +363,42 @@ class ControlEngine:
             return Decision(False, "USE_BOARD_ADDENDUM_OR_KILL_SWITCH_ENDPOINT")
         return Decision(False, "CONTROL_MUTATION_NOT_ENABLED_IN_THIS_SLICE")
 
+    def constraints_hint(self) -> dict[str, Any]:
+        """Compact, INFORMATIONAL control hint for AI context (PR #2).
+
+        This is a small projection of the authoritative control state so an AI
+        employee can *know* the current constraints. It is NOT an enforcement
+        surface: every deterministic control check in ``place_order`` /
+        ``write_control`` still runs exactly as before. The AI never enforces
+        controls. Do not weaken any deny logic, gate, or Addendum by reading this.
+        """
+        state = self.state()
+        allow = self.allow_list_symbols()
+        paper_closed = self.paper_execution_closed()
+        can_place_orders = (
+            not paper_closed
+            and state.trading_mode not in ("LIVE_BLOCKED", "LIVE")
+            and len(allow) > 0
+            and not state.kill_switch
+        )
+        return {
+            "can_place_orders": can_place_orders,
+            "paper_trading": "CLOSED" if paper_closed else "OPEN",
+            "live_trading": "BLOCKED" if state.trading_mode != "LIVE" else "LIVE",
+            "trading_mode": state.trading_mode,
+            "allow_list_empty": len(allow) == 0,
+            "broker_paper_loaded": BROKER_PAPER_LOADED,
+            "live_adapter_loaded": self.live_adapter_loaded(),
+            "kill_switch": bool(state.kill_switch),
+            "firm_open": False,
+            "authoritative_source": "deterministic ControlEngine",
+            "note": (
+                "Informational only. Controls are enforced deterministically by "
+                "ControlEngine; the AI does not enforce them. Full detail is in "
+                "GET /observability and the control tables."
+            ),
+        }
+
     def snapshot(self) -> dict[str, Any]:
         state = self.state()
         from varma.controls.kill_switch import kill_switch_state
