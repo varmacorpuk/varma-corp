@@ -88,6 +88,7 @@ def test_office_click_opens_panel_logic():
     assert "/routines/run-paper-trade-path" in JS
     assert "Run Trader paper-ticket proposal" in JS
     assert "first paper-trade PATH exists" in JS
+    assert "PAPER_EXECUTION_CLOSED" in JS
     assert "Board Addendum J" in JS
     assert "Run company backup now" in JS
     assert "last successful backup" in JS.lower()

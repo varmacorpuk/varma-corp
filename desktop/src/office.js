@@ -543,7 +543,10 @@
         return;
       }
       lastJobNote =
-        path.indexOf("flatten") !== -1
+        path.indexOf("paper-trade-path") !== -1
+          ? label +
+            " finished. Chris Adeyemi proposed a paper ticket. ControlEngine DENY PAPER_EXECUTION_CLOSED. No fill. LIVE still off. Panel refreshed from the database."
+          : path.indexOf("flatten") !== -1
           ? label +
             " finished. Internal simulator flatten only. Panel refreshed from the database. trading_mode unchanged. BROKER_PAPER and LIVE remain UNLOADED. No broker fills."
           : label +

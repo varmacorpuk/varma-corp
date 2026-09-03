@@ -1,4 +1,4 @@
-.PHONY: test api brief challenge risk-deny memory-filter meeting backup desktop install
+.PHONY: test api brief challenge risk-deny memory-filter meeting backup paper-trade-path desktop install
 
 install:
 	python3 -m pip install -r requirements.txt
@@ -26,6 +26,9 @@ meeting:
 
 backup:
 	python3 -m varma.routines.run_backup
+
+paper-trade-path:
+	python3 -m varma.routines.run_paper_trade_path
 
 desktop:
 	cd desktop && python3 -m http.server 5173 --bind 127.0.0.1

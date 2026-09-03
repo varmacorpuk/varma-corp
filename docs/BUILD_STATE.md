@@ -7,7 +7,7 @@ operations. The **source code on the branch you have checked out is authoritativ
 disagrees with that code, the code wins and this file must be corrected.
 
 _Last updated: 2026-09-03._ Verified against GitHub (`gh pr list` / API) and `python3 -m pytest`
-on this landing branch: **175 passing, 0 failures**. Do not invent a percent-complete. Chat is
+on this paper-trade-path branch: **183 passing, 0 failures**. Do not invent a percent-complete. Chat is
 not the record.
 
 ## 0. RECOVERY / CONTINUATION INSTRUCTION
@@ -27,7 +27,8 @@ not the record.
   (Board-only); FakeLLM default wrapped by MeasuredLLM; `AICallLog` + `ai_usage_summary`;
   token-efficiency runtime (`constraints_hint()`, STATIC/PERSISTENT/DYNAMIC context classes,
   bounded chat, selective lessons/working/org titles, idempotent handoffs, daily sim 0 AI on
-  deterministic ops). Pytest: **175 passing, 0 failures** (measured 2026-09-03).
+  deterministic ops). Pytest: **183 passing, 0 failures** (measured 2026-09-03, includes the
+  first paper-trade PATH tests; PAPER still CLOSED).
 - **Incomplete / not built:** Grand Opening (PAPER or LIVE); real LLM
   binding; live/broker execution; semantic memory summarisation; response caching;
   event-idempotency schema.
@@ -157,6 +158,6 @@ repo). Keep changes additive; keep the full test suite green.
 
 ## 10. HOW TO CONTINUE
 Read this file, then `PROJECT_MAP.md` + `SPEC_INDEX.md` (+ `knowledge/index.json` for machine navigation
-and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **175** passing on
-current `main` after this landing). Continue from Section 8. Preserve every governance and safety
-rule in Section 6.
+and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **183** passing
+on this paper-trade-path landing; **175** was main after #24–#26 runtime, before this path).
+Continue from Section 8. Preserve every governance and safety rule in Section 6.
