@@ -99,3 +99,25 @@ def test_gitignore_tracks_paper_open_book():
     assert "!data/varma_paper_open.db" in text
     assert "!data/paper_open_ledger.json" in text
     assert "data/varma.db" in text or "Never commit data/varma.db" in text
+
+
+def test_tracked_paper_open_ledger_has_shel_l_buy_5():
+    path = Path("data/paper_open_ledger.json")
+    assert path.is_file()
+    import json
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["kind"] == LEDGER_KIND
+    assert payload["ticket_id"] == "PAPER-20260903-02"
+    assert payload["trading_mode"] == "LIVE_BLOCKED"
+    assert payload["is_live"] is False
+    assert abs(payload["account"]["cash"] - 829.279217) < 1e-4
+    pos = payload["positions"][0]
+    assert pos["symbol"] == "SHEL.L"
+    assert pos["quantity"] == 5.0
+    fill = payload["fills"][0]
+    assert fill["symbol"] == "SHEL.L"
+    assert fill["quantity"] == 5.0
+    assert abs(fill["price"] - 34.127093) < 1e-6
+    assert fill["is_live"] is False
+    assert fill["id"]
