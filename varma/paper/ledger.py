@@ -112,11 +112,26 @@ class PaperLedger:
     def open_orders(self) -> list[PaperOrder]:
         return self.session.query(PaperOrder).filter_by(status="OPEN").all()
 
-    def cancel_open_paper_orders(self, *, reason: str, at=None) -> int:
-        """Cancel OPEN paper orders only. Never flatten live. There is no live."""
+    def cancel_open_paper_orders(
+        self,
+        *,
+        reason: str,
+        at=None,
+        symbols: frozenset[str] | set[str] | None = None,
+    ) -> int:
+        """Cancel OPEN paper orders only. Never flatten live. There is no live.
+
+        Bound LSE session exits are not dropped independently of the opening buy.
+        Pass ``symbols`` to cancel only that venue's working orders.
+        """
         now = at or now_london()
         n = 0
         for row in self.open_orders():
+            if symbols is not None and row.symbol not in symbols:
+                continue
+            if bool(row.is_flatten):
+                # Bound flatten tickets are filled by the venue flatten job, not cancelled.
+                continue
             row.status = "CANCELLED"
             row.cancelled_at = now
             row.cancel_reason = reason

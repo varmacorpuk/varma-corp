@@ -72,7 +72,8 @@ def addendum_k_public() -> dict[str, Any]:
         "flatten_at": FLATTEN_AT,
         "flatten_not_at": FLATTEN_NOT_AT,
         "london_cash_close_is_not_flatten": True,
-        "split_flatten_clocks": False,
+        "split_flatten_clocks": True,
+        "risk_02f_bound_in_engine": True,
         "overnight_holds": False,
         "paper_execution_stays": "OPEN_OR_CLOSED_BY_ADDENDUM_I",
         "not_grand_opening": False,
@@ -87,9 +88,10 @@ def addendum_k_public() -> dict[str, Any]:
             "Board Addendum K 2026-09-03 (Hari explicit yes). After London cash "
             "shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. Concentrate "
             "on the US seven until US flatten. Desk still UK cash open through US "
-            "cash close. Flatten still at US regular cash close. London close is "
-            "not the flatten. Dual-listed US lines are not on the allow-list. "
-            "Addendum I is the two-opening rule. LIVE_BLOCKED. The letter "
-            "exists outside the repo. Chat is not the record."
+            "cash close. CEO desk 02F binds LSE flatten to the London closing "
+            "auction 16:30–16:35; US names still flatten at US regular cash close. "
+            "split_flatten_clocks is true. Dual-listed US lines are not on the "
+            "allow-list. Addendum I is the two-opening rule. LIVE_BLOCKED. The "
+            "letter exists outside the repo. Chat is not the record."
         ),
     }

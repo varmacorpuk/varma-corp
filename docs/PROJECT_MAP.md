@@ -18,7 +18,7 @@ Authoritative specifications are **Documents 00–18**, which live **outside thi
 | `tests/` | Pytest suite: Grand Opening PAPER on #30 main (practice OPEN, LIVE blocked). Do not invent a percent-complete. |
 | `scripts/` | Dev helper scripts (`dev.sh`) |
 | `docs/` | `BUILD_STATE.md` (read first — current handover), this map, spec index, glossary, `knowledge/index.json` (navigation only) |
-| `data/` | TEMPORARY dev SQLite (gitignored). Not a system of record |
+| `data/` | TEMPORARY dev SQLite (gitignored). Paper-OPEN book is `varma_paper_open.db`. Never empty `varma.db` |
 | `docker-compose.yml` | Optional Postgres for the same StoragePort |
 | `README.md`, `ARCHITECTURE.md` | Overview + pointer to Documents 00–18 |
 | `Makefile`, `pyproject.toml`, `requirements.txt`, `.env.example` | Build / config |
@@ -81,7 +81,7 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - `varma/paper/simulator.py` — internal paper fill simulator (not a broker). Fill only after
   ControlEngine allows. After Grand Opening PAPER a legal allow-list practice order may fill.
 - `varma/paper/ledger.py` — paper account/positions/P&L, evaluation snapshot.
-- `varma/paper/flatten.py` — flatten-before-US-close (internal simulator).
+- `varma/paper/flatten.py` — venue-aware flatten (LSE London auction / US close; 02F bound).
 - `varma/skills/propose_paper_ticket.py` — Trader (Chris Adeyemi) paper-ticket proposal.
   Deterministic. No AI. ControlEngine is authoritative.
 - `varma/routines/run_paper_trade_path.py` — Board-only on-demand job that invokes the Trader
@@ -94,11 +94,12 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - `varma/controls/engine.py` — deterministic `ControlEngine`: permit/deny orders, `snapshot()`,
   compact informational `constraints_hint()` for AI context, `write_control`. Authoritative.
   AI never enforces controls.
-- `varma/controls/addendum_a.py` (numeric limits), `addendum_c.py` (paper session/flatten),
+- `varma/controls/addendum_a.py` (numeric limits), `addendum_c.py` (paper session),
   `addendum_e.py` (PAPER allow-list), `addendum_f.py` (named staff/slugs), `addendum_i.py`
-  (two-opening rule + Grand Opening PAPER Board write), `addendum_j.py` (backup), `addendum_k.py` (LSE after London cash close),
-  `lse_session.py` (Addendum K time window + UNSET fail-closed fallback), `risk.py`
-  (RiskPolicy), `kill_switch.py` (Board-only halt/reset).
+  (two-opening rule + Grand Opening PAPER Board write), `addendum_j.py` (backup),
+  `addendum_k.py` (LSE after London cash close), `lse_session.py` (Addendum K time window
+  + UNSET fail-closed fallback), `venue_flatten.py` (CEO desk 02F bound LSE London-auction
+  / US-close clocks), `risk.py` (RiskPolicy), `kill_switch.py` (Board-only halt/reset).
 
 ### Memory systems (four stores, Document 08)
 - `varma/memory/stores.py` — working, employee lessons, org knowledge (governed promotion),
@@ -112,7 +113,7 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 
 ### Orchestration / routines (on-demand; no daemon)
 - `varma/routines/run_brief.py`, `run_challenge.py`, `run_risk_deny.py`, `run_nightly_filter.py`,
-  `run_0730_meeting.py`, `run_flatten_us_close.py`, `run_backup.py`, `run_paper_trade_path.py` —
+  `run_0730_meeting.py`, `run_flatten_us_close.py`, `run_flatten_london_close.py`, `run_backup.py`, `run_paper_trade_path.py` —
   CLI + called by kernel POSTs.
 - `varma/routines/board_jobs.py` — Board-only job catalog + safety flag wrappers.
 
@@ -135,7 +136,7 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 
 ## Where things live (quick reference)
 - Agent/employee definitions: `varma/db/seed.py` + `varma/employees/brain.py` (`ROLE_KNOWLEDGE`).
-- Configuration: `varma/config.py`, `.env` / `.env.example`.
+- Configuration: `varma/config.py`, `.env` / `.env.example` (default SQLite `data/varma_paper_open.db`).
 - Database/schema: `varma/db/models.py`.
 - Memory/data: `varma/memory/`, `data/` (dev SQLite).
 - Tests: `tests/` (one file per addendum/feature).

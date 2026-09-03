@@ -82,6 +82,16 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
         if row["id"] == "run-flatten-us-close":
             assert row["internal_simulator_flatten"] is True
             assert row["flatten_at"] == "US_REGULAR_CASH_CLOSE"
+            assert row["venue_scope"] == "US"
+            assert row["split_flatten_clocks"] is True
+            assert row["paper_fills"] is False
+            assert row["flatten_as_if_there_were_positions"] is False
+        elif row["id"] == "run-flatten-london-close":
+            assert row["internal_simulator_flatten"] is True
+            assert row["flatten_at"] == "LONDON_CLOSING_AUCTION"
+            assert row["venue_scope"] == "LSE"
+            assert row["split_flatten_clocks"] is True
+            assert row["risk_02f_bound"] is True
             assert row["paper_fills"] is False
             assert row["flatten_as_if_there_were_positions"] is False
         elif row["id"] == "run-paper-trade-path":
@@ -228,6 +238,7 @@ def test_board_job_catalog_matches_cli(session):
     assert clis["run-0730-meeting"] == "python -m varma.routines.run_0730_meeting"
     assert clis["run-nightly-filter"] == "python -m varma.routines.run_nightly_filter"
     assert clis["run-flatten-us-close"] == "python -m varma.routines.run_flatten_us_close"
+    assert clis["run-flatten-london-close"] == "python -m varma.routines.run_flatten_london_close"
     assert clis["run-backup"] == "python -m varma.routines.run_backup"
     assert clis["run-paper-trade-path"] == "python -m varma.routines.run_paper_trade_path"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"

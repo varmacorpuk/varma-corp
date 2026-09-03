@@ -18,20 +18,22 @@ ADDENDUM_E_LABEL = "Board Addendum E 2026-08-27"
 ADDENDUM_E_SET_BY = "board-member"
 
 # US listed names, then LSE names in the instrument form already used by this repo.
+# JPM and JNJ are NYSE names. US tech stays NASDAQ. LSE three stay LSE.
 ADDENDUM_E_INSTRUMENTS: tuple[tuple[str, str], ...] = (
     ("AAPL", "NASDAQ"),
     ("MSFT", "NASDAQ"),
     ("NVDA", "NASDAQ"),
     ("AMZN", "NASDAQ"),
     ("GOOGL", "NASDAQ"),
-    ("JPM", "NASDAQ"),
-    ("JNJ", "NASDAQ"),
+    ("JPM", "NYSE"),
+    ("JNJ", "NYSE"),
     ("SHEL.L", "LSE"),
     ("AZN.L", "LSE"),
     ("ULVR.L", "LSE"),
 )
 
 ADDENDUM_E_SYMBOLS: tuple[str, ...] = tuple(symbol for symbol, _venue in ADDENDUM_E_INSTRUMENTS)
+ADDENDUM_E_VENUES: dict[str, str] = dict(ADDENDUM_E_INSTRUMENTS)
 
 
 def addendum_e_public() -> dict[str, Any]:
@@ -48,6 +50,7 @@ def addendum_e_public() -> dict[str, Any]:
         "employees_cannot_write": True,
         "ceo_cannot_write": True,
         "symbols": list(ADDENDUM_E_SYMBOLS),
+        "venues": dict(ADDENDUM_E_INSTRUMENTS),
         "count": len(ADDENDUM_E_SYMBOLS),
         "allow_list_e_cannot_fill_until_open": True,
         "note": (

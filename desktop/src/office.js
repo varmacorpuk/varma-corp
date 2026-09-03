@@ -251,12 +251,14 @@
     const filterSched = documented.nightly_filter || {};
     const meetingSched = documented.company_meeting || {};
     const flattenSched = documented.flatten_us_close || {};
+    const flattenLondonSched = documented.flatten_london_close || {};
     const backupSched = documented.backup || {};
     const dbRoutines = routines.items || [];
     const routineRows = `
       <div class="ledger-row">06:30 weekday brief · ${escapeHtml(briefSched.timezone || "Europe/London")} · daemon: ${briefSched.daemon === true} · ${escapeHtml(briefSched.cli || "python -m varma.routines.run_brief")}<br /><span class="meta">${escapeHtml(briefSched.description || "")}</span></div>
       <div class="ledger-row">07:30 company meeting · ${escapeHtml(meetingSched.timezone || "Europe/London")} · daemon: ${meetingSched.daemon === true} · is_trade: ${meetingSched.is_trade === true} · ${escapeHtml(meetingSched.cli || "python -m varma.routines.run_0730_meeting")}<br /><span class="meta">${escapeHtml(meetingSched.description || "")}</span></div>
-      <div class="ledger-row">Flatten paper before US cash close · ${escapeHtml(flattenSched.timezone || "Europe/London")} · daemon: ${flattenSched.daemon === true} · flatten_at: ${escapeHtml(flattenSched.flatten_at || "US_REGULAR_CASH_CLOSE")} · not London close · ${escapeHtml(flattenSched.cli || "python -m varma.routines.run_flatten_us_close")}<br /><span class="meta">${escapeHtml(flattenSched.description || "")}</span></div>
+      <div class="ledger-row">Flatten US names before US cash close · ${escapeHtml(flattenSched.timezone || "Europe/London")} · daemon: ${flattenSched.daemon === true} · flatten_at: ${escapeHtml(flattenSched.flatten_at || "US_REGULAR_CASH_CLOSE")} · split_flatten_clocks true · ${escapeHtml(flattenSched.cli || "python -m varma.routines.run_flatten_us_close")}<br /><span class="meta">${escapeHtml(flattenSched.description || "")}</span></div>
+      <div class="ledger-row">Flatten LSE names in London closing auction 16:30–16:35 · ${escapeHtml(flattenLondonSched.timezone || "Europe/London")} · daemon: ${flattenLondonSched.daemon === true} · flatten_at: ${escapeHtml(flattenLondonSched.flatten_at || "LONDON_CLOSING_AUCTION")} · 02F bound · ${escapeHtml(flattenLondonSched.cli || "python -m varma.routines.run_flatten_london_close")}<br /><span class="meta">${escapeHtml(flattenLondonSched.description || "")}</span></div>
       <div class="ledger-row">Nightly memory filter · ${escapeHtml(filterSched.timezone || "Europe/London")} · daemon: ${filterSched.daemon === true} · writes_controls: ${filterSched.writes_controls === true} · ${escapeHtml(filterSched.cli || "")}<br /><span class="meta">${escapeHtml(filterSched.description || "")}</span></div>
       <div class="ledger-row">Company backup · ${escapeHtml(backupSched.timezone || "Europe/London")} · daemon: ${backupSched.daemon === true} · after US close / end of London evening · owner: ${escapeHtml(backupSched.owner_display_name || "Owen Blake · Technology")} · ${escapeHtml(backupSched.cli || "python -m varma.routines.run_backup")}<br /><span class="meta">${escapeHtml(backupSched.description || "")}</span></div>
       ${
@@ -306,7 +308,7 @@
       <p class="meta">Currency: GBP · Timezone: Europe/London. These VALUES are Board-set, not invented silent defaults. Employees cannot write limits. Unknown tickers deny. trading_mode stays LIVE_BLOCKED.</p>
       ${limitRows}
       <h3>Board Addendum C 2026-08-27 (paper session)</h3>
-      <p class="meta">Desk open: UK cash open 08:00 Europe/London through US regular cash close 16:00 America/New_York converted onto the Europe/London clock (not hardcoded 21:00). Flatten ALL paper before US close. Do NOT flatten at London cash close. Overnight: ${paperSession.overnight_holds === true}. US after-hours: ${paperSession.us_after_hours === true}. Extended hours: ${paperSession.extended_hours === true}. Daemon: ${paperSession.daemon === true}.</p>
+      <p class="meta">Desk open: UK cash open 08:00 Europe/London through US regular cash close 16:00 America/New_York converted onto the Europe/London clock (not hardcoded 21:00). split_flatten_clocks true. LSE names (SHEL.L, AZN.L, ULVR.L) flatten in the London closing auction 16:30–16:35 (02F bound; cannot drop independently of the opening buy). US names flatten at US close. Overnight: ${paperSession.overnight_holds === true}. US after-hours: ${paperSession.us_after_hours === true}. Extended hours: ${paperSession.extended_hours === true}. Daemon: ${paperSession.daemon === true}.</p>
       <p class="meta">GET /observability does not flatten. Flatten uses the internal simulator, not a broker. Empty allow-list still denies new orders. ${escapeHtml(addendumC.label || "Board Addendum C 2026-08-27")}</p>
       ${
         flattenRun
@@ -324,7 +326,7 @@
       <h3>Board Addendum I 2026-08-27 (two-opening rule)</h3>
       <p class="meta">Addendum I still exists as the two-opening rule. Grand Opening PAPER happened (Hari explicit yes, 3 Sep 2026, word: Open). Practice / paper only. The first paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator). PAPER execution: ${escapeHtml(paperGate.paper_execution || (paperGate.paper_execution_closed === false ? "OPEN" : "CLOSED"))}. £1000 is the paper starting book. Addendum A limits apply. LIVE still blocked. Never auto-switch. Silence is not approval. Employees cannot open or close the firm. Deny reason if the Board closes paper again: PAPER_EXECUTION_CLOSED. Next human step is paper operation. LIVE later only if the Board says so.</p>
       <h3>Board Addendum K 2026-09-03 (LSE after London cash close)</h3>
-      <p class="meta">${escapeHtml(addendumK.label || "Board Addendum K 2026-09-03")}. Hari explicit yes. After London cash shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. Concentrate on the US seven until US flatten. Desk still UK cash open through US cash close. Flatten still at US regular cash close. London close is not the flatten. Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. LIVE_BLOCKED. Employees cannot write this lock.</p>
+      <p class="meta">${escapeHtml(addendumK.label || "Board Addendum K 2026-09-03")}. Hari explicit yes. After London cash shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. CEO desk 02F: those three flatten in the London closing auction 16:30–16:35; US seven wait until US flatten. Desk still UK cash open through US cash close. split_flatten_clocks true. Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. LIVE_BLOCKED. Employees cannot write this lock.</p>
       <h3>Board Addendum J 2026-08-27 (company backup)</h3>
       <p class="meta">Company records are not on the Board Member laptop and not in GitHub. GitHub is code only. System of record: ${escapeHtml(backup.system_of_record || "database")}. Encrypted at rest: ${backup.encrypted_at_rest !== false}. Owner: ${escapeHtml(backup.owner_display_name || addendumJ.owner_display_name || "Owen Blake · Technology")}. Owen cannot write trading_mode, allow-list, or open the firm. Schedule: ${escapeHtml(backup.schedule || "daily after US close / end of London evening")} · daemon: ${backup.daemon === true}.</p>
       <p class="meta">Included: paper ledger, evidence, organisational memory, control snapshots. Excluded: secrets, live broker credentials (must not exist yet). Employees including the CEO cannot download secrets. Last successful backup: ${escapeHtml(backup.last_successful_backup_at || "none")}. Last failure: ${escapeHtml(backup.last_failure_at || "none")}${backup.last_failure_reason ? " · " + escapeHtml(backup.last_failure_reason) : ""}.</p>
@@ -394,6 +396,7 @@
       { id: "run-0730-meeting", label: "Run 07:30 meeting record", path: "/routines/run-0730-meeting" },
       { id: "run-nightly-filter", label: "Run nightly memory filter", path: "/routines/run-nightly-filter" },
       { id: "run-flatten-us-close", label: "Flatten paper before US cash close", path: "/routines/run-flatten-us-close" },
+      { id: "run-flatten-london-close", label: "Flatten LSE paper in London closing auction", path: "/routines/run-flatten-london-close" },
       { id: "run-backup", label: "Run company backup now", path: "/routines/run-backup" },
       { id: "run-paper-trade-path", label: "Run Trader paper-ticket proposal", path: "/routines/run-paper-trade-path" },
     ];
