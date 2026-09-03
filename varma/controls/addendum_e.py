@@ -1,7 +1,9 @@
 """Board Addendum E 2026-09-03 (revised).
 
 Board-set PAPER execution allow-list. Revised 2026-09-03 to the final
-strategy universe: ten US-listed names. No LSE, no non-US sessions.
+strategy universe: ten US-listed equities. Addendum M the same day records
+five commodity ETPs as WATCH-ONLY — they are not on this executable list.
+
 The existing SHEL.L paper book (PAPER-20260903-02) stays valid as
 historical data; SHEL.L / AZN.L / ULVR.L are removed from the
 executable allow-list going forward.
@@ -22,8 +24,9 @@ from typing import Any
 ADDENDUM_E_LABEL = "Board Addendum E 2026-09-03"
 ADDENDUM_E_SET_BY = "board-member"
 
-# Final strategy universe: ten US-listed names. US market only.
+# Final executable strategy universe: ten US equities. US market only.
 # BRK-B is the feed/Yahoo form; canonical desk symbol BRK.B.
+# Addendum M commodity ETPs (GLD/SLV/USO/UNG/CPER) are watch-only — not listed here.
 ADDENDUM_E_INSTRUMENTS: tuple[tuple[str, str], ...] = (
     ("NVDA", "NASDAQ"),
     ("AAPL", "NASDAQ"),
@@ -37,10 +40,27 @@ ADDENDUM_E_INSTRUMENTS: tuple[tuple[str, str], ...] = (
     ("BRK-B", "NYSE"),
 )
 
+# Desk form → feed/Yahoo form. Only BRK has a syntax split.
+DESK_TO_FEED_SYMBOL: dict[str, str] = {"BRK.B": "BRK-B"}
+FEED_TO_DESK_SYMBOL: dict[str, str] = {"BRK-B": "BRK.B"}
+
+
+def canonical_feed_symbol(symbol: str) -> str:
+    """Map a desk symbol onto the allow-list / feed form."""
+    key = str(symbol or "").strip()
+    return DESK_TO_FEED_SYMBOL.get(key, key)
+
+
+def desk_symbol(symbol: str) -> str:
+    """Map a feed symbol onto the canonical desk form."""
+    key = str(symbol or "").strip()
+    return FEED_TO_DESK_SYMBOL.get(key, key)
+
+
 ADDENDUM_E_SYMBOLS: tuple[str, ...] = tuple(symbol for symbol, _venue in ADDENDUM_E_INSTRUMENTS)
 ADDENDUM_E_VENUES: dict[str, str] = dict(ADDENDUM_E_INSTRUMENTS)
 
-# All ten are USD. No GBP names in the final strategy.
+# All ten executables are USD. No GBP names in the final strategy.
 ADDENDUM_E_CURRENCIES: dict[str, str] = {
     symbol: "USD" for symbol, _venue in ADDENDUM_E_INSTRUMENTS
 }
@@ -56,7 +76,7 @@ ADDENDUM_E_QUOTE_UNITS: dict[str, str] = {
 
 def instrument_currency(symbol: str) -> str:
     """USD for US-venue names; GBP for .L names. Default USD for unknowns."""
-    key = str(symbol or "")
+    key = canonical_feed_symbol(symbol)
     if key in ADDENDUM_E_CURRENCIES:
         return ADDENDUM_E_CURRENCIES[key]
     if key.endswith(".L"):
@@ -66,7 +86,7 @@ def instrument_currency(symbol: str) -> str:
 
 def instrument_quote_unit(symbol: str) -> str:
     """Native quote unit. LSE cash is pence (GBX). Does not change membership."""
-    key = str(symbol or "")
+    key = canonical_feed_symbol(symbol)
     if key in ADDENDUM_E_QUOTE_UNITS:
         return ADDENDUM_E_QUOTE_UNITS[key]
     if key.endswith(".L"):

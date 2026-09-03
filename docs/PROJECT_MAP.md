@@ -118,8 +118,9 @@ true.
 
 ### Orchestration / routines (on-demand; no daemon)
 - `varma/routines/run_brief.py`, `run_challenge.py`, `run_risk_deny.py`, `run_nightly_filter.py`,
-  `run_0730_meeting.py`, `run_flatten_us_close.py`, `run_flatten_london_close.py`, `run_backup.py`, `run_paper_trade_path.py` —
-  CLI + called by kernel POSTs.
+  `run_0730_meeting.py`, `run_flatten_us_close.py`, `run_flatten_london_close.py`, `run_backup.py`,
+  `run_paper_trade_path.py`, `run_open_scanner.py` —
+  CLI + called by kernel POSTs. Open scanner does not place orders.
 - `varma/routines/board_jobs.py` — Board-only job catalog + safety flag wrappers.
 
 ### Observability / cost / measurement

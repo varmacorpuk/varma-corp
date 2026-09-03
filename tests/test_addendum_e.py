@@ -48,10 +48,12 @@ def test_addendum_e_allow_list_is_board_set(session):
     assert engine.snapshot()["addendum_e"]["label"] == ADDENDUM_E_LABEL
     assert engine.snapshot()["addendum_e"]["paper_membership_only"] is True
     assert engine.snapshot()["trading_mode"] == "LIVE_BLOCKED"
-    assert session.query(AllowListInstrument).count() == 10
+    assert session.query(AllowListInstrument).count() == len(ADDENDUM_E_SYMBOLS) == 10
     assert "NVDA" in engine.allow_list_symbols()
     assert "BRK-B" in engine.allow_list_symbols()
     assert "SPCX" in engine.allow_list_symbols()
+    for etp in ("GLD", "SLV", "USO", "UNG", "CPER"):
+        assert etp not in engine.allow_list_symbols()
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
 
 

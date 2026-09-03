@@ -241,6 +241,7 @@ def test_board_job_catalog_matches_cli(session):
     assert clis["run-flatten-london-close"] == "python -m varma.routines.run_flatten_london_close"
     assert clis["run-backup"] == "python -m varma.routines.run_backup"
     assert clis["run-paper-trade-path"] == "python -m varma.routines.run_paper_trade_path"
+    assert clis["run-open-scanner"] == "python -m varma.routines.run_open_scanner"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert snap["writes_controls"] is False
     assert LIVE_ADAPTER_LOADED is False

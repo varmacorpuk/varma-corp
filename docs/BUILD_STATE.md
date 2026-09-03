@@ -112,10 +112,13 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
   append-only evidence) + nightly filter. Selective recency retrieval (#25/#26) is on `main`
   (lessons/working/org titles, limit 8). Nothing is deleted. Full durable records stay in the
   database and in Board observability. Limits are reversible dev defaults, not a retention policy.
-- **Controls/governance:** deterministic `varma/controls/engine.py` (+ addenda A/C/E/F/I/J/K, LSE
+- **Controls/governance:** deterministic `varma/controls/engine.py` (+ addenda A/C/E/F/I/J/K/L/M, LSE
   after-London-cash-close session rule, CEO desk 02F venue flatten, kill switch, risk).
-  Authoritative; AI never enforces controls. Board `write_control` can open or close paper. LIVE
-  opening is not implemented.
+  Addendum M (2026-09-03) records five commodity ETPs (GLD/SLV/USO/UNG/CPER) as
+  WATCH-ONLY — not on the paper execution allow-list. Authoritative; AI never enforces controls.
+  Board `write_control` can open or close paper. LIVE opening is not implemented.
+- **Open scanner:** `varma/scanner/open_scanner.py` — on-demand 14:32–15:00 London completed-bar
+  scanner. Next-bar open fill. Does not place orders. CLI `python -m varma.routines.run_open_scanner`.
 - **Virtual office:** `desktop/` (vendored W17ant/Claude-Office isometric camera + right-hand work/chat panel; fetch-on-click, no polling). Click never grants authority. Board observability is a panel button, not a floor tap.
 - **Trading simulation:** internal paper fill simulator `varma/paper/` (not a broker). First
   paper-trade PATH exists: Trader (Chris Adeyemi) proposes → ControlEngine permit/deny →

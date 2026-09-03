@@ -14,7 +14,11 @@ import pandas as pd
 import pandas_ta as ta
 
 
-def compute_candlestick_patterns(df: pd.DataFrame) -> dict[str, Any]:
+def compute_candlestick_patterns(
+    df: pd.DataFrame,
+    *,
+    include_patterns: bool = True,
+) -> dict[str, Any]:
     """Return last-bar candlestick pattern signals + OR break signals.
 
     Each library pattern returns an int: positive = bullish, negative = bearish,
@@ -29,27 +33,31 @@ def compute_candlestick_patterns(df: pd.DataFrame) -> dict[str, Any]:
     close = df["close"]
 
     patterns_found: list[dict[str, Any]] = []
-
-    all_patterns = ta.cdl_pattern(open_, high, low, close, name="all")
-    if all_patterns is not None and not all_patterns.empty:
-        last_row = all_patterns.iloc[-1]
-        for col in all_patterns.columns:
-            val = last_row[col]
-            if val != 0:
-                name = str(col).replace("CDL_", "").lower()
-                patterns_found.append({
-                    "pattern": name,
-                    "signal": "bullish" if val > 0 else "bearish",
-                    "value": int(val),
-                    "description": _PATTERN_DESCRIPTIONS.get(name, ""),
-                })
+    all_patterns_checked = 0
+    if include_patterns:
+        all_patterns = ta.cdl_pattern(open_, high, low, close, name="all")
+        all_patterns_checked = all_patterns.shape[1] if all_patterns is not None else 0
+        if all_patterns is not None and not all_patterns.empty:
+            last_row = all_patterns.iloc[-1]
+            for col in all_patterns.columns:
+                val = last_row[col]
+                if val != 0:
+                    name = str(col).replace("CDL_", "").lower()
+                    patterns_found.append(
+                        {
+                            "pattern": name,
+                            "signal": "bullish" if val > 0 else "bearish",
+                            "value": int(val),
+                            "description": _PATTERN_DESCRIPTIONS.get(name, ""),
+                        }
+                    )
 
     or_break = _opening_range_break(df)
 
     return {
         "patterns": patterns_found,
         "or_break": or_break,
-        "patterns_checked": all_patterns.shape[1] if all_patterns is not None else 0,
+        "patterns_checked": int(all_patterns_checked),
     }
 
 

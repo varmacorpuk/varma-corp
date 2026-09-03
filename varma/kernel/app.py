@@ -53,6 +53,7 @@ from varma.routines.run_0730_meeting import run_0730_meeting
 from varma.routines.run_flatten_us_close import run_flatten_us_close
 from varma.routines.run_flatten_london_close import run_flatten_london_close
 from varma.routines.run_paper_trade_path import run_paper_trade_path
+from varma.routines.run_open_scanner import run_open_scanner
 from varma.routines.board_jobs import with_flatten_safety, with_job_safety, with_paper_trade_safety
 from varma.controls.addendum_j import (
     EMPLOYEE_CANNOT_DOWNLOAD_SECRETS_REASON,
@@ -416,6 +417,13 @@ def create_app() -> FastAPI:
             run_company_backup(session, started_by="board-member"),
         )
 
+    @app.post("/routines/run-open-scanner")
+    def api_run_open_scanner(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return with_job_safety(session, run_open_scanner(session, started_by="board-member"))
+
     @app.post("/routines/run-paper-trade-path")
     def api_run_paper_trade_path(
         _board: Actor = Depends(require_board_member),
@@ -626,6 +634,7 @@ def create_app() -> FastAPI:
     @app.get("/watchlist")
     def watchlist(session: Session = Depends(_session)) -> dict[str, Any]:
         rows = session.query(WatchlistItem).all()
+        allow_syms = set(ControlEngine(session).allow_list_symbols())
         return {
             "label": "TEMPORARY DEVELOPMENT DEFAULT",
             "is_execution_allow_list": False,
@@ -637,6 +646,8 @@ def create_app() -> FastAPI:
                     "venue": r.venue,
                     "asset_class": r.asset_class,
                     "label": r.label,
+                    "executable": r.symbol in allow_syms,
+                    "watch_only": r.symbol not in allow_syms,
                 }
                 for r in rows
             ],

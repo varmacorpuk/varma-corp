@@ -39,6 +39,11 @@ from varma.controls.addendum_e import (
     ADDENDUM_E_LABEL,
     ADDENDUM_E_SET_BY,
 )
+from varma.controls.addendum_m import (
+    ADDENDUM_M_ETPS,
+    ADDENDUM_M_ETP_SYMBOLS,
+    WATCH_ONLY_LABEL,
+)
 from varma.controls.addendum_f import (
     QUANT_SLUG,
     TECH_SLUG,
@@ -263,6 +268,7 @@ def seed_if_empty(session: Session) -> None:
     seed_board_addendum_a(session)
     seed_board_addendum_c(session)
     seed_board_addendum_e(session)
+    seed_board_addendum_m_watch_only(session)
     seed_board_addendum_k(session)
     seed_board_addendum_i(session)
     seed_board_addendum_j(session)
@@ -558,6 +564,35 @@ def seed_board_addendum_e(session: Session) -> None:
             row.venue = venue
             row.approved_by = ADDENDUM_E_SET_BY
             row.approved_at = now
+    # CEO ruling: Addendum M ETPs must never remain executable if a stale seed
+    # wrote them onto the allow-list. Do not delete other extra rows (tests may
+    # add SHEL.L for flatten coverage).
+    for symbol in ADDENDUM_M_ETP_SYMBOLS:
+        extra = session.query(AllowListInstrument).filter_by(symbol=symbol).one_or_none()
+        if extra is not None:
+            session.delete(extra)
+    session.flush()
+
+
+def seed_board_addendum_m_watch_only(session: Session) -> None:
+    """Seed GLD/SLV/USO/UNG/CPER as watch-only. Never as AllowListInstrument."""
+    for symbol, name, venue in ADDENDUM_M_ETPS:
+        row = session.get(WatchlistItem, symbol)
+        if row is None:
+            session.add(
+                WatchlistItem(
+                    symbol=symbol,
+                    name=name,
+                    venue=venue,
+                    asset_class="listed_etp",
+                    label=WATCH_ONLY_LABEL,
+                )
+            )
+        else:
+            row.name = name
+            row.venue = venue
+            row.asset_class = "listed_etp"
+            row.label = WATCH_ONLY_LABEL
     session.flush()
 
 

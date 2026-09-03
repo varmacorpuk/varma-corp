@@ -4,8 +4,10 @@ Source: Board Member direct instruction (Hari), 3 Sep 2026.
 Supersedes the earlier same-day top-100 market-cap attempt and the original
 Addendum E 2026-08-27 ten-name list.
 
-The paper-tradeable universe is exactly ten US-market names, all
+The paper-tradeable equity universe is exactly ten US-market names, all
 NYSE/Nasdaq, all USD-quoted. Single execution window: New York open.
+Board Addendum M the same day records five US-listed commodity ETPs as
+WATCH-ONLY (not executable) until Quant produces a proxy test.
 
 The allow-list constants live in ``addendum_e.py`` (which was updated in
 place to avoid churn across dozens of importers). This module exists as
@@ -64,6 +66,7 @@ def addendum_l_public() -> dict[str, Any]:
         "all_us_market": True,
         "all_usd_quoted": True,
         "execution_window": "New York open",
+        "extended_by": "Board Addendum M 2026-09-03 (watch-only ETPs; not executable)",
         "no_lse_names": True,
         "no_non_us_venues": True,
         "addendum_a_limits_apply": True,
