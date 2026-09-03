@@ -7,8 +7,8 @@ operations. The **source code on the branch you have checked out is authoritativ
 disagrees with that code, the code wins and this file must be corrected.
 
 _Last updated: 2026-09-03._ Grand Opening PAPER (Hari explicit yes, word: Open). LIVE still
-blocked. Pytest: **196 passing, 0 failures**. Do not invent a percent-complete. Chat is not
-the record.
+blocked. Addendum E listing venues: JPM and JNJ are NYSE (encoding only). Pytest: **198 passing,
+0 failures**. Do not invent a percent-complete. Chat is not the record.
 
 ## 0. RECOVERY / CONTINUATION INSTRUCTION
 > Read `BUILD_STATE.md` first. Then read `PROJECT_MAP.md` and `SPEC_INDEX.md`. Do not rescan the
@@ -19,7 +19,7 @@ the record.
 ## 1. CURRENT BUILD STATUS
 - **Formal completion percentage: not established — do not invent one.** The project is the first
   vertical slice per Document 18.
-- **On current `main` plus this Grand Opening PAPER PR:** FastAPI kernel; 7 durable AI employees;
+- **On current `main` plus this Addendum E listing-venue PR:** FastAPI kernel; 7 durable AI employees;
   skills (brief, challenge, risk, Trader paper-ticket proposal); on-demand routines (brief,
   challenge, risk-deny, 07:30 meeting, nightly memory filter, flatten, backup, Trader paper-ticket
   proposal); four memory stores; durable DB handoffs; deterministic ControlEngine; internal paper
@@ -37,9 +37,9 @@ the record.
   ControlEngine stays authority.
 
 ## 2. COMPLETED WORK (GitHub PR state, verified 2026-09-03)
-Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**.
+Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**, **#31**.
 (#16 is merged — Addendum I is the two-opening rule, not an unmerged close.)
-#30 wired the first paper-trade PATH and encoded Board Addendum K. This PR is Grand Opening PAPER.
+#31 is Grand Opening PAPER. This PR recodes Addendum E listing venues (JPM/JNJ NYSE).
 
 | PR | On `main`? | What |
 | --- | --- | --- |
@@ -51,7 +51,8 @@ Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **
 | #28 | yes | Restored BUILD_STATE on `main` |
 | #29 | yes | Landed #24–#26 runtime onto `main` at `f9adb0e`. Pytest **175** |
 | #30 | yes | First paper-trade PATH + Board Addendum K. Pytest **188**. PAPER was still CLOSED |
-| this PR | not yet | Grand Opening PAPER. Practice / paper OPEN. LIVE still blocked. Pytest **196** |
+| #31 | yes | Grand Opening PAPER. Practice / paper OPEN. LIVE still blocked. Pytest **196** |
+| this PR | not yet | Addendum E listing venues: JPM and JNJ recoded NASDAQ → NYSE. Encoding only. Pytest **198** |
 
 **Board Grand Opening PAPER** (3 Sep 2026, Hari explicit yes, word: Open) is Board record,
 encoded as a Board-only `write_control`. Silence was not this. Addendum I still exists as the
@@ -60,12 +61,11 @@ PR **#21**. Leave **#21** open as leftover draft. Do not encode a split-clock. A
 flatten-at-US-close. London cash close is not the flatten.
 
 ## 3. CURRENT BRANCH / REPOSITORY STATE
-- **Default branch `main` HEAD at start of this PR:** `8992fad` — PR #30. First paper-trade PATH
-  + Addendum K. Pytest was **188**. PAPER execution was CLOSED.
-- **This PR:** Board-authorised Grand Opening PAPER. Fresh seed: paper OPEN, live BLOCKED,
-  £1,000 starting paper capital, Addendum A limits, allow-list E, flatten US close (C), Addendum K.
-  Opening is a Board-only control write. Employees cannot open or close the firm. LIVE stays
-  unimplemented. FakeLLM remains default.
+- **Default branch `main` HEAD at start of this PR:** `430bec1` — PR #31. Grand Opening PAPER.
+  Pytest **196**. PAPER execution OPEN. LIVE_BLOCKED. JPM/JNJ were still encoded as NASDAQ.
+- **This PR:** Recode JPM and JNJ listing venues to NYSE in Addendum E and seed reconcile.
+  Encoding only. No fill. No live. Paper stays OPEN. Capital £1,000. Limits unchanged.
+  FakeLLM remains default.
 - Verify live state with `git log --oneline origin/main` and `gh pr list --state all` before
   continuing.
 
@@ -116,7 +116,8 @@ flatten-at-US-close. London cash close is not the flatten.
   happened; live opening has not. Addendum C flatten remains US regular cash close; London cash
   close is **not** the flatten. Addendum K denies SHEL.L / AZN.L / ULVR.L only after London cash
   shuts. Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. Addendum A limits apply
-  (£200 position, £50 daily loss, 6 orders/day, kill switch).
+  (£200 position, £50 daily loss, 6 orders/day, kill switch). Addendum E listing venues: JPM and
+  JNJ NYSE; US tech NASDAQ; LSE three LSE.
 - Employees including the CEO **cannot** open or close the firm or write locks.
 - **Board Member remains the sole human authority.** Silence is not approval. Do not write Board
   policy into chat comments. GitHub is code only: never paper book, secrets, or employee memory.
@@ -150,6 +151,6 @@ repo). Keep changes additive; keep the full test suite green.
 
 ## 10. HOW TO CONTINUE
 Read this file, then `PROJECT_MAP.md` + `SPEC_INDEX.md` (+ `knowledge/index.json` for machine navigation
-and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **196** passing
-on this Grand Opening PAPER landing; **188** was main after #30). Continue from Section 8.
+and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **198** passing
+on this listing-venue recode; **196** was main after Grand Opening PAPER #31). Continue from Section 8.
 Preserve every governance and safety rule in Section 6.
