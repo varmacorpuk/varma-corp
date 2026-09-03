@@ -101,7 +101,7 @@ def test_gitignore_tracks_paper_open_book():
     assert "data/varma.db" in text or "Never commit data/varma.db" in text
 
 
-def test_tracked_paper_open_ledger_has_shel_l_buy_5():
+def test_tracked_paper_open_ledger_has_shel_l_round_trip():
     path = Path("data/paper_open_ledger.json")
     assert path.is_file()
     import json
@@ -111,13 +111,23 @@ def test_tracked_paper_open_ledger_has_shel_l_buy_5():
     assert payload["ticket_id"] == "PAPER-20260903-02"
     assert payload["trading_mode"] == "LIVE_BLOCKED"
     assert payload["is_live"] is False
-    assert abs(payload["account"]["cash"] - 829.279217) < 1e-4
-    pos = payload["positions"][0]
-    assert pos["symbol"] == "SHEL.L"
-    assert pos["quantity"] == 5.0
-    fill = payload["fills"][0]
-    assert fill["symbol"] == "SHEL.L"
-    assert fill["quantity"] == 5.0
-    assert abs(fill["price"] - 34.127093) < 1e-6
-    assert fill["is_live"] is False
-    assert fill["id"]
+    assert abs(payload["account"]["cash"] - 999.488605) < 1e-4
+    assert payload["positions"] == []
+    buy = payload["fills"][0]
+    sell = payload["fills"][1]
+    assert buy["symbol"] == "SHEL.L"
+    assert buy["side"] == "buy"
+    assert buy["quantity"] == 5.0
+    assert abs(buy["price"] - 34.127093) < 1e-6
+    assert buy["is_live"] is False
+    assert buy["id"] == "917138ec-34d0-45fa-8080-380ab59334fc"
+    assert sell["symbol"] == "SHEL.L"
+    assert sell["side"] == "sell"
+    assert sell["quantity"] == 5.0
+    assert abs(sell["price"] - 34.058907) < 1e-6
+    assert sell["is_live"] is False
+    assert sell["id"] == "2b147fa3-df6e-4e8e-82a2-1b797bc3a217"
+    closed = payload["closed_trades"][0]
+    assert closed["symbol"] == "SHEL.L"
+    assert closed["quantity"] == 5.0
+    assert closed["is_live"] is False

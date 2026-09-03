@@ -40,7 +40,8 @@ file does not invent governance terms. Where a term maps to code, the code is au
   orders in the three LSE names only. Letter exists outside the repo. Chat is not the record.
 - **Paper trading** — internal fill *simulator* only (`varma/paper/`). Not a broker. £1000 is the
   paper starting book. Practice book: `data/varma_paper_open.db` (tracked) plus
-  `data/paper_open_ledger.json`. Board job: `run_paper_trade_path`. Never `data/varma.db`.
+  `data/paper_open_ledger.json` (SHEL.L round-trip closed; cash £999.488605).
+  Board job: `run_paper_trade_path`. Never `data/varma.db`.
 - **BROKER_PAPER / LIVE ports** — external execution ports; remain UNLOADED. No broker fills.
 - **Kill switch** — Board-only halt/reset (`varma/controls/kill_switch.py`). Employees cannot reset it.
 - **Handoff** — a durable database artefact passing work between employees (`varma/meetings/handoff.py`),
