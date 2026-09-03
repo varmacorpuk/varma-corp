@@ -4,7 +4,7 @@
   "generated_by": "PR #1 (Safe Token-Efficiency Foundation) — hand-authored, additive, non-invasive",
   "handover": {
     "path": "docs/BUILD_STATE.md",
-    "purpose": "READ FIRST: current build state on main vs GitHub-merged stacked PRs, governance/safety, open Board decisions, and the NEXT STEP. Do not rescan the repo or re-read Documents 00-18 unless required. Do not call AI for deterministic ops.",
+    "purpose": "READ FIRST: current build state on main (token-efficiency runtime from #24-#26 is landed; stages 4-5 are not), governance/safety, open Board decisions, and the NEXT STEP. Do not rescan the repo or re-read Documents 00-18 unless required. Do not call AI for deterministic ops. Open PR remains #21 only.",
     "then_read": ["docs/PROJECT_MAP.md", "docs/SPEC_INDEX.md", "docs/GLOSSARY.md"]
   },
   "specs_note": "Authoritative Documents 00-18 live OUTSIDE this repository. See docs/SPEC_INDEX.md for pointers.",

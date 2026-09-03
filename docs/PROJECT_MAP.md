@@ -15,7 +15,7 @@ Authoritative specifications are **Documents 00–18**, which live **outside thi
 | --- | --- |
 | `varma/` | Python package: the company kernel and all domain logic |
 | `desktop/` | Static 2D "virtual office" UI (Electron/browser). Projection only, not source of truth |
-| `tests/` | Pytest suite on default branch `main`: **158** passing (measured 2026-09-03). The token-efficiency stacked branches (#24–#26, GitHub-merged, not on `main`) reported **175**. Do not invent a percent-complete. |
+| `tests/` | Pytest suite on default branch `main`: **175** passing (measured 2026-09-03 after landing #24–#26 runtime). Do not invent a percent-complete. |
 | `scripts/` | Dev helper scripts (`dev.sh`) |
 | `docs/` | `BUILD_STATE.md` (read first — current handover), this map, spec index, glossary, `knowledge/index.json` (navigation only) |
 | `data/` | TEMPORARY dev SQLite (gitignored). Not a system of record |
@@ -57,8 +57,11 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 
 ### AI employee components
 - `varma/employees/brain.py` — `EmployeeBrain`: durable employee record + `invocation()` context
-  (identity, role knowledge, lessons, working memory, org titles). Document 03.
-- `varma/employees/runtime.py` — `EmployeeRuntime`: `context_pack()` + `chat()`. Shared by chat/skills.
+  (identity, role knowledge, lessons, working memory, org titles). Document 03. Selective recency
+  retrieval for lessons/working/org titles (limit 8); nothing deleted.
+- `varma/employees/context.py` — STATIC / PERSISTENT / DYNAMIC context classes for AI payloads.
+- `varma/employees/runtime.py` — `EmployeeRuntime`: `context_pack()` + `chat()`. Bounded chat
+  context (6 turns) for the model; full history stays append-only.
 - `varma/ports/llm.py` — `LLMPort`, `FakeLLM` (default), `get_llm()`. An LLM call is an invocation.
 
 ### Skills (one AI call each, wrapped in deterministic work)
@@ -80,7 +83,8 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 
 ### Risk / controls / governance
 - `varma/controls/engine.py` — deterministic `ControlEngine`: permit/deny orders, `snapshot()`,
-  `write_control`. Authoritative. AI never enforces controls.
+  compact informational `constraints_hint()` for AI context, `write_control`. Authoritative.
+  AI never enforces controls.
 - `varma/controls/addendum_a.py` (numeric limits), `addendum_c.py` (paper session/flatten),
   `addendum_e.py` (PAPER allow-list), `addendum_f.py` (named staff/slugs), `addendum_i.py`
   (CLOSED gate), `addendum_j.py` (backup), `lse_session.py` (LSE fail-closed), `risk.py`
@@ -93,6 +97,7 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 
 ### Meetings / communication
 - `varma/meetings/handoff.py` — durable DB handoff artefacts (Research→CEO, Challenge→Risk).
+  Idempotent insert (deterministic dedup, existing columns only).
 - `varma/meetings/company_meeting.py` — on-demand 07:30 meeting record from existing handoffs (no AI).
 
 ### Orchestration / routines (on-demand; no daemon)
@@ -106,10 +111,10 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - `varma/observability/ai_usage.py` — **non-invasive** AI-call measurement (#23). Wraps `LLMPort`
   (`MeasuredLLM`), records `AICallLog` rows (deterministic sizes + estimates), and
   `ai_usage_summary()`. Does not change prompts, context, model selection, or employee behaviour.
-  **Measure here before further runtime token work.** Token-efficiency stages 4 (snapshot cache)
-  and 5 (response cache) are intentionally **not** implemented (safety). Stages from PRs #24–#26
-  (`constraints_hint()`, bounded chat, selective lessons/working/org, idempotent handoffs) are
-  GitHub-merged on stacked branches, not on `main`.
+  **Measure here before further runtime token work.** Token-efficiency stages from PRs #24–#26
+  (`constraints_hint()`, bounded chat, selective lessons/working/org, idempotent handoffs, daily
+  sim 0 AI on deterministic ops) **are on `main`**. Stages 4 (snapshot cache) and 5 (response
+  cache) are intentionally **not** implemented (safety).
 
 ### Backup
 - `varma/backup/job.py`, `varma/backup/crypto.py` — encrypted-at-rest company backup (Technology owns).
@@ -124,4 +129,4 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - Memory/data: `varma/memory/`, `data/` (dev SQLite).
 - Tests: `tests/` (one file per addendum/feature).
 - Specs: Documents 00–18 (outside repo); pointers in `docs/SPEC_INDEX.md`.
-- Handover: `docs/BUILD_STATE.md` (read first; current `main` vs GitHub PR topology).
+- Handover: `docs/BUILD_STATE.md` (read first; current `main` after #24–#26 runtime landing).
