@@ -28,9 +28,10 @@ file does not invent governance terms. Where a term maps to code, the code is au
   live opening has not happened. The CLOSED gate remains (`PAPER_EXECUTION_CLOSED`) if the Board
   closes paper again.
 - **Allow-list (Addendum E)** — PAPER execution membership. After Grand Opening PAPER these names
-  may fill in the simulator (subject to session, limits, kill switch, Addendum K). Empty
-  allow-list denies. Gold is never authorised. After London cash close, Addendum K denies the three
-  LSE names (`SHEL.L`, `AZN.L`, `ULVR.L`) only; US names are not denied by K.
+  may fill in the simulator (subject to session, limits, kill switch, Addendum K). Listing venues:
+  US tech (`AAPL`, `MSFT`, `NVDA`, `AMZN`, `GOOGL`) NASDAQ; `JPM` and `JNJ` NYSE; `SHEL.L`,
+  `AZN.L`, `ULVR.L` LSE. Empty allow-list denies. Gold is never authorised. After London cash
+  close, Addendum K denies the three LSE names only; US names are not denied by K.
 - **Addendum K** — Board record 2026-09-03 (Hari explicit yes). After London cash shuts, deny paper
   orders in the three LSE names only. Flatten remains US regular cash close (Addendum C not rewritten).
   Letter exists outside the repo. Chat is not the record.

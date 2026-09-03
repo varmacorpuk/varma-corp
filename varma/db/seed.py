@@ -538,6 +538,7 @@ def seed_board_addendum_e(session: Session) -> None:
 
     Board-set. Employees including the CEO cannot write this list.
     Does not load LIVE or BROKER_PAPER. Does not switch trading_mode.
+    Recodes listing venues onto a stale copy (JPM/JNJ are NYSE).
     Addendum I: the list exists but cannot be used for fills until open.
     """
     now = now_london()
@@ -552,6 +553,11 @@ def seed_board_addendum_e(session: Session) -> None:
                     approved_at=now,
                 )
             )
+        elif row.venue != venue:
+            # Recode listing venue onto a stale copy. Encoding only. Does not fill.
+            row.venue = venue
+            row.approved_by = ADDENDUM_E_SET_BY
+            row.approved_at = now
     session.flush()
 
 

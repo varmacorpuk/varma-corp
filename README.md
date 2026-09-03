@@ -93,7 +93,7 @@ A later slice can attach the same skill to a Europe/London scheduler.
 
 - trading_mode: LIVE_BLOCKED (internal paper fill simulator is the paper ledger; PAPER execution is OPEN after Grand Opening PAPER; do not load LIVE or BROKER_PAPER)
 - PAPER execution: OPEN (Board Grand Opening PAPER 2026-09-03). Employees including the CEO cannot write this flag or open/close the firm. LIVE still blocked.
-- Execution allow-list: Board Addendum E 2026-08-27 PAPER membership (AAPL, MSFT, NVDA, AMZN, GOOGL, JPM, JNJ, SHEL.L, AZN.L, ULVR.L). After Grand Opening PAPER these names may fill in the simulator. Unknown tickers deny. Gold denies. Employees including the CEO cannot write the list.
+- Execution allow-list: Board Addendum E 2026-08-27 PAPER membership (AAPL, MSFT, NVDA, AMZN, GOOGL on NASDAQ; JPM, JNJ on NYSE; SHEL.L, AZN.L, ULVR.L on LSE). After Grand Opening PAPER these names may fill in the simulator. Unknown tickers deny. Gold denies. Employees including the CEO cannot write the list.
 - Numeric limits: Board Addendum A 2026-08-27 (Board-set, VALUES stored, in use after paper open)
   - simulated_capital = 1000 GBP (paper starting book)
   - max_position = 200 GBP (one paper trade)

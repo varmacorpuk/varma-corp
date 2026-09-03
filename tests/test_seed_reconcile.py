@@ -7,7 +7,7 @@ from tests.conftest import (
 )
 from varma.clock import now_london
 from varma.controls.addendum_a import ADDENDUM_A_LIMITS
-from varma.controls.addendum_e import ADDENDUM_E_SYMBOLS
+from varma.controls.addendum_e import ADDENDUM_E_SYMBOLS, ADDENDUM_E_VENUES
 from varma.controls.addendum_f import ALL_STAFF_SLUGS, TECH_SLUG, TRADER_SLUG, staff_display_for_slug
 from varma.controls.engine import ControlEngine
 from varma.db.engine import get_session_factory, init_db
@@ -17,7 +17,9 @@ from varma.db.models import (
     ControlState,
     Employee,
     NumericLimit,
+    PaperAccount,
     PaperFill,
+    PaperPosition,
     Permission,
 )
 from varma.db.seed import seed_if_empty
@@ -123,6 +125,10 @@ def test_stale_sqlite_is_reconciled_to_board_encoded(db_url):
         assert set(names) == set(EXPECTED_DISPLAY)
         assert names == EXPECTED_DISPLAY
         assert set(r.symbol for r in session.query(AllowListInstrument).all()) == set(ADDENDUM_E_SYMBOLS)
+        venues = {r.symbol: r.venue for r in session.query(AllowListInstrument).all()}
+        assert venues == ADDENDUM_E_VENUES
+        assert venues["JPM"] == "NYSE"
+        assert venues["JNJ"] == "NYSE"
         for key, value, _unit in ADDENDUM_A_LIMITS:
             assert session.get(NumericLimit, key).value == value
         assert session.get(ControlSetting, "paper_execution").value == "OPEN"
@@ -149,6 +155,68 @@ def test_stale_sqlite_is_reconciled_to_board_encoded(db_url):
         assert snap["kill_switch"]["board_member_can_trigger"] is True
         assert snap["kill_switch"]["employees_cannot_reset"] is True
         assert snap["paper_gate"]["paper_execution"] == "OPEN"
+    finally:
+        session.close()
+        init_db("sqlite:///:memory:", reset=True)
+
+
+def test_stale_nasdaq_jpm_jnj_are_recoded_to_nyse(db_url):
+    init_db(db_url, reset=True)
+    factory = get_session_factory(db_url, reset=False)
+    session = factory()
+    try:
+        now = now_london()
+        session.add(
+            ControlState(
+                id=1,
+                trading_mode="LIVE_BLOCKED",
+                kill_switch=False,
+                updated_at=now,
+                updated_by="stale-nasdaq-copy",
+            )
+        )
+        for symbol in ("JPM", "JNJ", "AAPL"):
+            session.add(
+                AllowListInstrument(
+                    symbol=symbol,
+                    venue="NASDAQ",
+                    approved_by="stale-nasdaq-copy",
+                    approved_at=now,
+                )
+            )
+        session.add(
+            AllowListInstrument(
+                symbol="SHEL.L",
+                venue="LSE",
+                approved_by="stale-nasdaq-copy",
+                approved_at=now,
+            )
+        )
+        session.commit()
+        assert session.query(AllowListInstrument).filter_by(symbol="JPM").one().venue == "NASDAQ"
+        assert session.query(AllowListInstrument).filter_by(symbol="JNJ").one().venue == "NASDAQ"
+
+        seed_if_empty(session)
+
+        venues = {r.symbol: r.venue for r in session.query(AllowListInstrument).all()}
+        assert venues == ADDENDUM_E_VENUES
+        assert venues["JPM"] == "NYSE"
+        assert venues["JNJ"] == "NYSE"
+        assert venues["AAPL"] == "NASDAQ"
+        assert venues["MSFT"] == "NASDAQ"
+        assert venues["NVDA"] == "NASDAQ"
+        assert venues["AMZN"] == "NASDAQ"
+        assert venues["GOOGL"] == "NASDAQ"
+        assert venues["SHEL.L"] == "LSE"
+        assert venues["AZN.L"] == "LSE"
+        assert venues["ULVR.L"] == "LSE"
+        assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
+        assert session.get(ControlSetting, "paper_execution").value == "OPEN"
+        account = session.get(PaperAccount, 1)
+        assert account.simulated_capital == 1000.0
+        assert account.cash == 1000.0
+        assert session.query(PaperFill).count() == 0
+        assert session.query(PaperPosition).count() == 0
     finally:
         session.close()
         init_db("sqlite:///:memory:", reset=True)
