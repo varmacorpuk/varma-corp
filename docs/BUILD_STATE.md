@@ -19,7 +19,7 @@ not the record.
 ## 1. CURRENT BUILD STATUS
 - **Formal completion percentage: not established — do not invent one.** The project is the first
   vertical slice per Document 18; the company is CLOSED until Grand Opening (Board Addendum I).
-- **On default branch `main` (this landing of #24–#26 runtime):** FastAPI kernel; 7 durable AI
+- **On current `main` plus this paper-trade-path PR:** FastAPI kernel; 7 durable AI
   employees; skills (brief, challenge, risk, Trader paper-ticket proposal); on-demand routines
   (brief, challenge, risk-deny, 07:30 meeting, nightly memory filter, flatten, backup,
   Trader paper-ticket proposal); four memory stores; durable DB handoffs;
@@ -41,10 +41,9 @@ not the record.
   internal simulator) and is still gated CLOSED.
 
 ## 2. COMPLETED WORK (GitHub PR state, verified 2026-09-03)
-Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, and this PR landing the #24–#26
-runtime. (#16 is merged — Addendum I company CLOSED until Grand Opening, not an unmerged close.)
-PRs #24–#27 were GitHub-merged earlier onto stacked feature branches and did **not** reach `main`
-until #28 (BUILD_STATE restore) and this PR (runtime).
+Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29** (#24–#26 runtime).
+(#16 is merged — Addendum I company CLOSED until Grand Opening, not an unmerged close.)
+This PR adds the first paper-trade PATH. PAPER execution is still CLOSED.
 
 | PR | On `main`? | What |
 | --- | --- | --- |
@@ -52,26 +51,22 @@ until #28 (BUILD_STATE restore) and this PR (runtime).
 | #16 | yes | Addendum I: PAPER execution CLOSED until Grand Opening |
 | #22 | yes | `.cursor/environment.json` (Cloud Agent install + start) |
 | #23 | yes | Project map + non-invasive AI usage (`MeasuredLLM`, `AICallLog`, `ai_usage_summary`). 153 → 158 tests |
-| #24 | **yes** (this PR) | `constraints_hint()` + STATIC/PERSISTENT/DYNAMIC classifier. 158 → 165 |
-| #25 | **yes** (this PR) | Bounded chat (6 turns); selective lessons (8); idempotent handoffs; daily sim 0 AI on deterministic ops. Stages 4–5 **not** implemented. 165 → 173 |
-| #26 | **yes** (this PR) | Selective working/org titles (8). 173 → 175 |
-| #27 | docs only | Original `docs/BUILD_STATE.md` on the stacked tip `07495a3`. Restored and corrected onto `main` by #28. Not replayed as a runtime commit |
-| #28 | yes | Restored BUILD_STATE on `main` and recorded that #24–#26 were not yet on default branch |
+| #24–#26 | yes (#29) | Token-efficiency runtime. 158 → 175 |
+| #27 | docs only | Original `docs/BUILD_STATE.md` on the stacked tip `07495a3`. Restored onto `main` by #28 |
+| #28 | yes | Restored BUILD_STATE on `main` |
+| #29 | yes | Landed #24–#26 runtime onto `main` at `f9adb0e`. Pytest **175** |
+| this PR | not yet | First paper-trade PATH. Pytest **183**. PAPER still CLOSED |
 
-**Open (leave open):** PR **#21** only — LSE hold: deny SHEL.L / AZN.L / ULVR.L after London cash
+**Open (leave open):** PR **#21** — LSE hold: deny SHEL.L / AZN.L / ULVR.L after London cash
 close. Do **not** merge or rebase it. Do **not** encode a split-clock. Addendum C stays
-flatten-at-US-close.
+flatten-at-US-close. This paper-trade-path PR is separate.
 
 ## 3. CURRENT BRANCH / REPOSITORY STATE
-- **Default branch `main` immediately before this landing:** `c548856` — PR #28. Contained #1–#20,
-  #22, #23, #28. Pytest was **158**. BUILD_STATE on that commit correctly said #24–#26 were
-  GitHub-merged but not on `main`.
-- **This landing:** replays the runtime commits from stacked PRs #24–#26 onto current `main`.
-  Runtime files match stacked tip `4adc643` (the #26 merge). The #27 BUILD_STATE blob was **not**
-  copied (it claimed the stack was already the working tree). `.cursor/environment.json` from #22
-  is kept. Docs here are updated to the new truth.
-- **Historical note:** #23–#27 were a stacked chain. Only #23 targeted `main` at the time. GitHub
-  "MERGED" did not mean the commit was in a `main` checkout. That gap is closed for #24–#26 runtime.
+- **Default branch `main` HEAD at start of this PR:** `f9adb0e` — PR #29. Token-efficiency
+  runtime from #24–#26 is on `main`. Pytest was **175**. PAPER execution CLOSED. First
+  paper-trade path was not yet wired.
+- **This PR:** wires Trader proposal → ControlEngine → internal simulator as a Board-only
+  on-demand job. PAPER stays CLOSED. Pytest **183**. Do not open the firm. Do not fill.
 - Verify live state with `git log --oneline origin/main` and `gh pr list --state all` before
   continuing.
 
