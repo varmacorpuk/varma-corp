@@ -7,8 +7,9 @@ operations. The **source code on the branch you have checked out is authoritativ
 disagrees with that code, the code wins and this file must be corrected.
 
 _Last updated: 2026-09-03._ Verified against GitHub (`gh pr list` / API) and `python3 -m pytest`
-on this paper-trade-path branch (Addendum K encoded here). Do not invent a percent-complete. Chat is
-not the record. The Addendum K letter exists outside the repo.
+on this paper-trade-path branch: **188 passing, 0 failures** (includes first paper-trade PATH and
+Board Addendum K). Do not invent a percent-complete. Chat is not the record. The Addendum K letter
+exists outside the repo.
 
 ## 0. RECOVERY / CONTINUATION INSTRUCTION
 > Read `BUILD_STATE.md` first. Then read `PROJECT_MAP.md` and `SPEC_INDEX.md`. Do not rescan the
@@ -27,9 +28,10 @@ not the record. The Addendum K letter exists outside the repo.
   (Board-only); FakeLLM default wrapped by MeasuredLLM; `AICallLog` + `ai_usage_summary`;
   token-efficiency runtime (`constraints_hint()`, STATIC/PERSISTENT/DYNAMIC context classes,
   bounded chat, selective lessons/working/org titles, idempotent handoffs, daily sim 0 AI on
-  deterministic ops). Pytest count is recorded after the Addendum K landing on this PR. PAPER still
-  CLOSED. Board Addendum K 2026-09-03 (Hari explicit yes) is encoded: after London cash shuts, deny
-  SHEL.L / AZN.L / ULVR.L only; US names are not denied by K; flatten remains US regular cash close.
+  deterministic ops). Pytest: **188 passing, 0 failures** (measured 2026-09-03, includes the
+  first paper-trade PATH and Board Addendum K; PAPER still CLOSED). Board Addendum K 2026-09-03
+  (Hari explicit yes) is encoded: after London cash shuts, deny SHEL.L / AZN.L / ULVR.L only;
+  US names are not denied by K; flatten remains US regular cash close.
 - **Incomplete / not built:** Grand Opening (PAPER or LIVE); real LLM
   binding; live/broker execution; semantic memory summarisation; response caching;
   event-idempotency schema.
@@ -56,7 +58,7 @@ This PR adds the first paper-trade PATH and encodes Board Addendum K. PAPER exec
 | #27 | docs only | Original `docs/BUILD_STATE.md` on the stacked tip `07495a3`. Restored onto `main` by #28 |
 | #28 | yes | Restored BUILD_STATE on `main` |
 | #29 | yes | Landed #24–#26 runtime onto `main` at `f9adb0e`. Pytest **175** |
-| this PR | not yet | First paper-trade PATH + Board Addendum K. PAPER still CLOSED |
+| this PR | not yet | First paper-trade PATH + Board Addendum K. Pytest **188**. PAPER still CLOSED |
 
 **Board Addendum K** (3 Sep 2026, Hari explicit yes) is Board record, encoded on this branch.
 Chat is not the record. The letter exists outside the repo. Do **not** merge or rebase PR **#21**
@@ -159,6 +161,6 @@ repo). Keep changes additive; keep the full test suite green.
 
 ## 10. HOW TO CONTINUE
 Read this file, then `PROJECT_MAP.md` + `SPEC_INDEX.md` (+ `knowledge/index.json` for machine navigation
-and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **183** passing
-on this paper-trade-path landing; **175** was main after #24–#26 runtime, before this path).
+and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **188** passing
+on this paper-trade-path + Addendum K landing; **175** was main after #24–#26 runtime, before this path).
 Continue from Section 8. Preserve every governance and safety rule in Section 6.

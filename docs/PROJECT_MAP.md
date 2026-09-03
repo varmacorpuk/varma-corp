@@ -15,7 +15,7 @@ Authoritative specifications are **Documents 00–18**, which live **outside thi
 | --- | --- |
 | `varma/` | Python package: the company kernel and all domain logic |
 | `desktop/` | Static 2D "virtual office" UI (Electron/browser). Projection only, not source of truth |
-| `tests/` | Pytest suite: **183** passing (measured 2026-09-03; first paper-trade PATH added, PAPER still CLOSED). Do not invent a percent-complete. |
+| `tests/` | Pytest suite: **188** passing (measured 2026-09-03; first paper-trade PATH + Addendum K, PAPER still CLOSED). Do not invent a percent-complete. |
 | `scripts/` | Dev helper scripts (`dev.sh`) |
 | `docs/` | `BUILD_STATE.md` (read first — current handover), this map, spec index, glossary, `knowledge/index.json` (navigation only) |
 | `data/` | TEMPORARY dev SQLite (gitignored). Not a system of record |
