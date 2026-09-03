@@ -40,10 +40,11 @@ not the record.
   ControlEngine stays authority.
 
 ## 2. COMPLETED WORK (GitHub PR state, verified 2026-09-03)
-Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**, **#31**, **#32**, **#34**.
+Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**, **#31**, **#32**, **#34**, **#35**, **#37**.
 (#16 is merged — Addendum I is the two-opening rule, not an unmerged close.)
 #32 recoded Addendum E listing venues (JPM/JNJ NYSE). #34 binds CEO desk 02F in ControlEngine.
-This PR (#33) is the SHEL.L BUY 5 named paper ticket on `data/varma_paper_open.db`.
+#35/#37 record that landing on `main`. This PR (#33) is the SHEL.L BUY 5 named paper ticket on
+`data/varma_paper_open.db`.
 
 | PR | On `main`? | What |
 | --- | --- | --- |
@@ -58,6 +59,8 @@ This PR (#33) is the SHEL.L BUY 5 named paper ticket on `data/varma_paper_open.d
 | #31 | yes | Grand Opening PAPER. Practice / paper OPEN. LIVE still blocked. Pytest **196** |
 | #32 | yes | Addendum E listing venues: JPM and JNJ recoded NASDAQ → NYSE. Encoding only. Pytest **198** |
 | #34 | yes | CEO desk 02F bound in ControlEngine. Venue-split flatten clocks. Pytest **204** |
+| #35 | yes | BUILD_STATE record of #34 on `main` (02F bound, LIVE_BLOCKED, kernel down) |
+| #37 | yes | Align BUILD_STATE and PROJECT_MAP with main after 02F merge |
 | #33 | this PR | Named ticket PAPER-20260903-02: SHEL.L BUY 5 on `data/varma_paper_open.db` only |
 
 **Board Grand Opening PAPER** (3 Sep 2026, Hari explicit yes, word: Open) is Board record,
@@ -72,10 +75,11 @@ Firm day still runs to NY close. Risk reads `engine.snapshot()["risk_02f"]` (`bo
 re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
 
 ## 3. CURRENT BRANCH / REPOSITORY STATE
-- **Default branch `main` HEAD:** `2e03dbe` — PR **#34** merged. CEO desk 02F bound.
-  `split_flatten_clocks` **true**. Pytest **204**. PAPER execution OPEN. LIVE_BLOCKED. Kernel down.
-  JPM/JNJ NYSE (from #32). Capital £1,000 and Addendum A limits unchanged. Allow-list membership
-  unchanged. Kill switch unchanged. FakeLLM remains default. No fills on the paper-OPEN book.
+- **Default branch `main`:** PR **#34** is merged (encoding commit `079b267`, merge `2e03dbe`).
+  CEO desk 02F bound. Venue-split flatten clocks. `split_flatten_clocks` **true**. Pytest **204**.
+  PAPER execution OPEN. LIVE_BLOCKED. Kernel down / no daemon. JPM/JNJ NYSE (from #32). Capital
+  £1,000 and Addendum A limits unchanged. Allow-list membership unchanged. Kill switch unchanged.
+  FakeLLM remains default. No fills on the paper-OPEN book. Do not start the office kernel.
 - **Paper-OPEN book:** `data/varma_paper_open.db`. Never empty `data/varma.db`. Never reset/wipe a
   different sqlite file.
 - Verify live state with `git log --oneline origin/main` and `gh pr list --state all` before
