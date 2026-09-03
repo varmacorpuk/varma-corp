@@ -38,7 +38,11 @@ from varma.observability.board import BoardObservability
 from varma.paper.flatten import flatten_all_paper
 from varma.ports.execution import BROKER_PAPER_LOADED, LIVE_PORT_LOADED
 from varma.routines.run_paper_trade_path import run_paper_trade_path
-from varma.skills.propose_paper_ticket import LEGAL_PAPER_TICKET
+from varma.skills.propose_paper_ticket import (
+    LEGAL_PAPER_TICKET,
+    PAPER_20260903_02,
+    PAPER_20260903_02_AT,
+)
 
 EMPLOYEE_SETS = (EMPLOYEE_HEADERS, CEO_HEADERS, TRADER_HEADERS, TECH_HEADERS)
 
@@ -292,3 +296,55 @@ def test_overnight_and_after_us_close_flatten_rules_hold(session):
     assert gate["grand_opening_live"] == "not"
     assert LIVE_ADAPTER_LOADED is False
     assert BROKER_PAPER_LOADED is False
+
+
+def test_paper_20260903_02_shel_l_buy_5_fills_in_london_session(session):
+    ticket = dict(PAPER_20260903_02)
+    assert ticket["symbol"] == "SHEL.L"
+    assert ticket["side"] == "buy"
+    assert ticket["quantity"] == 5.0
+    assert ticket["execution_port"] == "SIMULATOR"
+    assert 5.0 * 34.093 <= MAX_POSITION
+    result = run_paper_trade_path(
+        session,
+        started_by="cli",
+        at=PAPER_20260903_02_AT,
+        order=ticket,
+    )
+    assert result["proposed"] is True
+    assert result["allowed"] is True
+    assert result["filled"] is True
+    assert result["paper_fills"] is True
+    assert result["live_fills"] is False
+    assert result["reason"] == "PAPER_FILL_SIMULATED"
+    assert result["paper_execution"] == "OPEN"
+    assert result["trading_mode"] == "LIVE_BLOCKED"
+    assert result["ai_called"] is False
+    assert result["broker_paper_loaded"] is False
+    assert result["live_adapter_loaded"] is False
+    assert result["path"]["reached"] == "internal_simulator"
+    fill = session.query(PaperFill).one()
+    assert fill.symbol == "SHEL.L"
+    assert fill.side == "buy"
+    assert fill.quantity == 5.0
+    assert fill.is_live is False
+    pos = session.get(PaperPosition, "SHEL.L")
+    assert pos is not None
+    assert pos.quantity == 5.0
+    overnight = EmployeeRuntime(session, _trader(session)).propose_paper_ticket(
+        order=ticket,
+        at=BEFORE_UK_OPEN,
+    )
+    assert overnight["allowed"] is False
+    assert overnight["reason"] == "PAPER_SESSION_CLOSED"
+    assert overnight["filled"] is False
+    live = EmployeeRuntime(session, _trader(session)).propose_paper_ticket(
+        order={**ticket, "execution_port": "LIVE"},
+        at=PAPER_20260903_02_AT,
+    )
+    assert live["allowed"] is False
+    assert live["reason"] == "LIVE_BLOCKED"
+    assert live["filled"] is False
+    assert LIVE_ADAPTER_LOADED is False
+    assert BROKER_PAPER_LOADED is False
+    assert LIVE_PORT_LOADED is False

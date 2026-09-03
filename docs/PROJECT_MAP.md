@@ -85,7 +85,9 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - `varma/skills/propose_paper_ticket.py` — Trader (Chris Adeyemi) paper-ticket proposal.
   Deterministic. No AI. ControlEngine is authoritative.
 - `varma/routines/run_paper_trade_path.py` — Board-only on-demand job that invokes the Trader
-  proposal. No daemon. After Grand Opening PAPER a legal ticket may fill.
+  proposal. No daemon. After Grand Opening PAPER a legal ticket may fill. Named ticket
+  `PAPER-20260903-02` (SHEL.L BUY 5) uses `data/varma_paper_open.db` only and never
+  `data/varma.db`.
 - `varma/ports/execution.py` — ExecutionPort; BROKER_PAPER + LIVE remain UNLOADED.
 
 ### Risk / controls / governance
