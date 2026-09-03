@@ -27,6 +27,11 @@ from varma.skills.review_unsafe_path import risk_decision_to_dict
 
 NO_LIVE_APPROVAL_SLUGS = set(ALL_STAFF_SLUGS)
 
+# TEMPORARY DEVELOPMENT DEFAULT — how many recent chat turns are supplied to the model.
+# The full chat history stays append-only in the database (GET /employees/{slug}/chat).
+# This only bounds what a real model would receive, preventing unbounded prompt growth.
+RECENT_CHAT_TURNS = 6
+
 
 class EmployeeRuntime:
     def __init__(self, session: Session, employee: Employee) -> None:
@@ -103,6 +108,48 @@ class EmployeeRuntime:
             .first()
         )
 
+    def bounded_chat_context(self, *, limit: int = RECENT_CHAT_TURNS) -> dict:
+        """Deterministic bounded view of chat history for AI context (Stage 1).
+
+        Append-only storage is untouched: the full history remains in the database
+        and is served in full by GET /employees/{slug}/chat. Only the most recent
+        `limit` turns are exposed here so a real model never receives the entire
+        (potentially unbounded) history. No AI call is made and nothing is deleted.
+        A semantic rolling summary of older turns is a Board decision and is NOT
+        invented here; older turns are represented only by deterministic metadata.
+        """
+        base = self.session.query(ChatMessage).filter_by(employee_id=self.employee.id)
+        total = base.count()
+        recent_desc = base.order_by(ChatMessage.created_at.desc()).limit(max(0, limit)).all()
+        recent = [
+            {
+                "from_role": m.from_role,
+                "body": m.body,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            }
+            for m in reversed(recent_desc)
+        ]
+        older_count = max(0, total - len(recent))
+        older_earliest_at = None
+        if older_count:
+            first = base.order_by(ChatMessage.created_at.asc()).first()
+            older_earliest_at = first.created_at.isoformat() if first and first.created_at else None
+        return {
+            "recent": recent,
+            "recent_limit": limit,
+            "total_messages": total,
+            "older_count": older_count,
+            "older_earliest_at": older_earliest_at,
+            "durable_full_history_in_database": True,
+            "older_summary_policy": "BOARD_DECISION_NOT_INVENTED",
+            "note": (
+                "Durable full chat history is retained append-only in the database "
+                "(GET /employees/{slug}/chat). Only the most recent turns are supplied "
+                "to the model to bound prompt growth. A semantic rolling summary of older "
+                "turns is a Board decision and is not invented here."
+            ),
+        }
+
     def context_pack(self) -> dict:
         produced = self.latest_brief()
         received = self.latest_received_brief()
@@ -124,7 +171,10 @@ class EmployeeRuntime:
         }
         packed.update(
             {
-                "controls": self.controls.snapshot(),
+                # PR #2: compact informational control hint instead of the full verbose
+                # snapshot. Controls remain enforced deterministically by ControlEngine;
+                # the chat runtime never used the full snapshot for reasoning.
+                "controls_hint": self.controls.constraints_hint(),
                 "latest_brief": brief_to_dict(brief) if brief else None,
                 "produced_brief": brief_to_dict(produced) if produced else None,
                 "received_brief": brief_to_dict(received) if received else None,
@@ -133,6 +183,8 @@ class EmployeeRuntime:
                 "latest_risk_decision": risk_decision_to_dict(risk) if risk else None,
                 "inbox": [handoff_to_dict(h) for h in self.inbox()[:10]],
                 "cannot_approve_live_trading": self.employee.slug in NO_LIVE_APPROVAL_SLUGS,
+                # Stage 1: bounded recent chat turns; full history stays in the database.
+                "chat_recent": self.bounded_chat_context(),
             }
         )
         return packed
