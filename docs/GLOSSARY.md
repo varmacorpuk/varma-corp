@@ -32,9 +32,12 @@ file does not invent governance terms. Where a term maps to code, the code is au
   US tech (`AAPL`, `MSFT`, `NVDA`, `AMZN`, `GOOGL`) NASDAQ; `JPM` and `JNJ` NYSE; `SHEL.L`,
   `AZN.L`, `ULVR.L` LSE. Empty allow-list denies. Gold is never authorised. After London cash
   close, Addendum K denies the three LSE names only; US names are not denied by K.
+- **02F / venue-split flatten** — CEO desk rule bound in `ControlEngine`. `SHEL.L`, `AZN.L`,
+  `ULVR.L` flatten in the London closing auction 16:30–16:35 Europe/London; that exit cannot be
+  dropped independently of the opening buy. US names flatten at US regular cash close. Firm day
+  still runs to NY close. `split_flatten_clocks` is true. Readable from engine snapshot as `risk_02f`.
 - **Addendum K** — Board record 2026-09-03 (Hari explicit yes). After London cash shuts, deny paper
-  orders in the three LSE names only. Flatten remains US regular cash close (Addendum C not rewritten).
-  Letter exists outside the repo. Chat is not the record.
+  orders in the three LSE names only. Letter exists outside the repo. Chat is not the record.
 - **Paper trading** — internal fill *simulator* only (`varma/paper/`). Not a broker. £1000 is the
   paper starting book. Board job: `run_paper_trade_path`.
 - **BROKER_PAPER / LIVE ports** — external execution ports; remain UNLOADED. No broker fills.

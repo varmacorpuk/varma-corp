@@ -65,8 +65,10 @@ def describe_paper_session() -> str:
         "Board Addendum C 2026-08-27: paper desk open from UK cash open "
         "(08:00 Europe/London weekdays) through US regular cash close "
         "(16:00 America/New_York converted onto the Europe/London clock — "
-        "not hardcoded 21:00). Trade UK open, US open, and other regular cash "
-        "opens inside that window for allow-listed names. No overnight. "
+        "not hardcoded 21:00). CEO desk 02F: LSE names flatten in the London "
+        "closing auction 16:30–16:35; US names flatten at US regular cash close. "
+        "split_flatten_clocks is true. Trade UK open, US open, and other regular "
+        "cash opens inside that window for allow-listed names. No overnight. "
         "No US after-hours. No extended hours unless later Board-approved."
     )
 
@@ -88,12 +90,25 @@ def describe_company_backup() -> str:
 
 def describe_flatten_us_close() -> str:
     return (
-        "Board Addendum C 2026-08-27: flatten ALL paper before US regular cash "
-        "close. Do NOT flatten at London cash close (16:30 Europe/London). "
-        "On-demand via Board Member right-hand panel, API, or documented CLI. "
-        "This slice does not start a daemon scheduler. Flatten uses the internal "
-        "paper fill simulator, not a broker. Empty allow-list still denies new "
-        "orders; flatten of existing paper is session hygiene (no-op if none). "
+        "CEO desk 02F / Board Addendum C: flatten US paper names before US "
+        "regular cash close. LSE names (SHEL.L, AZN.L, ULVR.L) are already "
+        "bound to the London closing auction and are not flattened here. "
+        "split_flatten_clocks is true. On-demand via Board Member right-hand "
+        "panel, API, or documented CLI. This slice does not start a daemon "
+        "scheduler. Flatten uses the internal paper fill simulator, not a broker. "
         "GET /observability does not flatten. Board Addendum I: do not run "
         "flatten-as-if-there-were-positions while PAPER execution is CLOSED."
+    )
+
+
+def describe_flatten_london_close() -> str:
+    return (
+        "CEO desk 02F (bound in ControlEngine): flatten SHEL.L, AZN.L, ULVR.L "
+        "in the London closing auction 16:30–16:35 Europe/London. Do not hold "
+        "those three to New York. The auction exit cannot be dropped independently "
+        "of the opening buy. US names still flatten at US regular cash close. "
+        "Firm day still runs to NY close. On-demand via Board Member right-hand "
+        "panel, API, or documented CLI. Not a daemon. Internal paper fill "
+        "simulator only. GET /observability does not flatten. LIVE_BLOCKED. "
+        "paper_execution stays OPEN."
     )

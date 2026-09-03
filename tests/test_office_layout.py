@@ -84,8 +84,14 @@ def test_office_click_opens_panel_logic():
     assert "/routines/run-0730-meeting" in JS
     assert "/routines/run-nightly-filter" in JS
     assert "/routines/run-flatten-us-close" in JS
+    assert "/routines/run-flatten-london-close" in JS
     assert "/routines/run-backup" in JS
     assert "/routines/run-paper-trade-path" in JS
+    assert "US_REGULAR_CASH_CLOSE" in JS or "US cash close" in JS
+    assert "LONDON_CLOSING_AUCTION" in JS or "London closing auction" in JS
+    assert "split_flatten_clocks" in JS
+    assert "02F bound" in JS
+    assert "GET /observability does not flatten" in JS
     assert "Run Trader paper-ticket proposal" in JS
     assert "first paper-trade PATH exists" in JS
     assert "PAPER_EXECUTION_CLOSED" in JS
@@ -95,7 +101,7 @@ def test_office_click_opens_panel_logic():
     assert "Owen Blake · Technology" in JS
     assert "Board Addendum C" in JS
     assert "US_REGULAR_CASH_CLOSE" in JS or "US cash close" in JS
-    assert "not London close" in JS or "Do NOT flatten at London" in JS
+    assert "LONDON_CLOSING_AUCTION" in JS or "London closing auction" in JS
     assert "GET /observability does not flatten" in JS
     assert "runBoardJob" in JS
     assert 'method: "POST"' in JS or "method: \"POST\"" in JS or 'method: "POST"' in JS.replace(" ", "")

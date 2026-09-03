@@ -39,6 +39,7 @@ from sqlalchemy.orm import Session
 
 from varma.clock import london_day, now_london
 from varma.controls.addendum_a import ADDENDUM_A_LABEL, CURRENCY, TIMEZONE
+from varma.controls.venue_flatten import flatten_fill_note
 from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
     PAPER_EXECUTION_CLOSED_REASON,
@@ -151,7 +152,7 @@ class PaperFillSimulator:
             is_live=False,
             is_flatten=is_flatten,
             created_at=now,
-            notes=ASSUMPTIONS_NOTE if not is_flatten else "FLATTEN_BEFORE_US_REGULAR_CASH_CLOSE",
+            notes=ASSUMPTIONS_NOTE if not is_flatten else flatten_fill_note(symbol),
         )
         self.session.add(paper_order)
         self.session.flush()

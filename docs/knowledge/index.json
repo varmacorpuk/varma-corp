@@ -15,7 +15,8 @@
     "default LLM provider is FakeLLM (deterministic, no network)",
     "AI never enforces controls; ControlEngine is authoritative",
     "database is source of truth; office UI is a projection",
-    "no daemon/scheduler; routines are on-demand"
+    "no daemon/scheduler; routines are on-demand",
+    "split_flatten_clocks=true; 02F bound LSE London-auction exit"
   ],
   "components": [
     {"component": "kernel", "path": "varma/kernel/app.py", "purpose": "FastAPI app + all HTTP endpoints", "depends_on": ["varma/controls", "varma/employees", "varma/routines", "varma/observability", "varma/db"], "tests": ["tests/test_health.py", "tests/test_observability.py"], "specs": ["14", "16"]},
@@ -35,6 +36,7 @@
     {"component": "skills.risk", "path": "varma/skills/review_unsafe_path.py", "purpose": "Risk deny-path (deterministic decision; AI writes prose)", "depends_on": ["varma/controls/risk.py", "varma/employees/brain.py", "varma/ports/llm.py"], "tests": ["tests/test_challenge_risk.py"], "specs": ["11"]},
     {"component": "controls.engine", "path": "varma/controls/engine.py", "purpose": "Deterministic permit/deny; snapshot(); authoritative", "depends_on": ["varma/controls/addendum_a.py", "varma/controls/addendum_c.py", "varma/controls/addendum_e.py", "varma/controls/addendum_i.py", "varma/controls/addendum_k.py", "varma/controls/lse_session.py", "varma/db/models.py"], "tests": ["tests/test_controls.py", "tests/test_execution.py", "tests/test_addendum_k.py"], "specs": ["07", "11"]},
     {"component": "controls.addendum_k", "path": "varma/controls/addendum_k.py", "purpose": "Board Addendum K: after London cash close deny SHEL.L/AZN.L/ULVR.L only", "depends_on": ["varma/controls/addendum_c.py"], "tests": ["tests/test_addendum_k.py", "tests/test_lse_session.py"], "specs": ["06", "12"]},
+    {"component": "controls.venue_flatten", "path": "varma/controls/venue_flatten.py", "purpose": "CEO desk 02F: bound LSE London-auction flatten / US close; split_flatten_clocks true", "depends_on": ["varma/controls/addendum_e.py", "varma/controls/addendum_k.py", "varma/controls/addendum_c.py"], "tests": ["tests/test_venue_flatten_02f.py"], "specs": ["07", "12"]},
     {"component": "controls.kill_switch", "path": "varma/controls/kill_switch.py", "purpose": "Board-only halt/reset", "depends_on": ["varma/db/models.py"], "tests": ["tests/test_kill_switch.py"], "specs": ["11"]},
     {"component": "controls.risk", "path": "varma/controls/risk.py", "purpose": "RiskPolicy deny-path decision (deterministic)", "depends_on": ["varma/controls/engine.py"], "tests": ["tests/test_challenge_risk.py"], "specs": ["11"]},
     {"component": "memory.stores", "path": "varma/memory/stores.py", "purpose": "Four memory stores; learning never writes controls", "depends_on": ["varma/db/models.py"], "tests": ["tests/test_brains_and_people.py", "tests/test_memory_filter.py"], "specs": ["08"]},

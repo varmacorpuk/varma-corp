@@ -38,9 +38,10 @@ the index.
 | Addendum | Subject | Module | Tests |
 | --- | --- | --- | --- |
 | A (2026-08-27) | Numeric paper limits (Board-set) | `varma/controls/addendum_a.py` | `tests/test_addendum_a.py` |
-| C (2026-08-27) | Paper session / flatten-before-US-close | `varma/controls/addendum_c.py`, `varma/paper/flatten.py` | `tests/test_addendum_c.py` |
+| C (2026-08-27) | Paper session / firm desk UK open through US close | `varma/controls/addendum_c.py`, `varma/paper/flatten.py` | `tests/test_addendum_c.py` |
 | E (2026-08-27) | PAPER execution allow-list | `varma/controls/addendum_e.py` | `tests/test_addendum_e.py` |
 | F (2026-08-27) | Named staff (person · department) | `varma/controls/addendum_f.py`, `db/seed.py` | `tests/test_addendum_f.py` |
 | I (2026-08-27) | Two-opening rule; Grand Opening PAPER done | `varma/controls/addendum_i.py` | `tests/test_addendum_i.py`, `test_grand_opening_paper.py` |
 | J (2026-08-27) | Encrypted company backup | `varma/controls/addendum_j.py`, `varma/backup/` | `tests/test_addendum_j.py` |
 | K (2026-09-03) | After London cash close, deny SHEL.L/AZN.L/ULVR.L only | `varma/controls/addendum_k.py`, `lse_session.py` | `tests/test_addendum_k.py`, `test_lse_session.py` |
+| 02F (CEO desk) | Bound LSE London-auction flatten; US names at US close | `varma/controls/venue_flatten.py`, `engine.py`, `paper/flatten.py` | `tests/test_venue_flatten_02f.py` |
