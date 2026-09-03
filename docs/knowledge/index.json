@@ -53,6 +53,6 @@
     {"component": "backup.job", "path": "varma/backup/job.py", "purpose": "Encrypted-at-rest company backup (Technology owns)", "depends_on": ["varma/backup/crypto.py", "varma/db/models.py"], "tests": ["tests/test_addendum_j.py"], "specs": ["13"]},
     {"component": "verification.brief", "path": "varma/verification/brief.py", "purpose": "Deterministic freshness + required-field checks", "depends_on": ["varma/config.py", "varma/clock.py"], "tests": ["tests/test_brief.py"], "specs": ["15"]},
     {"component": "clock", "path": "varma/clock.py", "purpose": "Europe/London helpers + schedule text (no live scheduler)", "depends_on": [], "tests": ["tests/test_addendum_c.py"], "specs": ["09"]},
-    {"component": "desktop", "path": "desktop/src/office.js", "purpose": "Vendored AI-Office floor + peach panel; fetch-on-click (no polling)", "depends_on": ["varma/kernel/app.py", "desktop/src/office-floor.js", "desktop/vendor/ai-office/rpg-tileset.png"], "tests": ["tests/test_office_layout.py"], "specs": ["16"]}
+    {"component": "desktop", "path": "desktop/src/office.js", "purpose": "Vendored Claude-Office isometric floor + work/chat panel; fetch-on-click (no polling)", "depends_on": ["varma/kernel/app.py", "desktop/src/office-floor.js", "desktop/vendor/claude-office/rooms/office-day.png"], "tests": ["tests/test_office_layout.py"], "specs": ["16"]}
   ]
 }

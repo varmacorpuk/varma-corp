@@ -662,7 +662,7 @@ def create_app() -> FastAPI:
                 "width": 32,
                 "height": 20,
                 "tile": 16,
-                "style": "pixel-art-2d",
+                "style": "claude-office-isometric",
                 "rooms": [
                     {"id": "conference", "label": "Conference room"},
                     {"id": "kitchen", "label": "Kitchenette"},

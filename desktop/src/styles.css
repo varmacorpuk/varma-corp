@@ -1,31 +1,25 @@
-/* Layout: framed game window, office left, peach chat panel RIGHT. Not an overlay. Office remains visible. */
-@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+/* Varma control-room chrome around the vendored Claude-Office camera.
+   Room PNG, sprites, % layout, and character CSS come from W17ant/Claude-Office.
+   Not an overlay. Office remains visible. Click never grants authority. */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap");
 
 :root {
-  --ink: #181425;
-  --paper: #292929;
-  --panel: #e4a672;
+  --ink: #e8e8e8;
+  --paper: #0a0a0f;
+  --panel: #1a1d21;
   --accent: #3a4466;
   --warn: #8b1e1e;
-  --tile: #3aa8a8;
   --pixel: "Press Start 2P", ui-monospace, "IBM Plex Mono", monospace;
-  --body: ui-monospace, "IBM Plex Mono", "VCR OSD Mono", monospace;
+  --body: "JetBrains Mono", ui-monospace, "IBM Plex Mono", monospace;
 }
-* { box-sizing: border-box; }
 html, body {
   margin: 0;
   min-height: 100%;
-  font-family: var(--pixel);
-  color: #ffffff;
+  font-family: var(--body);
+  color: #d1d2d3;
 }
 body {
-  background: linear-gradient(rgba(41, 41, 41, 0.8), rgba(41, 41, 41, 0.8)),
-    url("../vendor/ai-office/office-animation-bg.png");
-  background-blend-mode: hard-light;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-attachment: fixed;
+  background: #0a0a0f;
 }
 .office-shell {
   width: 100%;
@@ -42,7 +36,7 @@ body {
   gap: 10px;
   padding: 8px 16px 4px;
   background: transparent;
-  color: #ffffff;
+  color: #d1d2d3;
   width: 100%;
 }
 .brand-block {
@@ -56,19 +50,17 @@ body {
   font-weight: 400;
   letter-spacing: 0.12em;
   font-family: var(--pixel);
-  font-size: clamp(28px, 6vw, 64px);
+  font-size: clamp(20px, 4vw, 40px);
   color: #ffffff;
-  text-shadow: 0 0.08em 0 #0c0c0c;
   line-height: 1;
 }
 .tagline {
   margin: 0;
   font-size: 12px;
-  color: #ffffff;
+  color: #8a7a58;
   text-align: center;
   line-height: 1.6;
-  text-shadow: 0 0.1em 0 rgba(0, 0, 0, 0.5);
-  font-family: var(--pixel);
+  font-family: var(--body);
 }
 .header-meta {
   display: flex;
@@ -77,55 +69,62 @@ body {
   gap: 16px;
   flex-wrap: wrap;
 }
-.role { font-size: 8px; color: #ead4aa; text-shadow: 0 0.1em 0 rgba(0, 0, 0, 0.5); }
+.role { font-size: 11px; color: #8a7a58; }
 .mode {
   background: var(--warn);
   color: white;
   padding: 6px 10px;
-  font-size: 8px;
+  font-size: 11px;
   line-height: 1.4;
 }
 .hint {
-  font-size: 8px;
-  color: #ead4aa;
+  font-size: 11px;
+  color: #8a7a58;
   text-align: center;
   line-height: 1.6;
   padding: 8px 16px;
   max-width: 980px;
-  text-shadow: 0 0.1em 0 rgba(0, 0, 0, 0.5);
 }
-.game-frame {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  width: min(1400px, 100%);
-  min-height: 400px;
-  height: min(700px, calc(100vh - 280px));
-  margin: 16px 0 0;
-  background: #181425;
-  border-width: 36px;
-  border-style: solid;
-  border-image-source: url("../vendor/ai-office/ui/frame.svg");
-  border-image-repeat: stretch;
-  border-image-slice: 25%;
-}
-@media screen and (min-width: 640px) {
-  .game-frame { border-width: 48px; }
-}
-.office-pane {
+.app-wrapper.game-frame {
   position: relative;
-  min-width: 0;
-  background: #181425;
+  top: auto;
+  left: auto;
+  transform: none;
+  width: min(1400px, 100%);
+  height: min(720px, calc(100vh - 260px));
+  min-height: 400px;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+}
+.app-body {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+}
+.office-view, .office-pane {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0f;
   overflow: hidden;
+  min-height: 0;
+  min-width: 0;
 }
 #office-floor {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: center;
-  background: #181425;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+  height: auto;
+  max-height: 100%;
   cursor: pointer;
+}
+.character-wrapper.clickable-staff {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.character-wrapper.selected-staff .char-sprite {
+  filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 1px #000);
 }
 .staff-bar {
   display: flex;
@@ -136,34 +135,32 @@ body {
   max-width: 1400px;
 }
 .staff-bar button {
-  background: #3a4466;
-  color: #ffffff;
-  border-width: 8px;
-  border-style: solid;
-  border-image-source: url("../vendor/ai-office/ui/button.svg");
-  border-image-repeat: stretch;
-  border-image-slice: 25%;
+  background: #151210;
+  color: #d1d2d3;
+  border: 1px solid #35363a;
+  border-radius: 6px;
   padding: 4px 10px;
-  font-size: 8px;
+  font-size: 11px;
   line-height: 1.4;
-  font-family: var(--pixel);
+  font-family: var(--body);
   display: flex;
   align-items: center;
   gap: 8px;
-  text-shadow: 0 0.1em 0 rgba(0, 0, 0, 0.5);
 }
 .staff-bar button.selected,
 .staff-bar button[aria-pressed="true"] {
-  border-image-source: url("../vendor/ai-office/ui/button_pressed.svg");
-  background: #5a6988;
+  border-color: #2bac76;
+  background: #1a2a22;
 }
 .staff-portrait {
   width: 32px;
   height: 32px;
+  object-fit: contain;
+  object-position: top;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   pointer-events: none;
-  background: #181425;
+  background: #0a0a0f;
   flex-shrink: 0;
 }
 #right-panel, .right-panel {
@@ -172,87 +169,85 @@ body {
   background: var(--panel);
   color: var(--ink);
   overflow: auto;
-  padding: 16px 20px;
+  padding: 0 0 16px;
   font-family: var(--body);
+  display: flex;
+  flex-direction: column;
 }
-.right-panel h2 {
-  margin-top: 0;
-  font-size: 18px;
-  color: #fff;
-  font-family: var(--pixel);
-  line-height: 1.5;
-  text-align: center;
-  letter-spacing: 0.08em;
-  text-shadow: 0.08em 0.08em 0 #743f39;
+.right-panel h2, .slack-channel-name {
+  margin: 0;
+  font-size: 13px;
 }
-.right-panel h3 { font-size: 14px; margin-bottom: 4px; }
-#panel-placeholder {
-  font-family: var(--pixel);
-  font-size: 11px;
+.panel-placeholder, #panel-placeholder {
+  font-family: var(--body);
+  font-size: 13px;
   line-height: 1.7;
-  color: #fff;
-  text-shadow: 0.08em 0.08em 0 #743f39;
-  margin: 24px 8px;
-  text-align: center;
+  color: #b5bac1;
+  margin: 16px 12px;
+  text-align: left;
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 120px;
+  min-height: 48px;
 }
 .panel-note {
   font-size: 11px;
-  color: #743f39;
+  color: #9aa0a6;
   line-height: 1.45;
+  margin: 0 12px 12px;
 }
-.panel-nav { display: flex; gap: 8px; margin: 0 0 12px; }
+.panel-nav { display: flex; gap: 8px; margin: 8px 12px 12px; }
 .panel-nav button {
-  font-size: 10px;
+  font-size: 11px;
   padding: 6px 10px;
-  font-family: var(--pixel);
+  font-family: var(--body);
   background: var(--accent);
   color: #fff;
   border: 0;
   cursor: pointer;
 }
-.job-runs { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 12px; }
-.kill-switch-actions { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+.job-runs { display: flex; flex-direction: column; gap: 6px; margin: 8px 12px 12px; }
+.kill-switch-actions { display: flex; gap: 8px; margin: 8px 12px; flex-wrap: wrap; }
 .kill-halt { background: var(--warn); }
 .kill-reset { background: #555; }
-.meta { font-size: 12px; color: #3f2832; }
-.brief { background: #ead4aa; padding: 8px; border: 1px solid #b86f50; font-size: 13px; }
-.ledger-row { font-size: 12px; border-bottom: 1px solid #b86f50; padding: 6px 0; }
+.meta { font-size: 12px; color: #9aa0a6; }
+.brief { background: #22252a; padding: 8px; border: 1px solid #35363a; font-size: 13px; margin: 8px 12px; }
+.ledger-row { font-size: 12px; border-bottom: 1px solid #35363a; padding: 6px 12px; }
 .bubble-link {
   display: block;
-  width: 100%;
+  width: calc(100% - 24px);
   text-align: left;
-  background: #ead4aa;
+  background: #22252a;
   color: var(--ink);
-  border: 1px solid #b86f50;
-  margin: 4px 0;
+  border: 1px solid #35363a;
+  margin: 4px 12px;
   padding: 6px 8px;
   font-size: 12px;
 }
-#chat-form { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+#panel-body { padding: 0 12px; }
+#chat-form { margin: 16px 12px 0; display: flex; flex-direction: column; gap: 6px; }
 #chat-form[hidden] { display: none; }
 #chat-form textarea { font: inherit; }
 button { background: var(--accent); color: white; border: 0; padding: 8px 12px; cursor: pointer; }
-.talk-disabled { font-size: 12px; color: #743f39; }
+.talk-disabled { font-size: 12px; color: #9aa0a6; }
 footer {
   padding: 8px 12px;
-  font-size: 10px;
+  font-size: 11px;
   background: transparent;
-  color: #ead4aa;
+  color: #8a7a58;
   font-family: var(--body);
   text-align: center;
-  text-shadow: 0 0.1em 0 rgba(0, 0, 0, 0.5);
 }
 .bubble-note { font-size: 12px; }
 @media (max-width: 900px) {
-  .game-frame {
-    grid-template-columns: 1fr;
-    grid-template-rows: 240px 1fr;
+  .app-wrapper.game-frame {
     height: auto;
     min-height: 520px;
+  }
+  .app-body {
+    flex-direction: column;
+  }
+  .office-view, .office-pane {
+    min-height: 240px;
   }
   #right-panel, .right-panel {
     width: 100%;

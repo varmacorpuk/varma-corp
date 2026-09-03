@@ -1,0 +1,637 @@
+/* Vendored layout from W17ant/Claude-Office src/rooms.ts + src/assets.ts
+   commit 291e7608aa3beb614aca80fe86077ef8c0cbc21d. Not a redraw. */
+window.CLAUDE_OFFICE_LAYOUT = {
+  "source": "https://github.com/W17ant/Claude-Office",
+  "commit": "291e7608aa3beb614aca80fe86077ef8c0cbc21d",
+  "room": {
+    "id": "main-office",
+    "background": "vendor/claude-office/rooms/office-day.png",
+    "aspectRatio": "4800/3584",
+    "width": 800,
+    "height": 600
+  },
+  "assets": {
+    "char-debugger": {
+      "path": "vendor/claude-office/sprites/debugger.png",
+      "width": 24,
+      "height": 65,
+      "category": "character"
+    },
+    "char-reviewer": {
+      "path": "vendor/claude-office/sprites/reviewer.png",
+      "width": 24,
+      "height": 65,
+      "category": "character"
+    },
+    "char-frontend": {
+      "path": "vendor/claude-office/sprites/frontend.png",
+      "width": 24,
+      "height": 65,
+      "category": "character"
+    },
+    "char-fullstack": {
+      "path": "vendor/claude-office/sprites/fullstack.png",
+      "width": 24,
+      "height": 65,
+      "category": "character"
+    },
+    "char-tester": {
+      "path": "vendor/claude-office/sprites/tester.png",
+      "width": 24,
+      "height": 65,
+      "category": "character"
+    },
+    "char-security": {
+      "path": "vendor/claude-office/sprites/security.png",
+      "width": 24,
+      "height": 65,
+      "category": "character"
+    },
+    "char-devops": {
+      "path": "vendor/claude-office/sprites/devops.png",
+      "width": 24,
+      "height": 65,
+      "category": "character"
+    },
+    "char-manager": {
+      "path": "vendor/claude-office/sprites/manager.png",
+      "width": 24,
+      "height": 65,
+      "category": "character"
+    },
+    "desk-standing-left-front": {
+      "path": "vendor/claude-office/sprites/furniture/standing-desk-left-front.png",
+      "width": 84,
+      "height": 106,
+      "category": "furniture"
+    },
+    "desk-standing-left-rear": {
+      "path": "vendor/claude-office/sprites/furniture/standing-desk-left-rear.png",
+      "width": 84,
+      "height": 102,
+      "category": "furniture"
+    },
+    "desk-standing-right-front": {
+      "path": "vendor/claude-office/sprites/furniture/standing-desk-right-front.png",
+      "width": 84,
+      "height": 106,
+      "category": "furniture"
+    },
+    "desk-standing-right-rear": {
+      "path": "vendor/claude-office/sprites/furniture/standing-desk-right-rear.png",
+      "width": 84,
+      "height": 102,
+      "category": "furniture"
+    },
+    "filing-closed": {
+      "path": "vendor/claude-office/sprites/furniture/filling-closed.png",
+      "width": 42,
+      "height": 56,
+      "category": "furniture"
+    },
+    "filing-open": {
+      "path": "vendor/claude-office/sprites/furniture/filling-open.png",
+      "width": 46,
+      "height": 60,
+      "category": "furniture"
+    },
+    "coffee-off": {
+      "path": "vendor/claude-office/sprites/appliances/coffee-off.png",
+      "width": 40,
+      "height": 51,
+      "category": "appliance"
+    },
+    "coffee-on": {
+      "path": "vendor/claude-office/sprites/appliances/coffee-on.png",
+      "width": 40,
+      "height": 51,
+      "category": "appliance"
+    },
+    "plant-monstera": {
+      "path": "vendor/claude-office/sprites/decoration/monstera-plant.png",
+      "width": 50,
+      "height": 71,
+      "category": "decoration"
+    },
+    "plant-snake": {
+      "path": "vendor/claude-office/sprites/decoration/snake-plant.png",
+      "width": 40,
+      "height": 63,
+      "category": "decoration"
+    },
+    "plant-money": {
+      "path": "vendor/claude-office/sprites/decoration/money-tree.png",
+      "width": 42,
+      "height": 63,
+      "category": "decoration"
+    },
+    "whiteboard": {
+      "path": "vendor/claude-office/sprites/decoration/white-board.png",
+      "width": 65,
+      "height": 86,
+      "category": "decoration"
+    },
+    "ac-unit": {
+      "path": "vendor/claude-office/sprites/decoration/ac-wall-unit.png",
+      "width": 50,
+      "height": 39,
+      "category": "decoration"
+    },
+    "printer": {
+      "path": "vendor/claude-office/sprites/decoration/printer.png",
+      "width": 55,
+      "height": 69,
+      "category": "decoration"
+    },
+    "printer-working": {
+      "path": "vendor/claude-office/sprites/decoration/printer-working.png",
+      "width": 55,
+      "height": 69,
+      "category": "decoration"
+    },
+    "printer-broken": {
+      "path": "vendor/claude-office/sprites/decoration/printer-broken.png",
+      "width": 55,
+      "height": 69,
+      "category": "decoration"
+    },
+    "bell": {
+      "path": "vendor/claude-office/sprites/culture/bell.png",
+      "width": 18,
+      "height": 36,
+      "category": "culture"
+    },
+    "days-last-incident": {
+      "path": "vendor/claude-office/sprites/culture/days-last-incident.png",
+      "width": 80,
+      "height": 66,
+      "category": "culture"
+    },
+    "deploying-screen": {
+      "path": "vendor/claude-office/sprites/culture/deploying-screen.png",
+      "width": 60,
+      "height": 70,
+      "category": "culture"
+    },
+    "todo-board": {
+      "path": "vendor/claude-office/sprites/culture/todo-board.png",
+      "width": 55,
+      "height": 62,
+      "category": "culture"
+    },
+    "fx-build-failed": {
+      "path": "vendor/claude-office/sprites/effects/build-failed.png",
+      "width": 24,
+      "height": 24,
+      "category": "effect"
+    },
+    "fx-fire": {
+      "path": "vendor/claude-office/sprites/effects/fire.png",
+      "width": 24,
+      "height": 24,
+      "category": "effect"
+    },
+    "fx-pr-merge": {
+      "path": "vendor/claude-office/sprites/effects/github-pr-merge.png",
+      "width": 24,
+      "height": 24,
+      "category": "effect"
+    },
+    "fx-need-coffee": {
+      "path": "vendor/claude-office/sprites/effects/need-coffee.png",
+      "width": 24,
+      "height": 24,
+      "category": "effect"
+    },
+    "fx-rocket": {
+      "path": "vendor/claude-office/sprites/effects/rocket.png",
+      "width": 24,
+      "height": 24,
+      "category": "effect"
+    },
+    "fx-sleeping": {
+      "path": "vendor/claude-office/sprites/effects/sleeping.png",
+      "width": 24,
+      "height": 24,
+      "category": "effect"
+    },
+    "fx-star": {
+      "path": "vendor/claude-office/sprites/effects/star.png",
+      "width": 24,
+      "height": 24,
+      "category": "effect"
+    },
+    "fx-thumb-up": {
+      "path": "vendor/claude-office/sprites/effects/thumb-up.png",
+      "width": 24,
+      "height": 24,
+      "category": "effect"
+    },
+    "fx-typing": {
+      "path": "vendor/claude-office/sprites/effects/typing.png",
+      "width": 24,
+      "height": 24,
+      "category": "effect"
+    },
+    "room-office-day": {
+      "path": "vendor/claude-office/rooms/office-day.png",
+      "width": 800,
+      "height": 600,
+      "category": "room"
+    },
+    "room-office-night": {
+      "path": "vendor/claude-office/rooms/office-night.png",
+      "width": 800,
+      "height": 600,
+      "category": "room"
+    }
+  },
+  "furniture": [
+    {
+      "id": "desk-1a",
+      "type": "desk-standing",
+      "sprite": "desk-standing-left-rear",
+      "x": 42.4,
+      "y": 50.4,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "desk-1b",
+      "type": "desk-standing",
+      "sprite": "desk-standing-left-front",
+      "x": 46.7,
+      "y": 53.0,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "desk-1c",
+      "type": "desk-standing",
+      "sprite": "desk-standing-right-front",
+      "x": 39.9,
+      "y": 55.2,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "desk-2a",
+      "type": "desk-standing",
+      "sprite": "desk-standing-left-rear",
+      "x": 31.4,
+      "y": 64.8,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "desk-2b",
+      "type": "desk-standing",
+      "sprite": "desk-standing-left-front",
+      "x": 35.4,
+      "y": 67.5,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "desk-2c",
+      "type": "desk-standing",
+      "sprite": "desk-standing-right-front",
+      "x": 27.9,
+      "y": 70.0,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "desk-3a",
+      "type": "desk-standing",
+      "sprite": "desk-standing-left-rear",
+      "x": 59.0,
+      "y": 73.7,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "desk-3b",
+      "type": "desk-standing",
+      "sprite": "desk-standing-left-front",
+      "x": 62.6,
+      "y": 76.0,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "desk-3c",
+      "type": "desk-standing",
+      "sprite": "desk-standing-right-front",
+      "x": 55.4,
+      "y": 78.7,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "desk-3d",
+      "type": "desk-standing",
+      "sprite": "desk-standing-right-rear",
+      "x": 66.6,
+      "y": 71.1,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "coffee",
+      "type": "coffee-machine",
+      "sprite": "coffee-off",
+      "x": 78.5,
+      "y": 50.2,
+      "zIndex": null,
+      "interactive": true,
+      "label": "Coffee Machine"
+    },
+    {
+      "id": "filing-1",
+      "type": "filing-cabinet",
+      "sprite": "filing-closed",
+      "x": 45.0,
+      "y": 56.5,
+      "zIndex": null,
+      "interactive": false,
+      "label": "Filing Cabinet"
+    },
+    {
+      "id": "plant-1",
+      "type": "plant-monstera",
+      "sprite": "plant-monstera",
+      "x": 91.9,
+      "y": 64.7,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "plant-2",
+      "type": "plant-snake",
+      "sprite": "plant-snake",
+      "x": 43.2,
+      "y": 37.9,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "plant-3",
+      "type": "plant-money",
+      "sprite": "plant-money",
+      "x": 32.0,
+      "y": 71.2,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "plant-4",
+      "type": "plant-money",
+      "sprite": "plant-money",
+      "x": 89.2,
+      "y": 65.7,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "plant-5",
+      "type": "plant-monstera",
+      "sprite": "plant-monstera",
+      "x": 60.2,
+      "y": 80.4,
+      "zIndex": null,
+      "interactive": false,
+      "label": null
+    },
+    {
+      "id": "printer-1",
+      "type": "printer",
+      "sprite": "printer-working",
+      "x": 85.4,
+      "y": 56.8,
+      "zIndex": null,
+      "interactive": false,
+      "label": "Printer"
+    },
+    {
+      "id": "fire-extinguisher",
+      "type": "hotspot",
+      "sprite": "hotspot",
+      "x": 8.0,
+      "y": 60.0,
+      "zIndex": null,
+      "interactive": true,
+      "label": "Fire Extinguisher"
+    },
+    {
+      "id": "water-cooler",
+      "type": "hotspot",
+      "sprite": "hotspot",
+      "x": 53.0,
+      "y": 45.0,
+      "zIndex": null,
+      "interactive": true,
+      "label": "Water Cooler"
+    },
+    {
+      "id": "bell",
+      "type": "hotspot",
+      "sprite": "hotspot",
+      "x": 63.0,
+      "y": 39.0,
+      "zIndex": null,
+      "interactive": true,
+      "label": "Bell"
+    },
+    {
+      "id": "kanban-board",
+      "type": "hotspot",
+      "sprite": "hotspot",
+      "x": 80.0,
+      "y": 42.0,
+      "zIndex": null,
+      "interactive": true,
+      "label": "Kanban Board"
+    },
+    {
+      "id": "ship-it-poster",
+      "type": "hotspot",
+      "sprite": "hotspot",
+      "x": 8.0,
+      "y": 45.0,
+      "zIndex": null,
+      "interactive": true,
+      "label": "Ship It Poster"
+    },
+    {
+      "id": "tv-monitor",
+      "type": "hotspot",
+      "sprite": "hotspot",
+      "x": 90.0,
+      "y": 42.0,
+      "zIndex": null,
+      "interactive": true,
+      "label": "Dashboard"
+    }
+  ],
+  "agentSpots": [
+    {
+      "id": "spot-1",
+      "type": "desk",
+      "x": 25.8,
+      "y": 71.0,
+      "spriteFacing": "rear-left",
+      "zIndex": 85
+    },
+    {
+      "id": "spot-2",
+      "type": "desk",
+      "x": 37.9,
+      "y": 68.2,
+      "spriteFacing": "rear-right",
+      "zIndex": 85
+    },
+    {
+      "id": "spot-3",
+      "type": "desk",
+      "x": 26.9,
+      "y": 59.2,
+      "spriteFacing": "front-left",
+      "zIndex": 40
+    },
+    {
+      "id": "spot-4",
+      "type": "desk",
+      "x": 38.5,
+      "y": 55.2,
+      "spriteFacing": "rear-left",
+      "zIndex": 58
+    },
+    {
+      "id": "spot-5",
+      "type": "desk",
+      "x": 48.9,
+      "y": 52.9,
+      "spriteFacing": "rear-right",
+      "zIndex": 70
+    },
+    {
+      "id": "spot-6",
+      "type": "desk",
+      "x": 38.8,
+      "y": 43.6,
+      "spriteFacing": "front-left",
+      "zIndex": 30
+    },
+    {
+      "id": "spot-7",
+      "type": "desk",
+      "x": 52.7,
+      "y": 78.8,
+      "spriteFacing": "rear-left",
+      "zIndex": 95
+    },
+    {
+      "id": "spot-8",
+      "type": "desk",
+      "x": 65.9,
+      "y": 75.8,
+      "spriteFacing": "rear-right",
+      "zIndex": 95
+    },
+    {
+      "id": "spot-9",
+      "type": "desk",
+      "x": 55.2,
+      "y": 66.8,
+      "spriteFacing": "front-left",
+      "zIndex": 55
+    },
+    {
+      "id": "spot-10",
+      "type": "desk",
+      "x": 68.7,
+      "y": 66.2,
+      "spriteFacing": "front-right",
+      "zIndex": 55
+    },
+    {
+      "id": "spot-coffee-1",
+      "type": "coffee",
+      "x": 73.5,
+      "y": 56.7,
+      "spriteFacing": "rear-left",
+      "zIndex": null
+    },
+    {
+      "id": "spot-coffee-2",
+      "type": "coffee",
+      "x": 76.2,
+      "y": 58.4,
+      "spriteFacing": "front-right",
+      "zIndex": null
+    },
+    {
+      "id": "spot-water-1",
+      "type": "water",
+      "x": 53.3,
+      "y": 46.6,
+      "spriteFacing": "rear-left",
+      "zIndex": null
+    },
+    {
+      "id": "spot-water-2",
+      "type": "water",
+      "x": 56.0,
+      "y": 47.7,
+      "spriteFacing": "front-right",
+      "zIndex": null
+    },
+    {
+      "id": "spot-filing",
+      "type": "filing",
+      "x": 47.8,
+      "y": 57.6,
+      "spriteFacing": "front-right",
+      "zIndex": 70
+    },
+    {
+      "id": "spot-printer",
+      "type": "printer",
+      "x": 81.0,
+      "y": 63.0,
+      "spriteFacing": "rear-left",
+      "zIndex": null
+    },
+    {
+      "id": "spot-door-2",
+      "type": "door",
+      "x": 64.0,
+      "y": 46.6,
+      "spriteFacing": "rear-right",
+      "zIndex": null
+    },
+    {
+      "id": "spot-door-3",
+      "type": "door",
+      "x": 69.9,
+      "y": 50.8,
+      "spriteFacing": "front-right",
+      "zIndex": null
+    }
+  ]
+};

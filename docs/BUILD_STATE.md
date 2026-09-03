@@ -68,7 +68,7 @@ commits the filled practice book.
 | #36 | yes | Pixel-art Varma office floor. Click does not grant authority. LIVE_BLOCKED. Pytest **208** |
 | #38 | yes | Tracked filled practice book (sqlite + JSON). SHEL.L 5, cash £829.279217 |
 | #39 | yes | Lookalike framed canvas. Hari rejected — not the photographed tileset. |
-| this office | this PR | Vendor Parcha-ai/ai-office `rpg-tileset.png` + peach panel + portrait bar; Metro City people for Varma staff. Click never grants authority. No Board tap. LIVE_BLOCKED. |
+| this office | this PR | Vendor W17ant/Claude-Office `office-day.png` + their furniture/character sprites (not a lookalike). Varma staff only. Click never grants authority. No Board tap. LIVE_BLOCKED. |
 
 **Board Grand Opening PAPER** (3 Sep 2026, Hari explicit yes, word: Open) is Board record,
 encoded as a Board-only `write_control`. Silence was not this. Addendum I still exists as the
@@ -112,7 +112,7 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
   after-London-cash-close session rule, CEO desk 02F venue flatten, kill switch, risk).
   Authoritative; AI never enforces controls. Board `write_control` can open or close paper. LIVE
   opening is not implemented.
-- **Virtual office:** `desktop/` (framed 16-bit pixel office + right-hand peach chat panel; fetch-on-click, no polling). Click never grants authority. Board observability is a panel button, not a floor tap.
+- **Virtual office:** `desktop/` (vendored W17ant/Claude-Office isometric camera + right-hand work/chat panel; fetch-on-click, no polling). Click never grants authority. Board observability is a panel button, not a floor tap.
 - **Trading simulation:** internal paper fill simulator `varma/paper/` (not a broker). First
   paper-trade PATH exists: Trader (Chris Adeyemi) proposes → ControlEngine permit/deny →
   simulator fill → paper ledger. Bound session exit is attached on permit. Board-only on-demand

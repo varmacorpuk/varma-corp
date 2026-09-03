@@ -6,7 +6,9 @@
   <title>Varma Corp. — Board Member control room</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="vendor/claude-office/styles/rooms.css" />
+  <link rel="stylesheet" href="vendor/claude-office/styles/office.css" />
   <link rel="stylesheet" href="src/styles.css" />
 </head>
 <body>
@@ -21,61 +23,74 @@
         <div id="mode-banner" class="mode">trading_mode: …</div>
       </div>
     </header>
-    <div class="game-frame" aria-label="Varma office window">
-      <section class="office-pane" aria-label="Virtual office">
-        <canvas id="office-floor" width="800" height="800"></canvas>
-      </section>
-      <aside id="right-panel" class="right-panel" aria-label="Right-hand information panel">
-        <h2>Information</h2>
-        <nav class="panel-nav" aria-label="Panel views">
-          <button type="button" id="board-observability-btn">Board observability</button>
-        </nav>
-        <p id="panel-placeholder">Click on a character to see chat history.</p>
-        <p class="panel-note">Select Asha Patel · Research, Jordan Hale · CEO, Sam Okeke · Challenge, Elena Voss · Risk, Chris Adeyemi · Trader, Nina Kapoor · Quant, or Owen Blake · Technology on the floor for their work. Chat reaches the same employee runtime. Talk/voice is disabled (OPEN BOARD DECISION). AI employees do not approve live trading. Click never grants authority. This panel does not write allow-list or trading_mode. Job runs and the kill switch are Board-only POST endpoints, not GET /observability. Board observability is a panel button, not a floor tap. No covering overlay.</p>
-        <div id="panel-body" hidden></div>
-        <form id="chat-form" hidden>
-          <label for="chat-input">Chat with selected employee</label>
-          <textarea id="chat-input" rows="3" maxlength="4000" placeholder="Ask the selected employee…"></textarea>
-          <button type="submit">Send chat</button>
-          <p class="talk-disabled">Talk / voice: disabled</p>
-        </form>
-      </aside>
+    <div class="app-wrapper game-frame" aria-label="Varma office window">
+      <div class="title-bar">
+        <div class="title-bar-dot" style="background: #ff5f57"></div>
+        <div class="title-bar-dot" style="background: #febc2e"></div>
+        <div class="title-bar-dot" style="background: #28c840"></div>
+        <span class="title-bar-text">VARMA CORP — AGENT OFFICE</span>
+        <span class="title-bar-phase">DAY</span>
+      </div>
+      <div class="app-body">
+        <section class="office-view office-pane" aria-label="Virtual office">
+          <div id="office-floor" class="room-container" role="application" aria-label="Claude-Office main office"></div>
+        </section>
+        <aside id="right-panel" class="right-panel slack-panel" aria-label="Right-hand information panel">
+          <div class="slack-header">
+            <span class="slack-channel-icon">#</span>
+            <h2 class="slack-channel-name">Information</h2>
+          </div>
+          <nav class="panel-nav" aria-label="Panel views">
+            <button type="button" id="board-observability-btn">Board observability</button>
+          </nav>
+          <p id="panel-placeholder">Click on a character to see chat history.</p>
+          <p class="panel-note">Select Asha Patel · Research, Jordan Hale · CEO, Sam Okeke · Challenge, Elena Voss · Risk, Chris Adeyemi · Trader, Nina Kapoor · Quant, or Owen Blake · Technology on the floor for their work. Chat reaches the same employee runtime. Talk/voice is disabled (OPEN BOARD DECISION). AI employees do not approve live trading. Click never grants authority. This panel does not write allow-list or trading_mode. Job runs and the kill switch are Board-only POST endpoints, not GET /observability. Board observability is a panel button, not a floor tap. No covering overlay.</p>
+          <div id="panel-body" class="slack-body" hidden></div>
+          <form id="chat-form" class="slack-input-wrap" hidden>
+            <label for="chat-input">Chat with selected employee</label>
+            <textarea id="chat-input" class="slack-input-field" rows="3" maxlength="4000" placeholder="Ask the selected employee…"></textarea>
+            <button type="submit">Send chat</button>
+            <p class="talk-disabled">Talk / voice: disabled</p>
+          </form>
+        </aside>
+      </div>
     </div>
     <nav id="staff-bar" class="staff-bar" aria-label="Varma staff">
       <button type="button" data-employee-slug="ceo">
-        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="ceo"></canvas>
+        <img class="staff-portrait" width="32" height="32" data-portrait-slug="ceo" alt="" />
         Jordan Hale · CEO
       </button>
       <button type="button" data-employee-slug="market-intelligence-research">
-        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="market-intelligence-research"></canvas>
+        <img class="staff-portrait" width="32" height="32" data-portrait-slug="market-intelligence-research" alt="" />
         Asha Patel · Research
       </button>
       <button type="button" data-employee-slug="challenge">
-        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="challenge"></canvas>
+        <img class="staff-portrait" width="32" height="32" data-portrait-slug="challenge" alt="" />
         Sam Okeke · Challenge
       </button>
       <button type="button" data-employee-slug="risk">
-        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="risk"></canvas>
+        <img class="staff-portrait" width="32" height="32" data-portrait-slug="risk" alt="" />
         Elena Voss · Risk
       </button>
       <button type="button" data-employee-slug="trader">
-        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="trader"></canvas>
+        <img class="staff-portrait" width="32" height="32" data-portrait-slug="trader" alt="" />
         Chris Adeyemi · Trader
       </button>
       <button type="button" data-employee-slug="quant-strategy">
-        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="quant-strategy"></canvas>
+        <img class="staff-portrait" width="32" height="32" data-portrait-slug="quant-strategy" alt="" />
         Nina Kapoor · Quant
       </button>
       <button type="button" data-employee-slug="technology">
-        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="technology"></canvas>
+        <img class="staff-portrait" width="32" height="32" data-portrait-slug="technology" alt="" />
         Owen Blake · Technology
       </button>
     </nav>
     <p class="hint">Click an employee, a staff button, or a status bubble for their work. Board observability is a panel button, not a floor tap. Run on-demand jobs from that panel. The office stays visible. No covering overlay. Talk/voice is disabled. No live trading. Click never grants authority.</p>
   </main>
   <footer>
-    DEVELOPMENT box. Watchlist is a TEMPORARY DEVELOPMENT DEFAULT — not the execution allow-list. PAPER allow-list is Board Addendum E. No live trading. No gold execution. Staff cannot approve LIVE.
+    DEVELOPMENT box. Watchlist is a TEMPORARY DEVELOPMENT DEFAULT — not the execution allow-list. PAPER allow-list is Board Addendum E. No live trading. No gold execution. Staff cannot approve LIVE. Office graphics: W17ant/Claude-Office (MIT); Varma did not draw them.
   </footer>
+  <script src="src/claude-office-layout.js"></script>
   <script src="src/office-floor.js"></script>
   <script src="src/office.js"></script>
 </body>
