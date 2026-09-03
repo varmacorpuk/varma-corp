@@ -634,6 +634,7 @@ def create_app() -> FastAPI:
     @app.get("/watchlist")
     def watchlist(session: Session = Depends(_session)) -> dict[str, Any]:
         rows = session.query(WatchlistItem).all()
+        allow_syms = set(ControlEngine(session).allow_list_symbols())
         return {
             "label": "TEMPORARY DEVELOPMENT DEFAULT",
             "is_execution_allow_list": False,
@@ -645,6 +646,8 @@ def create_app() -> FastAPI:
                     "venue": r.venue,
                     "asset_class": r.asset_class,
                     "label": r.label,
+                    "executable": r.symbol in allow_syms,
+                    "watch_only": r.symbol not in allow_syms,
                 }
                 for r in rows
             ],

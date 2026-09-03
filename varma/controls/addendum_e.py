@@ -1,9 +1,8 @@
 """Board Addendum E 2026-09-03 (revised).
 
 Board-set PAPER execution allow-list. Revised 2026-09-03 to the final
-strategy universe, then extended the same day by Board Addendum M to
-fifteen US-listed instruments: ten equities plus five commodity ETPs.
-No LSE, no non-US sessions, no futures.
+strategy universe: ten US-listed equities. Addendum M the same day records
+five commodity ETPs as WATCH-ONLY — they are not on this executable list.
 
 The existing SHEL.L paper book (PAPER-20260903-02) stays valid as
 historical data; SHEL.L / AZN.L / ULVR.L are removed from the
@@ -25,9 +24,9 @@ from typing import Any
 ADDENDUM_E_LABEL = "Board Addendum E 2026-09-03"
 ADDENDUM_E_SET_BY = "board-member"
 
-# Final strategy universe: ten US equities + five US-listed commodity ETPs.
+# Final executable strategy universe: ten US equities. US market only.
 # BRK-B is the feed/Yahoo form; canonical desk symbol BRK.B.
-# ETPs (Addendum M) use the same equity/ETP paper path — not futures.
+# Addendum M commodity ETPs (GLD/SLV/USO/UNG/CPER) are watch-only — not listed here.
 ADDENDUM_E_INSTRUMENTS: tuple[tuple[str, str], ...] = (
     ("NVDA", "NASDAQ"),
     ("AAPL", "NASDAQ"),
@@ -39,11 +38,6 @@ ADDENDUM_E_INSTRUMENTS: tuple[tuple[str, str], ...] = (
     ("META", "NASDAQ"),
     ("TSLA", "NASDAQ"),
     ("BRK-B", "NYSE"),
-    ("GLD", "NYSE"),
-    ("SLV", "NYSE"),
-    ("USO", "NYSE"),
-    ("UNG", "NYSE"),
-    ("CPER", "NYSE"),
 )
 
 # Desk form → feed/Yahoo form. Only BRK has a syntax split.
@@ -66,7 +60,7 @@ def desk_symbol(symbol: str) -> str:
 ADDENDUM_E_SYMBOLS: tuple[str, ...] = tuple(symbol for symbol, _venue in ADDENDUM_E_INSTRUMENTS)
 ADDENDUM_E_VENUES: dict[str, str] = dict(ADDENDUM_E_INSTRUMENTS)
 
-# All fifteen are USD. No GBP names in the final strategy.
+# All ten executables are USD. No GBP names in the final strategy.
 ADDENDUM_E_CURRENCIES: dict[str, str] = {
     symbol: "USD" for symbol, _venue in ADDENDUM_E_INSTRUMENTS
 }

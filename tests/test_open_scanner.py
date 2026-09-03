@@ -1,4 +1,4 @@
-"""Deterministic NY-open scanner: completed bars, next-bar fill, 15 names, limits."""
+"""Deterministic NY-open scanner: completed bars, next-bar fill, 10 executables, limits."""
 
 from __future__ import annotations
 
@@ -85,8 +85,8 @@ def test_next_bar_fill_not_signal_close(session):
     assert "not signal close" in rows[0]["reason"]
 
 
-def test_all_fifteen_names_covered(session):
-    """Each of the 15 names can trigger. Firm-wide 6-order cap is tested separately."""
+def test_all_ten_executables_covered(session):
+    """Each of the ten executable names can trigger. ETPs are watch-only."""
     book = _book_for_all()
     got = []
     desks = []
@@ -109,7 +109,7 @@ def test_all_fifteen_names_covered(session):
     assert "BRK.B" in desks
     assert "BRK-B" not in desks
     for etp in ADDENDUM_M_ETP_SYMBOLS:
-        assert etp in got
+        assert etp not in got
 
 
 def test_duplicate_entry_prevention_per_name(session):
@@ -203,6 +203,8 @@ def test_scanner_does_not_place_orders(session):
     assert result["places_orders"] is False
     assert result["candidate_count"] == 6  # Addendum A max_orders_per_day
     assert set(result["symbols_scanned"]) == set(ADDENDUM_E_SYMBOLS)
+    assert {row["symbol"] for row in result["watch_only"]} == set(ADDENDUM_M_ETP_SYMBOLS)
+    assert all(row["executable"] is False for row in result["watch_only"])
     assert result["daemon"] is False
     assert result["trading_mode"] == "LIVE_BLOCKED"
     assert session.query(PaperFill).count() == fills_before
@@ -236,13 +238,25 @@ def test_or_break_from_minute_5(session):
         [_ohlc(90.2), _ohlc(90.4)],
     )
     book = ScriptedBars()
-    book.add("GLD", "1m", bar_frame(stamps, rows))
-    book.add("GLD", "5m", five)
-    scanner = OpenScanner(latency_buffer_seconds=0, meeting_trigger_levels={"GLD": 200.0}, symbols=("GLD",))
+    book.add("AAPL", "1m", bar_frame(stamps, rows))
+    book.add("AAPL", "5m", five)
+    scanner = OpenScanner(latency_buffer_seconds=0, meeting_trigger_levels={"AAPL": 200.0}, symbols=("AAPL",))
     rows_out = scanner.scan(session, bar_provider=book, as_of=_ts(14, 37))
     assert len(rows_out) == 1
-    assert rows_out[0]["feed_symbol"] == "GLD"
+    assert rows_out[0]["feed_symbol"] == "AAPL"
     assert "OR high" in rows_out[0]["reason"]
+
+
+def test_etp_never_emits_fillable_candidate(session):
+    book = _book_for_all(symbols=ADDENDUM_M_ETP_SYMBOLS)
+    scanner = OpenScanner(
+        latency_buffer_seconds=0,
+        meeting_trigger_levels={sym: TRIGGER for sym in ADDENDUM_M_ETP_SYMBOLS},
+        symbols=ADDENDUM_M_ETP_SYMBOLS,
+    )
+    rows = scanner.scan(session, bar_provider=book, as_of=_ts(14, 33))
+    assert rows == []
+    assert scanner.symbols == ()
 
 
 def test_board_open_scanner_job_does_not_fill(client):
@@ -253,3 +267,6 @@ def test_board_open_scanner_job_does_not_fill(client):
     assert body["daemon"] is False
     assert body["job_safety"]["fills"] is False
     assert body["job_safety"]["trading_mode"] == "LIVE_BLOCKED"
+    assert {row["symbol"] for row in body["watch_only"]} == set(ADDENDUM_M_ETP_SYMBOLS)
+    assert all(row["executable"] is False for row in body["watch_only"])
+    assert not any(c["feed_symbol"] in ADDENDUM_M_ETP_SYMBOLS for c in body["candidates"])

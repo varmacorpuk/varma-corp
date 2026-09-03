@@ -114,8 +114,8 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
   database and in Board observability. Limits are reversible dev defaults, not a retention policy.
 - **Controls/governance:** deterministic `varma/controls/engine.py` (+ addenda A/C/E/F/I/J/K/L/M, LSE
   after-London-cash-close session rule, CEO desk 02F venue flatten, kill switch, risk).
-  Addendum M (2026-09-03) extends the paper universe to 15 US instruments (10 equities +
-  GLD/SLV/USO/UNG/CPER ETPs on the equity/ETP path). Authoritative; AI never enforces controls.
+  Addendum M (2026-09-03) records five commodity ETPs (GLD/SLV/USO/UNG/CPER) as
+  WATCH-ONLY — not on the paper execution allow-list. Authoritative; AI never enforces controls.
   Board `write_control` can open or close paper. LIVE opening is not implemented.
 - **Open scanner:** `varma/scanner/open_scanner.py` — on-demand 14:32–15:00 London completed-bar
   scanner. Next-bar open fill. Does not place orders. CLI `python -m varma.routines.run_open_scanner`.

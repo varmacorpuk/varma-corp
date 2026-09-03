@@ -45,6 +45,6 @@ the index.
 | J (2026-08-27) | Encrypted company backup | `varma/controls/addendum_j.py`, `varma/backup/` | `tests/test_addendum_j.py` |
 | K (2026-09-03) | After London cash close, deny SHEL.L/AZN.L/ULVR.L only | `varma/controls/addendum_k.py`, `lse_session.py` | `tests/test_addendum_k.py`, `test_lse_session.py` |
 | L (2026-09-03) | Final 10 US equities (supersedes earlier E list) | `varma/controls/addendum_l.py`, `addendum_e.py` | `tests/test_addendum_e.py` |
-| M (2026-09-03) | Five US-listed commodity ETPs; 15-name paper universe | `varma/controls/addendum_m.py`, `addendum_e.py` | `tests/test_addendum_m.py` |
+| M (2026-09-03) | Five US-listed commodity ETPs, WATCH-ONLY | `varma/controls/addendum_m.py`, watchlist seed | `tests/test_addendum_m.py`, `test_watchlist.py` |
 | 02F (CEO desk) | Bound LSE London-auction flatten; US names at US close | `varma/controls/venue_flatten.py`, `engine.py`, `paper/flatten.py` | `tests/test_venue_flatten_02f.py` |
 | Open scanner | On-demand NY-open 14:32–15:00 completed-bar scanner | `varma/scanner/open_scanner.py`, `varma/routines/run_open_scanner.py` | `tests/test_open_scanner.py` |

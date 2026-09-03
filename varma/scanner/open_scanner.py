@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 from varma.clock import LONDON, as_london, now_london
 from varma.controls.addendum_a import MAX_DAILY_LOSS, MAX_ORDERS_PER_DAY, MAX_POSITION
 from varma.controls.addendum_e import ADDENDUM_E_SYMBOLS, canonical_feed_symbol, desk_symbol
+from varma.controls.addendum_m import ADDENDUM_M_ETP_SYMBOLS, WATCH_ONLY_REASON, is_watch_only_etp
 from varma.db.models import PaperPosition
 from varma.paper.ledger import PaperLedger
 from varma.paper.quote import mark_gbp, paper_order_economics
@@ -113,7 +114,11 @@ class OpenScanner:
         self.meeting_trigger_levels = {
             canonical_feed_symbol(k): float(v) for k, v in (meeting_trigger_levels or {}).items()
         }
-        self.symbols = tuple(canonical_feed_symbol(s) for s in (symbols or ADDENDUM_E_SYMBOLS))
+        self.symbols = tuple(
+            canonical_feed_symbol(s)
+            for s in (symbols or ADDENDUM_E_SYMBOLS)
+            if not is_watch_only_etp(s)
+        )
 
     def scan(
         self,
@@ -150,6 +155,8 @@ class OpenScanner:
         for feed_symbol in self.symbols:
             if remaining <= 0:
                 break
+            if is_watch_only_etp(feed_symbol):
+                continue
             if feed_symbol in emitted:
                 continue
             if self._name_at_cap(session, feed_symbol):
@@ -368,10 +375,21 @@ def scan_result_envelope(
         "session_open": session_open.isoformat(),
         "latency_buffer_seconds": int(latency_buffer_seconds),
         "symbols_scanned": list(ADDENDUM_E_SYMBOLS),
+        "watch_only": [
+            {
+                "symbol": symbol,
+                "executable": False,
+                "watch_only": True,
+                "reason": WATCH_ONLY_REASON,
+            }
+            for symbol in ADDENDUM_M_ETP_SYMBOLS
+        ],
         "candidate_count": len(candidates),
         "candidates": candidates,
         "note": (
             "On-demand NY-open scanner. Completed bars only. Next-bar open fill. "
-            "Does not place orders. LIVE stays BLOCKED."
+            "Scans the ten executable equities. Addendum M ETPs are watch-only "
+            "and never emit a fillable candidate. Does not place orders. "
+            "LIVE stays BLOCKED."
         ),
     }

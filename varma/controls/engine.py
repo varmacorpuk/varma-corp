@@ -272,9 +272,24 @@ class ControlEngine:
         if state.kill_switch:
             return self._deny("KILL_SWITCH", actor_id, order)
 
-        # Gold is never an execution universe, even if someone writes it onto the list.
+        # Gold futures are never an execution universe.
         if symbol.upper() in {"XAU", "XAUUSD", "GOLD", "GC"}:
             return self._deny("GOLD_NOT_AUTHORISED", actor_id, order)
+
+        from varma.controls.addendum_m import WATCH_ONLY_REASON, addendum_m_public, is_watch_only_etp
+
+        if is_watch_only_etp(symbol):
+            return self._deny(
+                WATCH_ONLY_REASON,
+                actor_id,
+                order,
+                {
+                    "watch_only": True,
+                    "executable": False,
+                    "addendum_m": addendum_m_public()["label"],
+                    "note": addendum_m_public()["note"],
+                },
+            )
 
         allow = self.allow_list_symbols()
         if allow and symbol not in allow:
