@@ -20,14 +20,15 @@ not the record.
 - **Formal completion percentage: not established — do not invent one.** The project is the first
   vertical slice per Document 18; the company is CLOSED until Grand Opening (Board Addendum I).
 - **On default branch `main` (this landing of #24–#26 runtime):** FastAPI kernel; 7 durable AI
-  employees; skills (brief, challenge, risk); on-demand routines (brief, challenge, risk-deny,
-  07:30 meeting, nightly memory filter, flatten, backup); four memory stores; durable DB handoffs;
+  employees; skills (brief, challenge, risk, Trader paper-ticket proposal); on-demand routines
+  (brief, challenge, risk-deny, 07:30 meeting, nightly memory filter, flatten, backup,
+  Trader paper-ticket proposal); four memory stores; durable DB handoffs;
   deterministic ControlEngine; internal paper simulator; Board observability; 2D desktop UI; chat
   (Board-only); FakeLLM default wrapped by MeasuredLLM; `AICallLog` + `ai_usage_summary`;
   token-efficiency runtime (`constraints_hint()`, STATIC/PERSISTENT/DYNAMIC context classes,
   bounded chat, selective lessons/working/org titles, idempotent handoffs, daily sim 0 AI on
   deterministic ops). Pytest: **175 passing, 0 failures** (measured 2026-09-03).
-- **Incomplete / not built:** first paper-trade path; Grand Opening (PAPER or LIVE); real LLM
+- **Incomplete / not built:** Grand Opening (PAPER or LIVE); real LLM
   binding; live/broker execution; semantic memory summarisation; response caching;
   event-idempotency schema.
 - **Deliberately closed/disabled:** `trading_mode=LIVE_BLOCKED`; PAPER execution CLOSED (no fills;
@@ -35,7 +36,8 @@ not the record.
   LLM (no network); Talk/voice disabled. Token-efficiency stages 4 (snapshot cache) and 5
   (response cache) are intentionally **not** implemented (safety: caches must never become
   authority for limits, kill switch, hours, or live/paper gates). Deterministic ControlEngine
-  stays authority.
+  stays authority. The first paper-trade **PATH** exists (Trader proposal → ControlEngine →
+  internal simulator) and is still gated CLOSED.
 
 ## 2. COMPLETED WORK (GitHub PR state, verified 2026-09-03)
 Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, and this PR landing the #24–#26
@@ -88,7 +90,11 @@ flatten-at-US-close.
 - **Controls/governance:** deterministic `varma/controls/engine.py` (+ addenda A/C/E/F/I/J, LSE
   fail-closed hold, kill switch, risk). Authoritative; AI never enforces controls.
 - **Virtual office:** `desktop/` (2D office + right-hand Board panel; fetch-on-click, no polling).
-- **Trading simulation:** internal paper fill simulator `varma/paper/` (not a broker). No fills while CLOSED.
+- **Trading simulation:** internal paper fill simulator `varma/paper/` (not a broker). First
+  paper-trade PATH exists: Trader (Chris Adeyemi) proposes → ControlEngine permit/deny →
+  simulator fill → paper ledger. Board-only on-demand job
+  `python -m varma.routines.run_paper_trade_path` / POST `/routines/run-paper-trade-path`.
+  PAPER execution is still CLOSED: no fills. Next human step is Board Grand Opening.
 - **AI/LLM boundary:** `varma/ports/llm.py` — `FakeLLM` default, wrapped by `MeasuredLLM`. Four task
   strings only: `prepare_daily_intelligence_brief`, `challenge_sample_thesis`, `review_unsafe_path`, `chat`.
   Do not bind a real LLM.
@@ -137,6 +143,10 @@ flatten-at-US-close.
 - **Do not implement any Section 7 item** until the Board decides it.
 - **Do not implement token-efficiency stages 4–5.** Measure with `ai_usage_summary` before further
   runtime token work.
+- **Next human step:** Board Grand Opening (PAPER). The paper-trade path is wired. PAPER
+  execution is still CLOSED. Do not open the firm in code. Do not fill practice orders until
+  Hari says Grand Opening. Flipping the existing CLOSED gate is then enough for a practice
+  order to be able to fill (internal simulator only). LIVE remains later and forbidden.
 
 ## 9. IMPORTANT COMPATIBILITY RULES (Grok Bot)
 Do NOT rename/delete/move or structurally change: employee **slugs/identities/roles/relationships**;

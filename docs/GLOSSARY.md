@@ -23,11 +23,12 @@ file does not invent governance terms. Where a term maps to code, the code is au
   enforces controls. Employees cannot write control tables.
 - **trading_mode = LIVE_BLOCKED** — live trading is off; the live adapter is not loaded.
 - **PAPER execution CLOSED** — Board Addendum I: the firm is closed until Grand Opening; the internal
-  simulator denies all fills, even for allow-listed tickers.
+  simulator denies all fills, even for allow-listed tickers. The first paper-trade PATH exists
+  (Trader proposal → ControlEngine → simulator) and is still gated CLOSED.
 - **Allow-list (Addendum E)** — PAPER execution membership. Exists but cannot fill until open. Empty
   allow-list denies. Gold is never authorised.
 - **Paper trading** — internal fill *simulator* only (`varma/paper/`). Not a broker. £1000 is a
-  FUTURE starting book only.
+  FUTURE starting book only. Board job: `run_paper_trade_path`.
 - **BROKER_PAPER / LIVE ports** — external execution ports; remain UNLOADED. No broker fills.
 - **Kill switch** — Board-only halt/reset (`varma/controls/kill_switch.py`). Employees cannot reset it.
 - **Handoff** — a durable database artefact passing work between employees (`varma/meetings/handoff.py`),
@@ -38,7 +39,8 @@ file does not invent governance terms. Where a term maps to code, the code is au
   evidence or writes controls (`varma/memory/filter.py`).
 - **Observability** — read-only Board projection of the database (`varma/observability/board.py`).
   `GET /observability` runs no jobs and writes nothing.
-- **Grand Opening** — the Board-gated transition to PAPER (then, much later, LIVE). Not implemented in
-  this slice. Silence is not approval.
+- **Grand Opening** — the Board-gated transition to PAPER (then, much later, LIVE). Not performed.
+  The paper-trade path is wired; flipping the existing CLOSED gate is the remaining human step
+  for practice fills. Silence is not approval.
 - **AICallLog** — non-invasive AI-usage measurement record (PR #1, `varma/observability/ai_usage.py`).
   Records deterministic call metadata and estimates; does not change AI behaviour.

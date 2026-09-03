@@ -73,6 +73,7 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
     assert "Run nightly memory filter" in labels
     assert "Flatten paper before US cash close" in labels
     assert "Run company backup now" in labels
+    assert "Run Trader paper-ticket proposal" in labels
     for row in jobs["items"]:
         assert row["method"] == "POST"
         assert row["path"] != "/observability"
@@ -83,6 +84,13 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
             assert row["flatten_at"] == "US_REGULAR_CASH_CLOSE"
             assert row["paper_fills"] is False
             assert row["flatten_as_if_there_were_positions"] is False
+        elif row["id"] == "run-paper-trade-path":
+            assert row["first_paper_trade_path_implemented"] is True
+            assert row["internal_simulator"] is True
+            assert row["paper_fills"] is False
+            assert row["fills_while_closed"] is False
+            assert row["ai_called"] is False
+            assert row["proposer_slug"] == "trader"
         else:
             assert row["paper_fills"] is False
         assert row["fills"] is False
@@ -180,6 +188,16 @@ def test_board_runs_jobs_from_post_then_panel_refreshes(client):
     assert after_filter["controls"]["trading_mode"] == "LIVE_BLOCKED"
     _assert_execution_untouched(client)
 
+    paper_path = client.post("/routines/run-paper-trade-path", headers=BOARD_HEADERS)
+    assert paper_path.status_code == 200
+    _assert_job_safety(paper_path.json())
+    assert paper_path.json()["allowed"] is False
+    assert paper_path.json()["reason"] == "PAPER_EXECUTION_CLOSED"
+    assert paper_path.json()["filled"] is False
+    assert paper_path.json()["ai_called"] is False
+    assert paper_path.json()["proposer"]["slug"] == "trader"
+    _assert_execution_untouched(client)
+
     paper = client.post(
         "/execution/place-order",
         headers=BOARD_HEADERS,
@@ -210,6 +228,7 @@ def test_board_job_catalog_matches_cli(session):
     assert clis["run-nightly-filter"] == "python -m varma.routines.run_nightly_filter"
     assert clis["run-flatten-us-close"] == "python -m varma.routines.run_flatten_us_close"
     assert clis["run-backup"] == "python -m varma.routines.run_backup"
+    assert clis["run-paper-trade-path"] == "python -m varma.routines.run_paper_trade_path"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert snap["writes_controls"] is False
     assert LIVE_ADAPTER_LOADED is False

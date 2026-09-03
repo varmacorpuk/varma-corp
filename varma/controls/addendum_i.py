@@ -10,8 +10,9 @@ flatten-as-if-there-were-positions. Do not send Board Member meeting
 invites or approval emails.
 
 TWO OPENINGS, both require Hari's EXPLICIT yes. Silence is not approval.
-This slice implements the CLOSED gate only. It does not implement the
-first paper trade path.
+This slice implements the CLOSED gate and the first paper-trade PATH
+(Trader proposal → ControlEngine → internal simulator). PAPER execution
+remains CLOSED. No fills until Hari's explicit Grand Opening PAPER yes.
 
 1) Grand Opening PAPER — only when Hari says the firm is built, everyone
    is in place, and we are not adding more to open. Then paper trading on
@@ -121,7 +122,7 @@ def addendum_i_public() -> dict[str, Any]:
         "does_not_load_broker_paper": True,
         "allow_list_e_exists": True,
         "allow_list_e_cannot_fill_until_open": True,
-        "first_paper_trade_path_implemented": False,
+        "first_paper_trade_path_implemented": True,
         "simulated_capital_status": SIMULATED_CAPITAL_STATUS,
         "addendum_a_numbers_stored": True,
         "addendum_a_numbers_unused_until_open": True,

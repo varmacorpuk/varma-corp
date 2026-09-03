@@ -7,7 +7,9 @@ PAPER allow-list is Board Addendum E 2026-08-27. Employees cannot write control 
 Board Addendum I 2026-08-27: PAPER execution is CLOSED until Grand Opening.
 
 trading_mode stays LIVE_BLOCKED. Simulator DENY all fills while closed.
-Do not load LIVE or BROKER_PAPER. Do not implement the first paper trade path.
+Do not load LIVE or BROKER_PAPER. The first paper-trade PATH exists
+(Trader proposal → ControlEngine → internal simulator). PAPER execution
+remains CLOSED until Grand Opening. No fills.
 """
 
 from __future__ import annotations
@@ -430,7 +432,9 @@ class ControlEngine:
             "note": (
                 "Silence, elapsed time, paper success, and employee confidence are not approval. "
                 "The company is CLOSED until Grand Opening (Board Addendum I). "
-                "PAPER execution is CLOSED. Allow-list E exists but cannot fill until open. "
+                "PAPER execution is CLOSED. The first paper-trade PATH exists "
+                "(Trader proposal → ControlEngine → internal simulator). "
+                "Allow-list E exists but cannot fill until open. "
                 "trading_mode stays LIVE_BLOCKED. LIVE and BROKER_PAPER remain UNLOADED."
             ),
         }
@@ -477,7 +481,7 @@ class ControlEngine:
                 "allow_list_cannot_fill_until_open": True,
                 "addendum_a_unused_until_open": True,
                 "simulated_capital_status": "FUTURE_PAPER_STARTING_BOOK_ONLY",
-                "first_paper_trade_path_implemented": False,
+                "first_paper_trade_path_implemented": True,
                 "source": ADDENDUM_I_LABEL,
             },
         )

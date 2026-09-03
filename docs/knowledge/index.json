@@ -4,7 +4,7 @@
   "generated_by": "PR #1 (Safe Token-Efficiency Foundation) — hand-authored, additive, non-invasive",
   "handover": {
     "path": "docs/BUILD_STATE.md",
-    "purpose": "READ FIRST: current build state on main (token-efficiency runtime from #24-#26 is landed; stages 4-5 are not), governance/safety, open Board decisions, and the NEXT STEP. Do not rescan the repo or re-read Documents 00-18 unless required. Do not call AI for deterministic ops. Open PR remains #21 only.",
+    "purpose": "READ FIRST: current build state on main (token-efficiency runtime from #24-#26 is landed; first paper-trade PATH exists and is still CLOSED; stages 4-5 are not), governance/safety, open Board decisions, and the NEXT STEP. Do not rescan the repo or re-read Documents 00-18 unless required. Do not call AI for deterministic ops. Open PR remains #21 only. Next human step is Board Grand Opening.",
     "then_read": ["docs/PROJECT_MAP.md", "docs/SPEC_INDEX.md", "docs/GLOSSARY.md"]
   },
   "specs_note": "Authoritative Documents 00-18 live OUTSIDE this repository. See docs/SPEC_INDEX.md for pointers.",
@@ -40,8 +40,9 @@
     {"component": "memory.filter", "path": "varma/memory/filter.py", "purpose": "Nightly working-context archive; append-only evidence", "depends_on": ["varma/db/models.py", "varma/controls/engine.py"], "tests": ["tests/test_memory_filter.py"], "specs": ["08"]},
     {"component": "meetings.handoff", "path": "varma/meetings/handoff.py", "purpose": "Durable DB handoff artefacts", "depends_on": ["varma/db/models.py", "varma/memory/stores.py"], "tests": ["tests/test_company_meeting.py"], "specs": ["09"]},
     {"component": "meetings.company_meeting", "path": "varma/meetings/company_meeting.py", "purpose": "On-demand 07:30 meeting record (no AI)", "depends_on": ["varma/db/models.py", "varma/controls/engine.py"], "tests": ["tests/test_company_meeting.py"], "specs": ["09"]},
-    {"component": "paper.simulator", "path": "varma/paper/simulator.py", "purpose": "Internal paper fill simulator (not a broker)", "depends_on": ["varma/db/models.py"], "tests": ["tests/test_paper_simulator.py"], "specs": ["12"]},
+    {"component": "paper.simulator", "path": "varma/paper/simulator.py", "purpose": "Internal paper fill simulator (not a broker)", "depends_on": ["varma/db/models.py"], "tests": ["tests/test_paper_simulator.py", "tests/test_paper_trade_path.py"], "specs": ["12"]},
     {"component": "paper.ledger", "path": "varma/paper/ledger.py", "purpose": "Paper account/positions/P&L; evaluation", "depends_on": ["varma/db/models.py"], "tests": ["tests/test_paper_simulator.py"], "specs": ["12"]},
+    {"component": "skills.propose_paper_ticket", "path": "varma/skills/propose_paper_ticket.py", "purpose": "Trader paper-ticket proposal (deterministic; ControlEngine permit/deny; no AI)", "depends_on": ["varma/employees/runtime.py", "varma/controls/engine.py", "varma/ports/execution.py"], "tests": ["tests/test_paper_trade_path.py"], "specs": ["07", "12"]},
     {"component": "routines", "path": "varma/routines/board_jobs.py", "purpose": "On-demand Board job catalog + safety flags", "depends_on": ["varma/controls/engine.py", "varma/ports/execution.py"], "tests": ["tests/test_board_jobs.py"], "specs": ["18"]},
     {"component": "observability.board", "path": "varma/observability/board.py", "purpose": "Read-only Board projection of the database", "depends_on": ["varma/controls/engine.py", "varma/paper/ledger.py", "varma/memory/stores.py"], "tests": ["tests/test_observability.py"], "specs": ["16", "17"]},
     {"component": "observability.ai_usage", "path": "varma/observability/ai_usage.py", "purpose": "Non-invasive AI-usage measurement (PR #1)", "depends_on": ["varma/db/models.py", "varma/db/engine.py", "varma/ports/llm.py"], "tests": ["tests/test_ai_usage.py"], "specs": ["17"]},

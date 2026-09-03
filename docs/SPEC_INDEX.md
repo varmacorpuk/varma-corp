@@ -20,12 +20,12 @@ the index.
 | 04 | Trading strategy / approach | `varma/controls/` (allow-list, limits) | `tests/test_addendum_e.py`, `test_watchlist.py` |
 | 05 | Trading workflow / decision | `varma/skills/`, `varma/meetings/handoff.py` | `tests/test_challenge_risk.py` |
 | 06 | Strategy / market universe | `varma/controls/addendum_e.py`, `db/seed.py` (watchlist) | `tests/test_watchlist.py`, `test_addendum_e.py` |
-| 07 | Trade lifecycle / decisions | `varma/controls/engine.py`, `varma/paper/` | `tests/test_execution.py`, `test_paper_simulator.py` |
+| 07 | Trade lifecycle / decisions | `varma/controls/engine.py`, `varma/paper/`, `varma/skills/propose_paper_ticket.py` | `tests/test_execution.py`, `test_paper_simulator.py`, `test_paper_trade_path.py` |
 | 08 | Employee behaviour / memory / learning | `varma/memory/stores.py`, `varma/memory/filter.py` | `tests/test_memory_filter.py`, `test_brains_and_people.py` |
 | 09 | Meetings / communication / office | `varma/meetings/`, `desktop/` | `tests/test_company_meeting.py`, `test_office_layout.py`, `test_chat.py` |
 | 10 | CEO / management / governance | `varma/skills/`, `db/seed.py` (ceo) | `tests/test_ceo.py` |
 | 11 | Risk / compliance / controls / approval | `varma/controls/engine.py`, `risk.py`, `kill_switch.py` | `tests/test_controls.py`, `test_kill_switch.py`, `test_challenge_risk.py` |
-| 12 | Paper trading / evaluation / live transition | `varma/paper/`, `varma/controls/addendum_i.py` | `tests/test_paper_simulator.py`, `test_addendum_i.py` |
+| 12 | Paper trading / evaluation / live transition | `varma/paper/`, `varma/controls/addendum_i.py`, `varma/routines/run_paper_trade_path.py` | `tests/test_paper_simulator.py`, `test_addendum_i.py`, `test_paper_trade_path.py` |
 | 13 | Technology / IT / self-maintenance | `varma/backup/`, `varma/controls/addendum_j.py` | `tests/test_addendum_j.py` |
 | 14 | MVP technical architecture | `varma/kernel/app.py`, `varma/db/engine.py` | `tests/test_health.py` |
 | 15 | Data / market intelligence / tools | `varma/ports/data.py`, `varma/verification/brief.py` | `tests/test_brief.py` |

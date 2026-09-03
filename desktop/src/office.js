@@ -321,7 +321,7 @@
       </div>
       <p class="meta">Employees cannot reset the kill switch.</p>
       <h3>Board Addendum I 2026-08-27 (CLOSED until Grand Opening)</h3>
-      <p class="meta">The company is CLOSED. Nothing is trading. Not paper, not live. PAPER execution is CLOSED. Allow-list E exists but cannot be used for fills until Hari's explicit Grand Opening PAPER yes. £1000 is the FUTURE paper starting book only. Addendum A numbers are stored but unused until open. LIVE still blocked. Never auto-switch. Silence is not approval. First paper trade path is not implemented.</p>
+      <p class="meta">The company is CLOSED. Nothing is trading. Not paper, not live. PAPER execution is CLOSED. The first paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator). Allow-list E exists but cannot be used for fills until Hari's explicit Grand Opening PAPER yes. £1000 is the FUTURE paper starting book only. Addendum A numbers are stored but unused until open. LIVE still blocked. Never auto-switch. Silence is not approval. Next human step is Board Grand Opening. No fills now.</p>
       <h3>Board Addendum J 2026-08-27 (company backup)</h3>
       <p class="meta">Company records are not on the Board Member laptop and not in GitHub. GitHub is code only. System of record: ${escapeHtml(backup.system_of_record || "database")}. Encrypted at rest: ${backup.encrypted_at_rest !== false}. Owner: ${escapeHtml(backup.owner_display_name || addendumJ.owner_display_name || "Owen Blake · Technology")}. Owen cannot write trading_mode, allow-list, or open the firm. Schedule: ${escapeHtml(backup.schedule || "daily after US close / end of London evening")} · daemon: ${backup.daemon === true}.</p>
       <p class="meta">Included: paper ledger, evidence, organisational memory, control snapshots. Excluded: secrets, live broker credentials (must not exist yet). Employees including the CEO cannot download secrets. Last successful backup: ${escapeHtml(backup.last_successful_backup_at || "none")}. Last failure: ${escapeHtml(backup.last_failure_at || "none")}${backup.last_failure_reason ? " · " + escapeHtml(backup.last_failure_reason) : ""}.</p>
@@ -392,6 +392,7 @@
       { id: "run-nightly-filter", label: "Run nightly memory filter", path: "/routines/run-nightly-filter" },
       { id: "run-flatten-us-close", label: "Flatten paper before US cash close", path: "/routines/run-flatten-us-close" },
       { id: "run-backup", label: "Run company backup now", path: "/routines/run-backup" },
+      { id: "run-paper-trade-path", label: "Run Trader paper-ticket proposal", path: "/routines/run-paper-trade-path" },
     ];
     return (
       '<div class="job-runs">' +

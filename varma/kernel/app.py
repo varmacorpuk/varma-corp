@@ -50,7 +50,8 @@ from varma.routines.run_nightly_filter import run_nightly_filter
 from varma.routines.run_risk_deny import run_risk_deny
 from varma.routines.run_0730_meeting import run_0730_meeting
 from varma.routines.run_flatten_us_close import run_flatten_us_close
-from varma.routines.board_jobs import with_flatten_safety, with_job_safety
+from varma.routines.run_paper_trade_path import run_paper_trade_path
+from varma.routines.board_jobs import with_flatten_safety, with_job_safety, with_paper_trade_safety
 from varma.controls.addendum_j import (
     EMPLOYEE_CANNOT_DOWNLOAD_SECRETS_REASON,
     SECRETS_ARE_NOT_DOWNLOADABLE_REASON,
@@ -398,6 +399,16 @@ def create_app() -> FastAPI:
         return with_job_safety(
             session,
             run_company_backup(session, started_by="board-member"),
+        )
+
+    @app.post("/routines/run-paper-trade-path")
+    def api_run_paper_trade_path(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return with_paper_trade_safety(
+            session,
+            run_paper_trade_path(session, started_by="board-member"),
         )
 
     @app.get("/routines/backup-schedule")

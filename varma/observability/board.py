@@ -387,7 +387,7 @@ class BoardObservability:
             "paper_execution": "CLOSED",
             "paper_execution_closed": True,
             "paper_execution_implemented": False,
-            "first_paper_trade_path_implemented": False,
+            "first_paper_trade_path_implemented": True,
             "internal_simulator": True,
             "firm_open": False,
             "grand_opening_paper": "not",
@@ -427,11 +427,12 @@ class BoardObservability:
             ],
             "note": (
                 "Board Addendum I 2026-08-27: the company is CLOSED until Grand "
-                "Opening. PAPER execution is CLOSED. Do not fill. Do not propose "
-                "fills. Allow-list E exists but cannot be used for fills until Hari's "
-                "explicit Grand Opening PAPER yes. LIVE still blocked. Never auto-switch. "
-                "Silence is not approval. Addendum A numbers are stored but unused "
-                "until open. First paper trade path is not implemented in this slice."
+                "Opening. PAPER execution is CLOSED. The first paper-trade PATH "
+                "exists (Trader proposal → ControlEngine → internal simulator). "
+                "Do not fill. Allow-list E exists but cannot be used for fills until "
+                "Hari's explicit Grand Opening PAPER yes. LIVE still blocked. Never "
+                "auto-switch. Silence is not approval. Addendum A numbers are stored "
+                "but unused until open. Next human step is Board Grand Opening."
             ),
             "two_openings": addendum_i.get("two_openings"),
         }

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from sqlalchemy.orm import Session
 
 from varma.clock import now_london
@@ -17,7 +19,7 @@ from varma.db.models import (
 )
 from varma.employees.brain import EmployeeBrain
 from varma.memory.stores import MemoryStores
-from varma.controls.addendum_f import ALL_STAFF_SLUGS
+from varma.controls.addendum_f import ALL_STAFF_SLUGS, TRADER_SLUG
 from varma.meetings.handoff import CEO_SLUG, CHALLENGE_SLUG, RISK_SLUG, handoff_to_dict
 from varma.ports.llm import get_llm
 from varma.skills.challenge_sample_thesis import challenge_review_to_dict
@@ -211,3 +213,30 @@ class EmployeeRuntime:
         self.memory.working_put(self.employee.id, "last_chat", message[:500])
         self.session.commit()
         return reply
+
+    def propose_paper_ticket(
+        self,
+        *,
+        order: dict[str, Any] | None = None,
+        at=None,
+        started_by: str = "cli",
+    ) -> dict:
+        """Chris Adeyemi proposes a paper ticket. ControlEngine permit/deny. No AI.
+
+        Permit/deny, hours, kill switch, and fills are never an LLM call.
+        Only the Trader may use this skill. PAPER stays CLOSED until Grand Opening.
+        """
+        from varma.skills.propose_paper_ticket import (
+            ONLY_TRADER_MAY_PROPOSE,
+            run_propose_paper_ticket,
+        )
+
+        if self.employee.slug != TRADER_SLUG:
+            raise RuntimeError(ONLY_TRADER_MAY_PROPOSE)
+        return run_propose_paper_ticket(
+            self.session,
+            self.employee,
+            order=order,
+            at=at,
+            started_by=started_by,
+        )

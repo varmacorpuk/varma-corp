@@ -463,7 +463,7 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert gate["paper_execution"] == "CLOSED"
     assert gate["paper_execution_closed"] is True
     assert gate["paper_execution_implemented"] is False
-    assert gate["first_paper_trade_path_implemented"] is False
+    assert gate["first_paper_trade_path_implemented"] is True
     assert gate["internal_simulator"] is True
     assert gate["evaluation_status"] == "ledger ready (unused until open)"
     assert gate["live_trading_recommendation"] == "not"

@@ -60,8 +60,9 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
   (identity, role knowledge, lessons, working memory, org titles). Document 03. Selective recency
   retrieval for lessons/working/org titles (limit 8); nothing deleted.
 - `varma/employees/context.py` — STATIC / PERSISTENT / DYNAMIC context classes for AI payloads.
-- `varma/employees/runtime.py` — `EmployeeRuntime`: `context_pack()` + `chat()`. Bounded chat
-  context (6 turns) for the model; full history stays append-only.
+- `varma/employees/runtime.py` — `EmployeeRuntime`: `context_pack()` + `chat()` +
+  `propose_paper_ticket()` (Trader only; no AI). Bounded chat context (6 turns) for the model;
+  full history stays append-only.
 - `varma/ports/llm.py` — `LLMPort`, `FakeLLM` (default), `get_llm()`. An LLM call is an invocation.
 
 ### Skills (one AI call each, wrapped in deterministic work)
@@ -70,15 +71,21 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - `varma/skills/prepare_sample_thesis.py` — SAMPLE thesis (no AI call; artefact builder).
 - `varma/skills/challenge_sample_thesis.py` — Challenge review; hands off to Risk.
 - `varma/skills/review_unsafe_path.py` — Risk deny-path (decision is deterministic; AI writes prose).
+- `varma/skills/propose_paper_ticket.py` — Trader paper-ticket proposal (no AI call; engine permit/deny).
 
 ### Market intelligence / data
 - `varma/ports/data.py` — `FakeMarketData` (delayed fake news + prices). No paid vendor. Equities only.
 - `varma/verification/brief.py` — deterministic freshness + required-field verification.
 
 ### Trading / paper-trading components
-- `varma/paper/simulator.py` — internal paper fill simulator (not a broker).
+- `varma/paper/simulator.py` — internal paper fill simulator (not a broker). Fill only after
+  ControlEngine allows. DENY while PAPER execution is CLOSED.
 - `varma/paper/ledger.py` — paper account/positions/P&L, evaluation snapshot.
 - `varma/paper/flatten.py` — flatten-before-US-close (internal simulator; no-op while CLOSED).
+- `varma/skills/propose_paper_ticket.py` — Trader (Chris Adeyemi) paper-ticket proposal.
+  Deterministic. No AI. ControlEngine is authoritative.
+- `varma/routines/run_paper_trade_path.py` — Board-only on-demand job that invokes the Trader
+  proposal. No daemon. No fills while CLOSED.
 - `varma/ports/execution.py` — ExecutionPort; BROKER_PAPER + LIVE remain UNLOADED.
 
 ### Risk / controls / governance
@@ -102,7 +109,8 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 
 ### Orchestration / routines (on-demand; no daemon)
 - `varma/routines/run_brief.py`, `run_challenge.py`, `run_risk_deny.py`, `run_nightly_filter.py`,
-  `run_0730_meeting.py`, `run_flatten_us_close.py`, `run_backup.py` — CLI + called by kernel POSTs.
+  `run_0730_meeting.py`, `run_flatten_us_close.py`, `run_backup.py`, `run_paper_trade_path.py` —
+  CLI + called by kernel POSTs.
 - `varma/routines/board_jobs.py` — Board-only job catalog + safety flag wrappers.
 
 ### Observability / cost / measurement
