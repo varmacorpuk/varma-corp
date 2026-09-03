@@ -1,23 +1,37 @@
 /* Layout: office left, information panel RIGHT. Not an overlay. Office remains visible. */
 :root {
   --ink: #1b1b18;
-  --paper: #f4efe4;
-  --panel: #fffdf8;
-  --accent: #2f5d50;
+  --paper: #1a1a1e;
+  --panel: #f3c4a0;
+  --accent: #1a2744;
   --warn: #8b1e1e;
-  --tile: #c5d5c0;
+  --tile: #3d9a92;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; font-family: "IBM Plex Sans", "Segoe UI", sans-serif; background: var(--paper); color: var(--ink); }
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
 .topbar {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 8px 16px;
-  background: #111;
+  padding: 10px 16px;
+  background: #0d0d10;
   color: #f4efe4;
+  border-bottom: 4px solid #2b2b2b;
 }
-.brand { font-weight: 700; letter-spacing: 0.08em; }
+.brand-block { display: flex; flex-direction: column; gap: 4px; }
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 18px;
+}
+.tagline { font-size: 11px; color: #c8c0b0; }
 .role { flex: 1; font-size: 14px; }
 .mode { background: var(--warn); color: white; padding: 4px 10px; font-size: 13px; }
 .workspace {
@@ -31,15 +45,37 @@ html, body { margin: 0; height: 100%; font-family: "IBM Plex Sans", "Segoe UI", 
   display: flex;
   flex-direction: column;
   min-width: 0;
+  background: #222228;
 }
-.office-caption, .hint { font-size: 12px; color: #444; }
+.office-caption, .hint { font-size: 12px; color: #d8d0c4; }
 #office-floor {
   flex: 1;
   width: 100%;
-  background: #6b8f71;
+  background: #318780;
   image-rendering: pixelated;
+  image-rendering: crisp-edges;
   cursor: pointer;
-  border: 4px solid #2b2b2b;
+  border: 6px solid #1c1c20;
+  box-shadow: inset 0 0 0 2px #5a5a66;
+}
+.staff-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 6px;
+}
+.staff-bar button {
+  background: #1a2744;
+  color: #f4efe4;
+  border: 2px solid #0d1320;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+.staff-bar button.selected,
+.staff-bar button[aria-pressed="true"] {
+  background: #3d5a80;
+  outline: 2px solid #f0d878;
 }
 #right-panel, .right-panel {
   flex: 0 0 38%;

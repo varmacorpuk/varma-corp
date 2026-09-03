@@ -7,7 +7,7 @@ operations. The **source code on the branch you have checked out is authoritativ
 disagrees with that code, the code wins and this file must be corrected.
 
 _Last updated: 2026-09-03._ Grand Opening PAPER (Hari explicit yes, word: Open). LIVE still
-blocked. Pytest: **196 passing, 0 failures**. Do not invent a percent-complete. Chat is not
+blocked. Pytest: **198 passing, 0 failures**. Do not invent a percent-complete. Chat is not
 the record.
 
 ## 0. RECOVERY / CONTINUATION INSTRUCTION
@@ -85,7 +85,7 @@ flatten-at-US-close. London cash close is not the flatten.
 - **Controls/governance:** deterministic `varma/controls/engine.py` (+ addenda A/C/E/F/I/J/K, LSE
   after-London-cash-close session rule, kill switch, risk). Authoritative; AI never enforces controls.
   Board `write_control` can open or close paper. LIVE opening is not implemented.
-- **Virtual office:** `desktop/` (2D office + right-hand Board panel; fetch-on-click, no polling).
+- **Virtual office:** `desktop/` (pixel-art 2D office + right-hand Board panel; fetch-on-click, no polling).
 - **Trading simulation:** internal paper fill simulator `varma/paper/` (not a broker). First
   paper-trade PATH exists: Trader (Chris Adeyemi) proposes → ControlEngine permit/deny →
   simulator fill → paper ledger. Board-only on-demand job
@@ -150,6 +150,6 @@ repo). Keep changes additive; keep the full test suite green.
 
 ## 10. HOW TO CONTINUE
 Read this file, then `PROJECT_MAP.md` + `SPEC_INDEX.md` (+ `knowledge/index.json` for machine navigation
-and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **196** passing
+and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **198** passing
 on this Grand Opening PAPER landing; **188** was main after #30). Continue from Section 8.
 Preserve every governance and safety rule in Section 6.

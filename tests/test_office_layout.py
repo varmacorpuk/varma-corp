@@ -4,6 +4,10 @@ ROOT = Path(__file__).resolve().parents[1]
 HTML = (ROOT / "desktop" / "index.html").read_text(encoding="utf-8")
 CSS = (ROOT / "desktop" / "src" / "styles.css").read_text(encoding="utf-8")
 JS = (ROOT / "desktop" / "src" / "office.js").read_text(encoding="utf-8")
+FLOOR = (ROOT / "desktop" / "src" / "office-floor.js").read_text(encoding="utf-8")
+APP = (ROOT / "varma" / "kernel" / "app.py").read_text(encoding="utf-8")
+
+SITCOM = ("Michael", "Jim", "Pam", "Dwight", "Angela", "Kevin", "Oscar", "Stanley")
 
 
 def test_right_hand_panel_not_overlay():
@@ -123,3 +127,54 @@ def test_office_click_opens_panel_logic():
     assert "LSE after London cash close" in JS
     assert "no Board Member diary invite" in JS
     assert "Talk is disabled" in JS or "talk-disabled" in HTML
+
+
+def test_pixel_office_is_not_four_desk_placeholder():
+    assert 'id="staff-bar"' in HTML
+    assert "office-floor.js" in HTML
+    assert "placeholder pixels" not in HTML.lower()
+    assert "conference table" in HTML.lower() or "conferenceTable" in FLOOR
+    assert "poolTable" in FLOOR
+    assert "plant(" in FLOOR
+    assert "pixel-art-2d" in APP
+    assert "placeholder-pixel-2d" not in APP
+    assert "VarmaOfficeFloor" in JS
+    assert "SEATS" in FLOOR
+    for slug in (
+        "ceo",
+        "market-intelligence-research",
+        "challenge",
+        "risk",
+        "trader",
+        "quant-strategy",
+        "technology",
+    ):
+        assert f'data-employee-slug="{slug}"' in HTML
+        assert f"{slug}:" in FLOOR or f'"{slug}"' in FLOOR
+    rows = [
+        line.strip().strip('",')
+        for line in FLOOR.splitlines()
+        if line.strip().startswith('"') and line.strip().endswith('",')
+    ]
+    map_rows = [row for row in rows if set(row) <= set("#.")]
+    assert len(map_rows) == 20
+    assert all(len(row) == 32 for row in map_rows)
+    assert "#" in "".join(map_rows)
+    assert "." in "".join(map_rows)
+
+
+def test_office_uses_varma_staff_not_sitcom_names():
+    blob = HTML + CSS + JS + FLOOR
+    for name in SITCOM:
+        assert name not in blob
+    for label in (
+        "Jordan Hale · CEO",
+        "Asha Patel · Research",
+        "Sam Okeke · Challenge",
+        "Elena Voss · Risk",
+        "Chris Adeyemi · Trader",
+        "Nina Kapoor · Quant",
+        "Owen Blake · Technology",
+    ):
+        assert label in HTML
+        assert label in JS

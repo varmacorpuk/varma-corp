@@ -14,7 +14,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 6. Brief stored in the database, then handed off to the CEO as the 07:30 meeting recipient (Document 18). Handoff artefact lives in the database, not on a desktop disk.
 7. Challenge reviews a SAMPLE thesis (not a live trade). Thesis and challenge review are database artefacts, handed to Risk.
 8. Risk deny-path demo: reviews an unsafe/out-of-policy LIVE-gold path and DENIES it. Risk cannot approve LIVE.
-9. Desktop: 2D office, four employee sprites, click to right-hand panel; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. Chat history is loaded from the database. No Talk/voice.
+9. Desktop: 2D pixel-art office (rooms, desks, plants, conference table, rec room), seven Varma staff sprites labelled person · department, click to right-hand panel; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. Chat history is loaded from the database. No Talk/voice.
 10. pytest without paid APIs. Execution in LIVE mode is denied. Empty allow-list cannot execute.
 11. TEMPORARY DEVELOPMENT DEFAULT watchlist of a few listed stocks. It is not the execution allow-list. No gold.
 12. Nightly Europe/London memory filter (on-demand): archives working context in the database; evidence stays append-only; filter does not write controls.
@@ -212,7 +212,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 
 ## Next slice
 
-Practice / paper is open. Grand Opening PAPER happened (Hari explicit yes, 3 Sep 2026). LIVE stays blocked. BROKER_PAPER and LIVE remain UNLOADED. £1,000 fake money on the internal simulator. No office visual redesign. No Mac installers. Approve LIVE remains impossible until Hari's explicit Grand Opening LIVE yes after paper evidence.
+Practice / paper is open. Grand Opening PAPER happened (Hari explicit yes, 3 Sep 2026). LIVE stays blocked. BROKER_PAPER and LIVE remain UNLOADED. £1,000 fake money on the internal simulator. No Mac installers. Approve LIVE remains impossible until Hari's explicit Grand Opening LIVE yes after paper evidence.
 
 ## Specs
 
