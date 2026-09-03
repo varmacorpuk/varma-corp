@@ -27,7 +27,8 @@ the record.
   MeasuredLLM; `AICallLog` + `ai_usage_summary`; token-efficiency runtime; first paper-trade PATH;
   Board Addendum K; **Grand Opening PAPER**. Practice / paper only. A legal allow-list practice
   order can fill in the internal simulator on the £1,000 paper book when in session and within
-  Addendum A limits. LIVE stays BLOCKED. BROKER_PAPER and LIVE ports stay UNLOADED. No real broker.
+  Addendum A limits. Named ticket PAPER-20260903-02 (SHEL.L BUY 5) runs on
+  `data/varma_paper_open.db` only. LIVE stays BLOCKED. BROKER_PAPER and LIVE ports stay UNLOADED. No real broker.
   No real money. FakeLLM stays default. Do not call AI for permit/deny/fills.
 - **Incomplete / not built:** Grand Opening LIVE; real LLM binding; live/broker execution;
   semantic memory summarisation; response caching; event-idempotency schema.
