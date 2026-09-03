@@ -235,7 +235,7 @@ def test_5m_opening_range_updates_from_minute_5():
     ]
     before = evaluate_symbol("AAPL", plan=_plan("AAPL"), now=MINUTE_4, bars_1m=bars_1m, bars_5m=bars_5m)
     assert before["opening_range_5m"]["OR_high"] is None
-    assert before.get("opening_range_5m_applied") is None
+    assert before["opening_range_5m_applied"] is False
 
     after = evaluate_symbol("AAPL", plan=_plan("AAPL"), now=MINUTE_5, bars_1m=bars_1m, bars_5m=bars_5m)
     assert after["opening_range_5m"]["OR_high"] == 103.5

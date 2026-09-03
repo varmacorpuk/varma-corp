@@ -190,7 +190,8 @@ def evaluate_symbol(
     done_1m = completed_bars(bars_1m, now, latency_buffer=latency_buffer, symbol=name, timeframe="1m")
     done_5m = completed_bars(bars_5m, now, latency_buffer=latency_buffer, symbol=name, timeframe="5m")
     minutes = minutes_from_ny_open(now)
-    or_5m = opening_range(done_5m) if minutes >= MINUTE_5 and done_5m else {"OR_high": None, "OR_low": None, "bar_count": 0}
+    or_5m_ready = minutes >= MINUTE_5 and bool(done_5m)
+    or_5m = opening_range(done_5m) if or_5m_ready else {"OR_high": None, "OR_low": None, "bar_count": 0}
     result: dict[str, Any] = {
         "symbol": name,
         "desk_symbol": symbol,
@@ -203,6 +204,7 @@ def evaluate_symbol(
         "completed_1m": len(done_1m),
         "completed_5m": len(done_5m),
         "opening_range_5m": or_5m,
+        "opening_range_5m_applied": or_5m_ready,
         "frozen_level": None if name_plan is None else name_plan.level,
         "plan_frozen": bool(plan.frozen),
         "technical": _technical_context(done_1m),
@@ -259,8 +261,6 @@ def evaluate_symbol(
             "next_price_fill": True,
         }
     )
-    if minutes >= MINUTE_5:
-        result["opening_range_5m_applied"] = True
     return result
 
 
