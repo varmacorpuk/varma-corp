@@ -659,6 +659,7 @@ def create_app() -> FastAPI:
                     "paper_session",
                     "addendum_c",
                     "addendum_j",
+                    "addendum_k",
                     "backup",
                 ],
             },

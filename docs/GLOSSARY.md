@@ -26,7 +26,11 @@ file does not invent governance terms. Where a term maps to code, the code is au
   simulator denies all fills, even for allow-listed tickers. The first paper-trade PATH exists
   (Trader proposal → ControlEngine → simulator) and is still gated CLOSED.
 - **Allow-list (Addendum E)** — PAPER execution membership. Exists but cannot fill until open. Empty
-  allow-list denies. Gold is never authorised.
+  allow-list denies. Gold is never authorised. After London cash close, Addendum K denies the three
+  LSE names (`SHEL.L`, `AZN.L`, `ULVR.L`) only; US names are not denied by K.
+- **Addendum K** — Board record 2026-09-03 (Hari explicit yes). After London cash shuts, deny paper
+  orders in the three LSE names only. Flatten remains US regular cash close (Addendum C not rewritten).
+  PAPER stays CLOSED. Letter exists outside the repo. Chat is not the record.
 - **Paper trading** — internal fill *simulator* only (`varma/paper/`). Not a broker. £1000 is a
   FUTURE starting book only. Board job: `run_paper_trade_path`.
 - **BROKER_PAPER / LIVE ports** — external execution ports; remain UNLOADED. No broker fills.

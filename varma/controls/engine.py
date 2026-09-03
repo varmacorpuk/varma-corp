@@ -5,6 +5,8 @@ This slice never loads a live adapter. Unknown tickers and gold deny.
 Numeric limits are Board Addendum A 2026-08-27 (Board-set; unused until open).
 PAPER allow-list is Board Addendum E 2026-08-27. Employees cannot write control tables.
 Board Addendum I 2026-08-27: PAPER execution is CLOSED until Grand Opening.
+Board Addendum K 2026-09-03: after London cash shuts, deny SHEL.L / AZN.L /
+ULVR.L only. Flatten remains US regular cash close.
 
 trading_mode stays LIVE_BLOCKED. Simulator DENY all fills while closed.
 Do not load LIVE or BROKER_PAPER. The first paper-trade PATH exists
@@ -47,11 +49,19 @@ from varma.controls.addendum_j import (
     BACKUP_WRITE_FIELDS,
     addendum_j_public,
 )
+from varma.controls.addendum_k import (
+    ADDENDUM_K_LABEL,
+    ADDENDUM_K_WRITE_FIELDS,
+    LSE_AFTER_LONDON_CASH_CLOSE_REASON,
+    LSE_SESSION_RULE_DENY_AFTER_LONDON_CASH_CLOSE,
+    addendum_k_public,
+)
 from varma.controls.lse_session import (
     LSE_SESSION_RULE_REASON,
     LSE_WRITE_FIELDS,
     lse_hold_blocks,
     lse_session_public,
+    lse_session_rule_is_unset,
 )
 from varma.db.models import (
     AllowListInstrument,
@@ -85,8 +95,11 @@ LIMIT_WRITE_FIELDS = set(REQUIRED_LIMIT_KEYS) | {
     "addendum_c",
     "addendum_i",
     "addendum_j",
+    "addendum_k",
     "control_settings",
-} | set(FIRM_OPEN_WRITE_FIELDS) | set(BACKUP_WRITE_FIELDS) | set(LSE_WRITE_FIELDS)
+} | set(FIRM_OPEN_WRITE_FIELDS) | set(BACKUP_WRITE_FIELDS) | set(LSE_WRITE_FIELDS) | set(
+    ADDENDUM_K_WRITE_FIELDS
+)
 
 
 @dataclass
@@ -245,10 +258,14 @@ class ControlEngine:
         if allow and symbol not in allow:
             return self._deny("SYMBOL_NOT_ON_ALLOW_LIST", actor_id, order)
 
-        # Distinct from PAPER_EXECUTION_CLOSED so these three cannot silently
-        # fill at Grand Opening. Addendum C flatten is unchanged.
-        if lse_hold_blocks(self.session, symbol):
-            return self._deny_lse_session_unset(actor_id, order)
+        # Addendum K: after London cash shut, deny SHEL.L / AZN.L / ULVR.L only.
+        # Checked before CLOSED so the London-shut reason is visible in tests
+        # while PAPER stays CLOSED. During London open, K does not block and
+        # CLOSED still holds. Missing rule stays fail-closed UNSET.
+        if lse_hold_blocks(self.session, symbol, at=now):
+            if lse_session_rule_is_unset(self.session):
+                return self._deny_lse_session_unset(actor_id, order)
+            return self._deny_lse_after_london_cash_close(actor_id, order)
 
         if closed:
             return self._deny_paper_closed(actor_id, order)
@@ -421,6 +438,7 @@ class ControlEngine:
             "addendum_f": addendum_f_public(),
             "addendum_i": addendum_i_public(),
             "addendum_j": addendum_j_public(),
+            "addendum_k": addendum_k_public(),
             "lse_session": lse_session_public(self.session),
             "paper_execution": "CLOSED" if self.paper_execution_closed() else "OPEN",
             "paper_execution_closed": self.paper_execution_closed(),
@@ -445,7 +463,7 @@ class ControlEngine:
         return Decision(False, reason, details)
 
     def _deny_lse_session_unset(self, actor_id: str, order: dict[str, Any]) -> Decision:
-        """Fail-closed LSE hold. Not a rewrite of Addendum C. Not a US listing."""
+        """Fail-closed LSE hold when the Board K rule is missing."""
         return self._deny(
             LSE_SESSION_RULE_REASON,
             actor_id,
@@ -461,6 +479,30 @@ class ControlEngine:
                 "invented_us_listings": False,
                 "us_names_wait_on_grand_opening": True,
                 "paper_execution_closed": self.paper_execution_closed(),
+                "employees_cannot_write": True,
+            },
+        )
+
+    def _deny_lse_after_london_cash_close(
+        self, actor_id: str, order: dict[str, Any]
+    ) -> Decision:
+        """Board Addendum K: LSE three only, after London cash shut. Not flatten."""
+        return self._deny(
+            LSE_AFTER_LONDON_CASH_CLOSE_REASON,
+            actor_id,
+            order,
+            {
+                "session_rule": LSE_SESSION_RULE_DENY_AFTER_LONDON_CASH_CLOSE,
+                "addendum_k": ADDENDUM_K_LABEL,
+                "london_cash_close_is_not_flatten": True,
+                "addendum_c_not_rewritten": True,
+                "split_flatten_clocks": False,
+                "flatten_at": "US_REGULAR_CASH_CLOSE",
+                "flatten_not_at": "LONDON_CASH_CLOSE",
+                "invented_us_listings": False,
+                "us_names_not_denied_by_k": True,
+                "paper_execution_closed": self.paper_execution_closed(),
+                "not_grand_opening": True,
                 "employees_cannot_write": True,
             },
         )

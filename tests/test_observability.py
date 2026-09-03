@@ -89,6 +89,7 @@ def test_board_observability_api_is_read_only(client):
     assert "runnable_jobs" in office["board_observability"]["includes"]
     assert "backup" in office["board_observability"]["includes"]
     assert "addendum_j" in office["board_observability"]["includes"]
+    assert "addendum_k" in office["board_observability"]["includes"]
     assert "kill_switch" in office["board_observability"]["includes"]
     assert "evaluation" in office["board_observability"]["includes"]
 

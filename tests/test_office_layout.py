@@ -119,5 +119,7 @@ def test_office_click_opens_panel_logic():
     assert "job-runs" in CSS
     assert "Board Addendum I" in JS
     assert "CLOSED until Grand Opening" in JS
+    assert "Board Addendum K" in JS
+    assert "LSE after London cash close" in JS
     assert "no Board Member diary invite" in JS
     assert "Talk is disabled" in JS or "talk-disabled" in HTML

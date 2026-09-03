@@ -43,4 +43,4 @@ the index.
 | F (2026-08-27) | Named staff (person · department) | `varma/controls/addendum_f.py`, `db/seed.py` | `tests/test_addendum_f.py` |
 | I (2026-08-27) | Company CLOSED until Grand Opening | `varma/controls/addendum_i.py` | `tests/test_addendum_i.py` |
 | J (2026-08-27) | Encrypted company backup | `varma/controls/addendum_j.py`, `varma/backup/` | `tests/test_addendum_j.py` |
-| LSE hold | SHEL.L/AZN.L/ULVR.L fail-closed | `varma/controls/lse_session.py` | `tests/test_lse_session.py` |
+| K (2026-09-03) | After London cash close, deny SHEL.L/AZN.L/ULVR.L only | `varma/controls/addendum_k.py`, `lse_session.py` | `tests/test_addendum_k.py`, `test_lse_session.py` |

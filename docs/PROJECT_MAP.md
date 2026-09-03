@@ -94,7 +94,8 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
   AI never enforces controls.
 - `varma/controls/addendum_a.py` (numeric limits), `addendum_c.py` (paper session/flatten),
   `addendum_e.py` (PAPER allow-list), `addendum_f.py` (named staff/slugs), `addendum_i.py`
-  (CLOSED gate), `addendum_j.py` (backup), `lse_session.py` (LSE fail-closed), `risk.py`
+  (CLOSED gate), `addendum_j.py` (backup), `addendum_k.py` (LSE after London cash close),
+  `lse_session.py` (Addendum K time window + UNSET fail-closed fallback), `risk.py`
   (RiskPolicy), `kill_switch.py` (Board-only halt/reset).
 
 ### Memory systems (four stores, Document 08)

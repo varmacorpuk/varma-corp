@@ -49,6 +49,7 @@ def test_default_seed_has_seven_named_employees_and_board_addenda(session):
     assert set(ControlEngine(session).allow_list_symbols()) == set(ADDENDUM_E_SYMBOLS)
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert session.get(ControlSetting, "paper_execution").value == "CLOSED"
+    assert session.get(ControlSetting, "lse_session_rule").value == "DENY_LSE_AFTER_LONDON_CASH_CLOSE"
     for key, value, _unit in ADDENDUM_A_LIMITS:
         assert session.get(NumericLimit, key).value == value
     trader = rows[TRADER_SLUG]
@@ -131,6 +132,7 @@ def test_stale_sqlite_is_reconciled_to_board_encoded(db_url):
         for key, value, _unit in ADDENDUM_A_LIMITS:
             assert session.get(NumericLimit, key).value == value
         assert session.get(ControlSetting, "paper_execution").value == "CLOSED"
+        assert session.get(ControlSetting, "lse_session_rule").value == "DENY_LSE_AFTER_LONDON_CASH_CLOSE"
 
         trader = session.query(Employee).filter_by(slug=TRADER_SLUG).one()
         assert (
