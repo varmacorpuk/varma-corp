@@ -41,8 +41,21 @@ from varma.employees.runtime import EmployeeRuntime
 from varma.observability.board import BoardObservability
 from varma.paper.simulator import PaperFillSimulator
 from varma.ports.execution import BROKER_PAPER_LOADED, LIVE_PORT_LOADED
-from varma.routines.run_paper_trade_path import run_paper_trade_path
-from varma.skills.propose_paper_ticket import LEGAL_PAPER_TICKET, ONLY_TRADER_MAY_PROPOSE
+from varma.routines.run_paper_trade_path import (
+    DEFAULT_DEV_DB_FILENAME,
+    REFUSE_DEFAULT_VARMA_DB,
+    assert_url_is_not_default_varma_db,
+    paper_open_book_sqlite_path,
+    paper_open_book_url,
+    run_paper_trade_path,
+)
+from varma.skills.propose_paper_ticket import (
+    LEGAL_PAPER_TICKET,
+    ONLY_TRADER_MAY_PROPOSE,
+    PAPER_20260903_02,
+    PAPER_20260903_02_ID,
+    named_paper_ticket,
+)
 
 
 def _trader(session) -> Employee:
@@ -252,3 +265,22 @@ def test_no_production_open_hook_default_config(session, client):
     jobs = [row["id"] for row in snap["runnable_jobs"]["items"]]
     assert "run-paper-trade-path" in jobs
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
+
+
+def test_paper_open_book_url_never_varma_db():
+    path = paper_open_book_sqlite_path()
+    assert path.name == "varma_paper_open.db"
+    assert path.name != DEFAULT_DEV_DB_FILENAME
+    url = paper_open_book_url()
+    assert url.endswith("varma_paper_open.db")
+    try:
+        assert_url_is_not_default_varma_db("sqlite:///data/varma.db")
+        raise AssertionError("default varma.db must be refused for the paper-open book")
+    except RuntimeError as exc:
+        assert REFUSE_DEFAULT_VARMA_DB in str(exc)
+    ticket = named_paper_ticket(PAPER_20260903_02_ID)
+    assert ticket["symbol"] == "SHEL.L"
+    assert ticket["quantity"] == 5.0
+    assert ticket["execution_port"] == "SIMULATOR"
+    assert ticket["ticket_id"] == PAPER_20260903_02_ID
+    assert PAPER_20260903_02["execution_port"] == "SIMULATOR"

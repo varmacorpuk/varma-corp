@@ -54,7 +54,8 @@ class FakeMarketData:
             "GOOGL": 160.0,
             "JPM": 200.0,
             "JNJ": 150.0,
-            "SHEL.L": 27.5,
+            # LSE last treated as GBP (pence/100). 3409.3p delayed ≈ 34.093 GBP.
+            "SHEL.L": 34.093,
             "AZN.L": 112.0,
             "ULVR.L": 45.0,
         }
