@@ -39,6 +39,7 @@ from varma.controls.addendum_c import (
 )
 from varma.controls.addendum_e import addendum_e_public
 from varma.controls.addendum_f import addendum_f_public
+from varma.controls.addendum_l import addendum_l_public
 from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
     FIRM_CLOSED_REASON,
@@ -534,6 +535,7 @@ class ControlEngine:
             "addendum": addendum_a_public(),
             "addendum_c": addendum_c_public(),
             "addendum_e": addendum_e_public(),
+            "addendum_l": addendum_l_public(),
             "addendum_f": addendum_f_public(),
             "addendum_i": addendum_i_public(self.session),
             "addendum_j": addendum_j_public(),

@@ -33,7 +33,9 @@ from varma.db.seed import MI_SLUG
 from varma.observability.board import BoardObservability
 from varma.ports.execution import BROKER_PAPER_LOADED, LIVE_PORT_LOADED
 
-US_SEVEN = ("AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "JPM", "JNJ")
+US_NAMES = tuple(s for s in ADDENDUM_E_SYMBOLS if not s.endswith(".L"))
+from varma.clock import now_london
+from varma.db.models import AllowListInstrument
 EMPLOYEE_SETS = (
     EMPLOYEE_HEADERS,
     CEO_HEADERS,
@@ -49,6 +51,15 @@ def _grant_place(session):
     session.query(Permission).filter_by(subject_id=emp.id, action="place_order").one().allowed = True
     session.commit()
     return emp
+
+
+def _add_lse_to_allow_list(session):
+    """Test-only: add SHEL.L/AZN.L/ULVR.L so Addendum K can be exercised."""
+    now = now_london()
+    for sym in ADDENDUM_K_LSE_SYMBOLS:
+        if session.query(AllowListInstrument).filter_by(symbol=sym).one_or_none() is None:
+            session.add(AllowListInstrument(symbol=sym, venue="LSE", approved_by="test-only", approved_at=now))
+    session.commit()
 
 
 def test_addendum_k_is_board_set_not_unset(session):
@@ -81,6 +92,7 @@ def test_addendum_k_is_board_set_not_unset(session):
 
 def test_london_open_uk_names_may_fill_when_paper_open(session):
     """Mocked London-open session: UK names are not denied by K while London cash is open."""
+    _add_lse_to_allow_list(session)
     emp = _grant_place(session)
     engine = ControlEngine(session)
     assert engine.paper_execution_closed() is False
@@ -109,6 +121,7 @@ def test_after_london_shut_session_rule_unit_denies_lse_three_ignoring_closed(se
     for symbol in ADDENDUM_K_LSE_SYMBOLS:
         assert lse_hold_blocks(session, symbol, at=LONDON_CASH_CLOSE) is True
         assert lse_hold_blocks(session, symbol, at=SESSION_OPEN) is False
+    _add_lse_to_allow_list(session)
     emp = _grant_place(session)
     engine = ControlEngine(session)
     for symbol in ADDENDUM_K_LSE_SYMBOLS:
@@ -149,6 +162,7 @@ def test_us_names_not_denied_by_k_after_london_shut(session):
 
 
 def test_k_survives_hypothetical_paper_open_after_london_shut(session):
+    _add_lse_to_allow_list(session)
     emp = _grant_place(session)
     paper = session.get(ControlSetting, "paper_execution")
     paper.value = "OPEN"
@@ -168,7 +182,8 @@ def test_k_survives_hypothetical_paper_open_after_london_shut(session):
 
 def test_no_invented_us_listings_and_addendum_c_unrewritten(session):
     allow = set(ControlEngine(session).allow_list_symbols())
-    assert set(LSE_HOLD_SYMBOLS) <= allow
+    # After Addendum L the default list is US-only; LSE names removed.
+    # K logic stays in code for when LSE names return.
     for fake in INVENTED_US_LISTINGS:
         assert fake not in allow
     assert allow == set(ADDENDUM_E_SYMBOLS)
@@ -185,6 +200,7 @@ def test_no_invented_us_listings_and_addendum_c_unrewritten(session):
 
 
 def test_missing_session_rule_still_fail_closed_unset(session):
+    _add_lse_to_allow_list(session)
     emp = _grant_place(session)
     row = session.get(ControlSetting, LSE_SESSION_RULE_KEY)
     session.delete(row)

@@ -47,6 +47,17 @@ from varma.skills.propose_paper_ticket import (
 EMPLOYEE_SETS = (EMPLOYEE_HEADERS, CEO_HEADERS, TRADER_HEADERS, TECH_HEADERS)
 
 
+def _add_lse_to_allow_list(session):
+    """Test-only: add SHEL.L/AZN.L/ULVR.L so LSE-era tests still exercise K."""
+    from varma.clock import now_london as _now
+    from varma.db.models import AllowListInstrument
+    now = _now()
+    for sym in ("SHEL.L", "AZN.L", "ULVR.L"):
+        if session.query(AllowListInstrument).filter_by(symbol=sym).one_or_none() is None:
+            session.add(AllowListInstrument(symbol=sym, venue="LSE", approved_by="test-only", approved_at=now))
+    session.commit()
+
+
 def _trader(session) -> Employee:
     return session.query(Employee).filter_by(slug=TRADER_SLUG).one()
 
@@ -210,6 +221,7 @@ def test_board_member_can_open_paper_from_closed_fixture(client, session):
 
 
 def test_shel_l_denied_by_k_after_london_cash_close_while_paper_open(session):
+    _add_lse_to_allow_list(session)
     engine = ControlEngine(session)
     assert engine.paper_execution_closed() is False
     d = engine.place_order(
@@ -299,6 +311,7 @@ def test_overnight_and_after_us_close_flatten_rules_hold(session):
 
 
 def test_paper_20260903_02_shel_l_buy_5_fills_in_london_session(session):
+    _add_lse_to_allow_list(session)
     ticket = dict(PAPER_20260903_02)
     assert ticket["symbol"] == "SHEL.L"
     assert ticket["side"] == "buy"

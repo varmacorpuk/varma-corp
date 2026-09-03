@@ -36,7 +36,7 @@ def _grant_place_and_allow(session: Session, *, symbol: str) -> Employee:
         session.add(
             AllowListInstrument(
                 symbol=symbol,
-                venue="NASDAQ",
+                venue="LSE" if symbol.endswith(".L") else "NASDAQ",
                 approved_by="test-only",
                 approved_at=now_london(),
             )

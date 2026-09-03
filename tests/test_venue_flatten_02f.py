@@ -36,6 +36,16 @@ from varma.paper.flatten import flatten_all_paper, flatten_lse_paper
 from varma.ports.execution import BROKER_PAPER_LOADED, LIVE_PORT_LOADED
 
 
+def _add_lse_to_allow_list(session):
+    from varma.clock import now_london as _now
+    from varma.db.models import AllowListInstrument
+    now = _now()
+    for sym in ADDENDUM_K_LSE_SYMBOLS:
+        if session.query(AllowListInstrument).filter_by(symbol=sym).one_or_none() is None:
+            session.add(AllowListInstrument(symbol=sym, venue="LSE", approved_by="test-only", approved_at=now))
+    session.commit()
+
+
 def _grant_place(session):
     emp = session.query(Employee).filter_by(slug=MI_SLUG).one()
     session.query(Permission).filter_by(subject_id=emp.id, action="place_order").one().allowed = True
@@ -93,6 +103,7 @@ def test_bound_exit_cannot_be_dropped_independently_of_opening_buy():
 
 
 def test_open_shel_l_exits_at_london_auction_and_cannot_remain_into_us_hours(session):
+    _add_lse_to_allow_list(session)
     emp = _grant_place(session)
     engine = ControlEngine(session)
     shel = engine.place_order(
@@ -156,6 +167,7 @@ def test_open_shel_l_exits_at_london_auction_and_cannot_remain_into_us_hours(ses
 
 
 def test_us_flatten_does_not_close_lse_inventory(session):
+    _add_lse_to_allow_list(session)
     emp = _grant_place(session)
     engine = ControlEngine(session)
     filled = engine.place_order(
@@ -179,7 +191,7 @@ def test_us_flatten_does_not_close_lse_inventory(session):
 def test_us_names_remain_after_london_flatten_until_us_close(session):
     emp = _grant_place(session)
     engine = ControlEngine(session)
-    for symbol in ("MSFT", "JPM", "JNJ"):
+    for symbol in ("MSFT", "META", "TSLA"):
         d = engine.place_order(
             actor_id=emp.id,
             actor_type="employee",
