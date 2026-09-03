@@ -270,6 +270,20 @@ class BoardObservability:
                 for p in self.session.query(PaperPosition).all()
             ],
             "fills": self.session.query(PaperFill).count(),
+            "fill_rows": [
+                {
+                    "id": row.id,
+                    "symbol": row.symbol,
+                    "side": row.side,
+                    "quantity": row.quantity,
+                    "price": row.price,
+                    "notional_gbp": row.notional_gbp,
+                    "commission_gbp": row.commission_gbp,
+                    "is_live": row.is_live,
+                    "filled_at": row.filled_at.isoformat() if row.filled_at else None,
+                }
+                for row in self.session.query(PaperFill).order_by(PaperFill.filled_at.asc()).all()
+            ],
             "open_orders": self.session.query(PaperOrder).filter_by(status="OPEN").count(),
             "assumptions": simulator_assumptions(),
             "allow_list_empty": control_snap.get("allow_list_empty", True),

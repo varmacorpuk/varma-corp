@@ -1,0 +1,70 @@
+{
+  "kind": "PAPER_OPEN_LEDGER",
+  "book": "varma_paper_open.db",
+  "trading_mode": "LIVE_BLOCKED",
+  "is_live": false,
+  "live_fills": false,
+  "broker_paper_loaded": false,
+  "ticket_id": "PAPER-20260903-02",
+  "account": {
+    "id": 1,
+    "currency": "GBP",
+    "timezone": "Europe/London",
+    "simulated_capital": 1000.0,
+    "cash": 829.279217,
+    "equity_at_day_start": 1000.0,
+    "london_day": "2026-09-03",
+    "source": "Board Addendum A 2026-08-27",
+    "updated_at": "2026-09-03T09:59:00"
+  },
+  "orders": [
+    {
+      "id": "4e7af75a-4b76-4bcc-ae3b-502dfb16c00b",
+      "symbol": "SHEL.L",
+      "side": "buy",
+      "quantity": 5.0,
+      "notional_gbp": 170.635465,
+      "status": "FILLED",
+      "london_day": "2026-09-03",
+      "mid_price": 34.093,
+      "fill_price": 34.127093,
+      "spread_bps": 10.0,
+      "slippage_bps": 5.0,
+      "commission_gbp": 0.085318,
+      "actor_id": "d4f6cac1-79ea-46c6-a36d-5b38a934458d",
+      "execution_port": "SIMULATOR",
+      "is_paper": true,
+      "is_live": false,
+      "created_at": "2026-09-03T09:59:00",
+      "filled_at": "2026-09-03T09:59:00",
+      "cancelled_at": null,
+      "cancel_reason": "",
+      "notes": "INTERNAL PAPER FILL SIMULATOR assumptions: spread 10 bps of mid; half-spread + slippage 5 bps = 10 bps adverse vs mid; commission 5 bps of notional; FakeMarketData last treated as GBP (no FX vendor). Not BROKER_PAPER. Not LIVE. Not a vendor contract.",
+      "is_flatten": false
+    }
+  ],
+  "fills": [
+    {
+      "id": "917138ec-34d0-45fa-8080-380ab59334fc",
+      "order_id": "4e7af75a-4b76-4bcc-ae3b-502dfb16c00b",
+      "symbol": "SHEL.L",
+      "side": "buy",
+      "quantity": 5.0,
+      "price": 34.127093,
+      "notional_gbp": 170.635465,
+      "commission_gbp": 0.085318,
+      "london_day": "2026-09-03",
+      "filled_at": "2026-09-03T09:59:00",
+      "is_live": false
+    }
+  ],
+  "positions": [
+    {
+      "symbol": "SHEL.L",
+      "quantity": 5.0,
+      "avg_cost_gbp": 34.127093,
+      "updated_at": "2026-09-03T09:59:00"
+    }
+  ],
+  "closed_trades": []
+}

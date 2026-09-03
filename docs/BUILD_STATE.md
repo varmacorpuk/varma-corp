@@ -7,10 +7,11 @@ operations. The **source code on the branch you have checked out is authoritativ
 disagrees with that code, the code wins and this file must be corrected.
 
 _Last updated: 2026-09-03._ Grand Opening PAPER (Hari explicit yes, word: Open). LIVE still
-blocked. CEO desk 02F is bound in ControlEngine: `split_flatten_clocks` true. Paper-OPEN book is
-`data/varma_paper_open.db`. Named ticket PAPER-20260903-02 (SHEL.L BUY 5) uses that book only.
-LIVE_BLOCKED. Kernel down / no daemon. Pytest **208**. Do not invent a percent-complete. Chat is
-not the record.
+blocked. CEO desk 02F is bound in ControlEngine: `split_flatten_clocks` true. Pixel-art office
+floor is on `main` (#36). Paper-OPEN book is `data/varma_paper_open.db` (tracked) plus
+`data/paper_open_ledger.json`. Named ticket PAPER-20260903-02 filled: SHEL.L BUY 5,
+cash £829.279217, fill `917138ec-34d0-45fa-8080-380ab59334fc` at 34.127093 GBP. LIVE_BLOCKED.
+Kernel down / no daemon. Do not invent a percent-complete. Chat is not the record.
 
 ## 0. RECOVERY / CONTINUATION INSTRUCTION
 > Read `BUILD_STATE.md` first. Then read `PROJECT_MAP.md` and `SPEC_INDEX.md`. Do not rescan the
@@ -21,17 +22,19 @@ not the record.
 ## 1. CURRENT BUILD STATUS
 - **Formal completion percentage: not established — do not invent one.** The project is the first
   vertical slice per Document 18.
-- **On current `main` (02F bound, PR #34, plus PAPER-20260903-02):** FastAPI kernel; 7 durable AI employees;
-  skills (brief, challenge, risk, Trader paper-ticket proposal); on-demand routines (brief,
-  challenge, risk-deny, 07:30 meeting, nightly memory filter, US flatten, London-auction flatten,
-  backup, Trader paper-ticket proposal); four memory stores; durable DB handoffs; deterministic
-  ControlEngine with bound 02F; internal paper simulator; Board observability; 2D desktop UI; chat
-  (Board-only); FakeLLM default wrapped by MeasuredLLM; `AICallLog` + `ai_usage_summary`;
-  token-efficiency runtime; first paper-trade PATH; Board Addendum K; Grand Opening PAPER;
-  Addendum E JPM/JNJ NYSE. Named ticket PAPER-20260903-02 (SHEL.L BUY 5) runs on
-  `data/varma_paper_open.db` only. Practice / paper only. LIVE stays BLOCKED. BROKER_PAPER and LIVE
-  ports stay UNLOADED. No real broker. No real money. FakeLLM stays default. Do not call AI for
-  permit/deny/fills. Kernel is down; do not start it for this encoding.
+- **On current `main` (02F, pixel office #36, PAPER-20260903-02) plus this persist landing:** FastAPI
+  kernel; 7 durable AI employees; skills (brief, challenge, risk, Trader paper-ticket proposal);
+  on-demand routines (brief, challenge, risk-deny, 07:30 meeting, nightly memory filter, US flatten,
+  London-auction flatten, backup, Trader paper-ticket proposal); four memory stores; durable DB
+  handoffs; deterministic ControlEngine with bound 02F; internal paper simulator; Board observability;
+  pixel-art 2D desktop UI; chat (Board-only); FakeLLM default wrapped by MeasuredLLM; `AICallLog` +
+  `ai_usage_summary`; token-efficiency runtime; first paper-trade PATH; Board Addendum K; Grand
+  Opening PAPER; Addendum E JPM/JNJ NYSE. Named ticket PAPER-20260903-02 (SHEL.L BUY 5) filled on
+  `data/varma_paper_open.db` only. Never `data/varma.db`. Practice / paper only. LIVE stays BLOCKED.
+  BROKER_PAPER and LIVE ports stay UNLOADED. No real broker. No real money. FakeLLM stays default.
+  Do not call AI for permit/deny/fills. Not a Board tap. Not a Hari card. The practice book is
+  tracked (`data/varma_paper_open.db` + `data/paper_open_ledger.json`) so the floor keeps the
+  SHEL.L 5 fill. Kernel down; do not start it for this landing. Do not place new orders.
 - **Incomplete / not built:** Grand Opening LIVE; real LLM binding; live/broker execution;
   semantic memory summarisation; response caching; event-idempotency schema.
 - **Deliberately closed/disabled:** `trading_mode=LIVE_BLOCKED`; BROKER_PAPER and LIVE ports
@@ -40,11 +43,11 @@ not the record.
   ControlEngine stays authority.
 
 ## 2. COMPLETED WORK (GitHub PR state, verified 2026-09-03)
-Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**, **#31**, **#32**, **#33**, **#34**, **#35**, **#37**.
-(#16 is merged — Addendum I is the two-opening rule, not an unmerged close.)
-#32 recoded Addendum E listing venues (JPM/JNJ NYSE). #34 binds CEO desk 02F in ControlEngine.
-#35/#37 record that landing on `main`. #33 is the SHEL.L BUY 5 named paper ticket on
-`data/varma_paper_open.db`. This PR (#36) is the pixel-art office floor only.
+Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**, **#31**, **#32**,
+**#33**, **#34**, **#35**, **#36**, **#37**. (#16 is merged — Addendum I is the two-opening rule, not
+an unmerged close.) #32 recoded Addendum E listing venues (JPM/JNJ NYSE). #34 binds CEO desk 02F.
+#36 is the pixel-art office floor. #33 is the SHEL.L BUY 5 named paper ticket. This persist landing
+commits the filled practice book.
 
 | PR | On `main`? | What |
 | --- | --- | --- |
@@ -62,7 +65,8 @@ Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **
 | #35 | yes | BUILD_STATE record of #34 on `main` (02F bound, LIVE_BLOCKED, kernel down) |
 | #37 | yes | Align BUILD_STATE and PROJECT_MAP with main after 02F merge |
 | #33 | yes | Named ticket PAPER-20260903-02: SHEL.L BUY 5 on `data/varma_paper_open.db` only. Pytest **206** |
-| #36 | this PR | Pixel-art Varma office floor. Right-hand panel unchanged. Click does not grant authority. LIVE_BLOCKED |
+| #36 | yes | Pixel-art Varma office floor. Click does not grant authority. LIVE_BLOCKED. Pytest **208** |
+| this persist | landing | Tracked filled practice book (sqlite + JSON). SHEL.L 5, cash £829.279217 |
 
 **Board Grand Opening PAPER** (3 Sep 2026, Hari explicit yes, word: Open) is Board record,
 encoded as a Board-only `write_control`. Silence was not this. Addendum I still exists as the
@@ -76,22 +80,23 @@ Firm day still runs to NY close. Risk reads `engine.snapshot()["risk_02f"]` (`bo
 re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
 
 ## 3. CURRENT BRANCH / REPOSITORY STATE
-- **Default branch `main`:** PR **#34** is merged (encoding commit `079b267`, merge `2e03dbe`).
-  CEO desk 02F bound. Venue-split flatten clocks. `split_flatten_clocks` **true**. Pytest **204**.
-  PAPER execution OPEN. LIVE_BLOCKED. Kernel down / no daemon. JPM/JNJ NYSE (from #32). Capital
-  £1,000 and Addendum A limits unchanged. Allow-list membership unchanged. Kill switch unchanged.
-  FakeLLM remains default. No fills on the paper-OPEN book. Do not start the office kernel.
-- **Paper-OPEN book:** `data/varma_paper_open.db`. Never empty `data/varma.db`. Never reset/wipe a
-  different sqlite file.
+- **Default branch `main`:** pixel office #36 merged (`c3e1d67`). 02F bound. PAPER-20260903-02 on
+  `main` (#33). PAPER execution OPEN. LIVE_BLOCKED. Kernel down / no daemon. JPM/JNJ NYSE (from #32).
+  Capital £1,000 and Addendum A limits unchanged. Allow-list membership unchanged. Kill switch
+  unchanged. FakeLLM remains default. Do not start the office kernel. Do not place new orders.
+- **Paper-OPEN book:** `data/varma_paper_open.db` (tracked) plus `data/paper_open_ledger.json`.
+  SHEL.L BUY 5 is filled. Cash £829.279217. Fill id `917138ec-34d0-45fa-8080-380ab59334fc`.
+  Never empty `data/varma.db`. Never reset/wipe a different sqlite file.
 - Verify live state with `git log --oneline origin/main` and `gh pr list --state all` before
   continuing.
 
 ## 4. ARCHITECTURE STATE (see `docs/PROJECT_MAP.md` for file-level detail)
 - **Application:** FastAPI kernel `varma/kernel/app.py` (entry `varma/__main__.py`). Desktop UI is a
   projection; DB is the source of truth. No daemon/scheduler; routines are on-demand. Kernel down
-  for this encoding.
+  for this landing.
 - **Database:** SQLAlchemy `varma/db/` (SQLite dev / Postgres via compose). Paper-OPEN practice
-  book is `data/varma_paper_open.db`. Additive `AICallLog` table from #23 is on `main`.
+  book is `data/varma_paper_open.db` (tracked) plus `data/paper_open_ledger.json`. Additive
+  `AICallLog` table from #23 is on `main`.
 - **Employee system:** 7 durable records (Document 03) in `varma/db/seed.py` + `varma/employees/brain.py`;
   runtime in `varma/employees/runtime.py`; context classes in `varma/employees/context.py`.
   Slugs/identities/roles unchanged. AI context uses compact `constraints_hint()` (includes
@@ -109,8 +114,9 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
 - **Trading simulation:** internal paper fill simulator `varma/paper/` (not a broker). First
   paper-trade PATH exists: Trader (Chris Adeyemi) proposes → ControlEngine permit/deny →
   simulator fill → paper ledger. Bound session exit is attached on permit. Board-only on-demand
-  jobs `run_flatten_london_close` (LSE) and `run_flatten_us_close` (US). PAPER execution is OPEN
-  for practice. LIVE stays blocked.
+  jobs `run_flatten_london_close` (LSE) and `run_flatten_us_close` (US). Named ticket
+  PAPER-20260903-02 is already filled on `data/varma_paper_open.db`. PAPER execution is OPEN for
+  practice. LIVE stays blocked.
 - **AI/LLM boundary:** `varma/ports/llm.py` — `FakeLLM` default, wrapped by `MeasuredLLM`. Four task
   strings only: `prepare_daily_intelligence_brief`, `challenge_sample_thesis`, `review_unsafe_path`, `chat`.
   Do not bind a real LLM.
@@ -130,7 +136,8 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
 - `trading_mode = LIVE_BLOCKED`. **No live trading authorised.** Kernel down.
 - PAPER trading **OPEN** for PRACTICE only (Grand Opening PAPER, Hari explicit yes 3 Sep 2026,
   word: Open). Internal simulator. £1,000 paper starting book. No real broker. No real money.
-  Paper-OPEN book: `data/varma_paper_open.db`. Do not use empty `data/varma.db`.
+  Paper-OPEN book: `data/varma_paper_open.db` (tracked) plus `data/paper_open_ledger.json`.
+  Do not use empty `data/varma.db`.
 - BROKER_PAPER and LIVE adapters **UNLOADED**; no broker connection; no live-order path exists.
 - Kill switch and deterministic control engine **preserved and authoritative**; AI does not enforce controls.
 - Addenda A/C/E/F/I/J/K. Addendum I still exists as the two-opening rule. Paper opening has
@@ -143,7 +150,8 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
   membership were not rewritten.
 - Employees including the CEO **cannot** open or close the firm or write locks.
 - **Board Member remains the sole human authority.** Silence is not approval. Do not write Board
-  policy into chat comments. GitHub is code only: never paper book, secrets, or employee memory.
+  policy into chat comments. Secrets and employee memory stay out of GitHub. The practice
+  paper-OPEN book is the documented exception so the floor keeps fills.
 - Specs Documents 00–18 live **outside** the repo (see `ARCHITECTURE.md`). Do not copy the full spec set in.
 
 ## 7. CURRENT OPEN DECISIONS (Board — do not invent answers)
@@ -155,22 +163,22 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
 6. Any **real LLM provider binding** and, separately, Grand Opening LIVE (much later, only if Board says so).
 
 ## 8. CURRENT NEXT STEP
-- Treat **this file on `main`** as the handover. Do not rescan the repo or re-read Documents 00–18
+- Treat **this file on the branch** as the handover. Do not rescan the repo or re-read Documents 00–18
   unless a specific task requires it.
 - **Do not merge PR #21.** Leave it open.
 - **Do not bind a real LLM.** FakeLLM remains default.
 - **Do not implement any Section 7 item** until the Board decides it.
 - **Do not implement token-efficiency stages 4–5.** Measure with `ai_usage_summary` before further
   runtime token work.
-- **Do not start the office kernel.** LIVE stays blocked. Overnight off.
-- **Paper ticket path:** named ticket `PAPER-20260903-02` is SHEL.L BUY 5 on
-  `data/varma_paper_open.db` only (`python -m varma.routines.run_paper_trade_path --ticket PAPER-20260903-02`).
+- **Do not start the office kernel.** Do not place new orders. LIVE stays blocked. Overnight off.
+- **Paper book:** named ticket `PAPER-20260903-02` filled SHEL.L BUY 5 on
+  `data/varma_paper_open.db` (fill `917138ec-34d0-45fa-8080-380ab59334fc`, cash £829.279217).
   Never `data/varma.db`. Stop/target are desk-managed, not resting engine orders. LSE three flatten
-  in the London closing auction (02F); that exit is a later job. GitHub remains code only
-  (the paper book is gitignored).
-- **Next human step:** further paper operation on the £1,000 book in `data/varma_paper_open.db`.
-  LIVE later only if the Board says so. Do not open live in code. Risk can re-clear 02F from
-  engine state (`risk_02f.bound` / `split_flatten_clocks`).
+  in the London closing auction (02F); that exit is a later job.
+- **Next human step:** further paper operation on the practice book, then flatten-before-London-auction
+  for the LSE three (02F) / flatten-before-US-close for US names as later jobs. LIVE later only if
+  the Board says so. Do not open live in code. Risk can re-clear 02F from engine state
+  (`risk_02f.bound` / `split_flatten_clocks`).
 
 ## 9. IMPORTANT COMPATIBILITY RULES (Grok Bot)
 Do NOT rename/delete/move or structurally change: employee **slugs/identities/roles/relationships**;
@@ -181,6 +189,5 @@ repo). Keep changes additive; keep the full test suite green.
 
 ## 10. HOW TO CONTINUE
 Read this file, then `PROJECT_MAP.md` + `SPEC_INDEX.md` (+ `knowledge/index.json` for machine navigation
-and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **208** on this
-pixel-office landing; **206** was main after #33). Continue from Section 8. Preserve every
-governance and safety rule in Section 6.
+and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest`. Continue from Section 8.
+Preserve every governance and safety rule in Section 6.

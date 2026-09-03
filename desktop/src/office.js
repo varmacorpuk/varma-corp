@@ -270,6 +270,26 @@
       <p class="meta">Success: ${escapeHtml(paperGate.successful_trade_definition || evaluation.successful_trade_definition || "CLOSED paper trade with profit &gt; 0")}. Trigger: win rate &gt; 50% AND book profitable. Auto-switch LIVE: ${paperGate.evaluation_auto_switch_live === true}. Paper duration remains an OPEN BOARD DECISION. Silence is not approval.</p>
       <h3>Paper ledger (internal simulator)</h3>
       <p class="meta">Not a broker. BROKER_PAPER and LIVE remain UNLOADED. PAPER allow-list is Board Addendum E. Simulated capital: ${escapeHtml(String(paperLedger.simulated_capital_gbp ?? "1000"))} GBP (paper starting book) · cash: ${escapeHtml(String(paperLedger.cash_gbp ?? ""))} · equity: ${escapeHtml(String(paperLedger.equity_gbp ?? ""))} · fills: ${escapeHtml(String(paperLedger.fills ?? 0))}</p>
+      ${
+        (paperLedger.open_positions || []).length
+          ? (paperLedger.open_positions || [])
+              .map(
+                (row) =>
+                  `<div class="ledger-row">${escapeHtml(row.symbol || "")} · qty ${escapeHtml(String(row.quantity ?? ""))} · avg ${escapeHtml(String(row.avg_cost_gbp ?? ""))} GBP</div>`
+              )
+              .join("")
+          : `<p class="meta">Open positions: none.</p>`
+      }
+      ${
+        (paperLedger.fill_rows || []).length
+          ? (paperLedger.fill_rows || [])
+              .map(
+                (row) =>
+                  `<div class="ledger-row">fill ${escapeHtml(row.id || "")} · ${escapeHtml(row.symbol || "")} ${escapeHtml(String(row.side || "").toUpperCase())} ${escapeHtml(String(row.quantity ?? ""))} @ ${escapeHtml(String(row.price ?? ""))} GBP · live: ${row.is_live === true}</div>`
+              )
+              .join("")
+          : `<p class="meta">Fills: none.</p>`
+      }
       <p class="meta">Assumptions: spread ${escapeHtml(String(assumptions.spread_bps ?? 10))} bps · slippage ${escapeHtml(String(assumptions.slippage_bps ?? 5))} bps · commission ${escapeHtml(String(assumptions.commission_bps ?? 5))} bps. Fake delayed last treated as GBP (INTERNAL ASSUMPTION, no FX vendor).</p>
       <h3>Evaluation ledger</h3>
       <p class="meta">Closed trades: ${escapeHtml(String(evaluation.closed_trades ?? 0))} · profitable closes: ${escapeHtml(String(evaluation.profitable_closes ?? 0))} · win rate: ${escapeHtml(String(evaluation.win_rate ?? 0))} · book P&amp;L: ${escapeHtml(String(evaluation.book_pnl_gbp ?? 0))} GBP · trigger met: ${evaluation.evaluation_trigger_met === true} · auto-switch LIVE: ${evaluation.evaluation_auto_switch_live === true}</p>

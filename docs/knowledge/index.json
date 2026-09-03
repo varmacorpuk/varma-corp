@@ -4,7 +4,7 @@
   "generated_by": "PR #1 (Safe Token-Efficiency Foundation) — hand-authored, additive, non-invasive",
   "handover": {
     "path": "docs/BUILD_STATE.md",
-    "purpose": "READ FIRST: current build state. Grand Opening PAPER is done (practice / paper OPEN, £1000 fake book). LIVE still blocked. Addendum I remains the two-opening rule. FakeLLM default. Do not rescan the repo or re-read Documents 00-18 unless required. Do not call AI for deterministic ops. Next human step is paper operation; LIVE later only if the Board says so.",
+    "purpose": "READ FIRST: current build state. Grand Opening PAPER is done. PAPER-20260903-02 filled SHEL.L BUY 5 on data/varma_paper_open.db (cash ~£829). LIVE still blocked. Addendum I remains the two-opening rule. FakeLLM default. Do not rescan the repo or re-read Documents 00-18 unless required. Do not call AI for deterministic ops. LIVE later only if the Board says so.",
     "then_read": ["docs/PROJECT_MAP.md", "docs/SPEC_INDEX.md", "docs/GLOSSARY.md"]
   },
   "specs_note": "Authoritative Documents 00-18 live OUTSIDE this repository. See docs/SPEC_INDEX.md for pointers.",

@@ -68,6 +68,8 @@ def test_office_click_opens_panel_logic():
     assert "runKillSwitch" in JS
     assert "Evaluation ledger" in JS
     assert "Paper ledger" in JS
+    assert "open_positions" in JS
+    assert "fill_rows" in JS
     assert "kill-halt" in CSS
     assert "Execution ports" in JS
     assert "BROKER_PAPER" in JS
