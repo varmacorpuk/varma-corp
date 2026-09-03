@@ -48,6 +48,16 @@ def describe_0630_weekday_routine() -> str:
     )
 
 
+def describe_open_scanner() -> str:
+    return (
+        "On-demand NY-open scanner 14:32–15:00 Europe/London (Documents 04/06). "
+        "Completed 1m/5m bars only, with an explicit latency buffer. "
+        "Minute-2 meeting-trigger cross; from minute 5 also 5m opening-range "
+        "high/low break. Next-bar open fill, never the signal close. "
+        "Does not place orders. Not a daemon. Paper only. LIVE stays BLOCKED."
+    )
+
+
 def describe_0730_company_meeting() -> str:
     return (
         "07:30 Europe/London company meeting (Documents 02, 09, 18). "

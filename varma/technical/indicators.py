@@ -252,6 +252,8 @@ def technical_snapshot(
     *,
     timeframe: str = "1d",
     fetch_time: datetime | None = None,
+    include_sections: set[str] | None = None,
+    include_candlestick_patterns: bool = True,
 ) -> dict[str, Any]:
     """ONE compact snapshot per ticker per timeframe.
 
@@ -262,6 +264,14 @@ def technical_snapshot(
     patterns, metadata, and the signal reference. Deterministic: same
     bars in → same numbers out. No AI. No network.
     """
+    include = include_sections or {
+        "trend",
+        "momentum",
+        "volatility",
+        "volume",
+        "structure",
+        "candles",
+    }
     if bars.empty or len(bars) < 2:
         return {
             "symbol": symbol,
@@ -298,21 +308,29 @@ def technical_snapshot(
         "ai_calls": 0,
     }
 
-    result["trend"] = _compute_trend(df)
-    result["momentum"] = _compute_momentum(df)
-    result["volatility"] = _compute_volatility(df)
-    result["volume"] = _compute_volume(df)
-    result["structure"] = {
-        "opening_range": compute_opening_range(df, timeframe=timeframe),
-        "prior_day": compute_prior_day_levels(df),
-        "prior_week": compute_prior_week_levels(df),
-        "gap": compute_gap(df),
-        "pivots": compute_pivot_points(df),
-        "session_levels": compute_session_levels(df),
-        "swing_points": compute_swing_points(df),
-        "sr_clusters": compute_support_resistance_clusters(df),
-    }
-    result["candles"] = compute_candlestick_patterns(df)
+    if "trend" in include:
+        result["trend"] = _compute_trend(df)
+    if "momentum" in include:
+        result["momentum"] = _compute_momentum(df)
+    if "volatility" in include:
+        result["volatility"] = _compute_volatility(df)
+    if "volume" in include:
+        result["volume"] = _compute_volume(df)
+    if "structure" in include:
+        result["structure"] = {
+            "opening_range": compute_opening_range(df, timeframe=timeframe),
+            "prior_day": compute_prior_day_levels(df),
+            "prior_week": compute_prior_week_levels(df),
+            "gap": compute_gap(df),
+            "pivots": compute_pivot_points(df),
+            "session_levels": compute_session_levels(df),
+            "swing_points": compute_swing_points(df),
+            "sr_clusters": compute_support_resistance_clusters(df),
+        }
+    if "candles" in include:
+        result["candles"] = compute_candlestick_patterns(
+            df, include_patterns=include_candlestick_patterns
+        )
     result["signal_reference"] = SIGNAL_REFERENCE
 
     return result

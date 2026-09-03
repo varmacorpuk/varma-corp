@@ -53,6 +53,7 @@ from varma.routines.run_0730_meeting import run_0730_meeting
 from varma.routines.run_flatten_us_close import run_flatten_us_close
 from varma.routines.run_flatten_london_close import run_flatten_london_close
 from varma.routines.run_paper_trade_path import run_paper_trade_path
+from varma.routines.run_open_scanner import run_open_scanner
 from varma.routines.board_jobs import with_flatten_safety, with_job_safety, with_paper_trade_safety
 from varma.controls.addendum_j import (
     EMPLOYEE_CANNOT_DOWNLOAD_SECRETS_REASON,
@@ -415,6 +416,13 @@ def create_app() -> FastAPI:
             session,
             run_company_backup(session, started_by="board-member"),
         )
+
+    @app.post("/routines/run-open-scanner")
+    def api_run_open_scanner(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return with_job_safety(session, run_open_scanner(session, started_by="board-member"))
 
     @app.post("/routines/run-paper-trade-path")
     def api_run_paper_trade_path(
