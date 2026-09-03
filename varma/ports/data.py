@@ -58,6 +58,12 @@ class FakeMarketData:
             "META": 618.0,
             "TSLA": 380.0,
             "BRK-B": 507.0,
+            # --- Addendum M US-listed commodity ETPs (USD, equity/ETP path) ---
+            "GLD": 232.0,
+            "SLV": 27.5,
+            "USO": 71.0,
+            "UNG": 14.2,
+            "CPER": 26.8,
             # --- Legacy LSE names (historical paper book, GBP) ---
             # 3409.3p delayed ≈ 34.093 GBP.
             "SHEL.L": 34.093,

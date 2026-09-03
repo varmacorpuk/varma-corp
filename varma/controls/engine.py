@@ -37,9 +37,10 @@ from varma.controls.addendum_c import (
     paper_desk_open,
     paper_session_status,
 )
-from varma.controls.addendum_e import addendum_e_public
+from varma.controls.addendum_e import addendum_e_public, canonical_feed_symbol
 from varma.controls.addendum_f import addendum_f_public
 from varma.controls.addendum_l import addendum_l_public
+from varma.controls.addendum_m import addendum_m_public
 from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
     FIRM_CLOSED_REASON,
@@ -238,7 +239,9 @@ class ControlEngine:
         """
         now = at or now_london()
         state = self.state()
-        symbol = str(order.get("symbol") or "")
+        order = dict(order)
+        symbol = canonical_feed_symbol(str(order.get("symbol") or ""))
+        order["symbol"] = symbol
         execution_port = str(order.get("execution_port") or "SIMULATOR")
 
         if actor_type != "employee" and actor_type != "board_member":
@@ -536,6 +539,7 @@ class ControlEngine:
             "addendum_c": addendum_c_public(),
             "addendum_e": addendum_e_public(),
             "addendum_l": addendum_l_public(),
+            "addendum_m": addendum_m_public(),
             "addendum_f": addendum_f_public(),
             "addendum_i": addendum_i_public(self.session),
             "addendum_j": addendum_j_public(),

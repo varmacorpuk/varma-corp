@@ -186,7 +186,7 @@ def test_company_meeting_runner_does_not_write_controls(session):
     before_mode = session.get(ControlState, 1).trading_mode
     CompanyMeetingRunner(session).run(started_by="cli")
     assert session.get(ControlState, 1).trading_mode == before_mode == "LIVE_BLOCKED"
-    assert session.query(AllowListInstrument).count() == 10
+    assert session.query(AllowListInstrument).count() == 15
     snap = BoardObservability(session).snapshot()
     assert snap["company_meeting"]["run"]["writes_controls"] is False
     assert snap["writes_controls"] is False
