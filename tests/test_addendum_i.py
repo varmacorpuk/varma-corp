@@ -68,7 +68,7 @@ def test_addendum_i_paper_execution_is_closed(session):
     assert snap["paper_execution_closed"] is True
     assert snap["addendum_i"]["label"] == ADDENDUM_I_LABEL
     assert snap["addendum_i"]["paper_execution_closed"] is True
-    assert snap["addendum_i"]["first_paper_trade_path_implemented"] is False
+    assert snap["addendum_i"]["first_paper_trade_path_implemented"] is True
     assert snap["addendum_i"]["simulated_capital_status"] == "FUTURE_PAPER_STARTING_BOOK_ONLY"
     assert snap["addendum_i"]["addendum_a_numbers_unused_until_open"] is True
     assert snap["addendum_i"]["board_member_0730_diary_invite"] is False
@@ -248,5 +248,5 @@ def test_0730_does_not_invite_board_member(session):
     obs = BoardObservability(session).snapshot()
     assert obs["company_meeting"]["board_member_diary_invite"] is False
     assert obs["paper_gate"]["paper_execution"] == "CLOSED"
-    assert obs["paper_gate"]["first_paper_trade_path_implemented"] is False
+    assert obs["paper_gate"]["first_paper_trade_path_implemented"] is True
     assert obs["addendum_i"]["label"] == ADDENDUM_I_LABEL

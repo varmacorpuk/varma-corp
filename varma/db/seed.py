@@ -1,4 +1,4 @@
-"""Seed persistent identities, Board Addenda A/C/E/F/I, and TEMPORARY watchlist.
+"""Seed persistent identities, Board Addenda A/C/E/F/I/J/K, and TEMPORARY watchlist.
 
 Numeric limits are Board Addendum A 2026-08-27 (Board-set; unused until open).
 Paper session is Board Addendum C 2026-08-27 (UK open through US close).
@@ -6,6 +6,7 @@ PAPER allow-list is Board Addendum E 2026-08-27 (Board-set; no fills until open)
 Staff display is Board Addendum F 2026-08-27 (person · department).
 Company CLOSED until Grand Opening: Board Addendum I 2026-08-27.
 Encrypted company backup: Board Addendum J 2026-08-27 (database artefact; not git).
+LSE after London cash close: Board Addendum K 2026-09-03 (Hari explicit yes).
 seed_if_empty reconciles those Board-encoded rows onto a stale SQLite copy.
 trading_mode stays LIVE_BLOCKED. LIVE and BROKER_PAPER remain UNLOADED.
 """
@@ -58,10 +59,10 @@ from varma.controls.addendum_j import (
     BACKUP_SKILL_NAME,
     BACKUP_TIMEZONE,
 )
-from varma.controls.lse_session import (
-    LSE_HOLD_LABEL,
-    LSE_HOLD_SET_BY,
-    LSE_HOLD_SETTINGS,
+from varma.controls.addendum_k import (
+    ADDENDUM_K_LABEL,
+    ADDENDUM_K_SET_BY,
+    ADDENDUM_K_SETTINGS,
 )
 from varma.db.models import (
     AllowListInstrument,
@@ -261,7 +262,7 @@ def seed_if_empty(session: Session) -> None:
     seed_board_addendum_a(session)
     seed_board_addendum_c(session)
     seed_board_addendum_e(session)
-    seed_lse_session_hold(session)
+    seed_board_addendum_k(session)
     seed_board_addendum_i(session)
     seed_board_addendum_j(session)
     seed_employee_brains(session)
@@ -364,14 +365,15 @@ def seed_board_addendum_c(session: Session) -> None:
     session.flush()
 
 
-def seed_lse_session_hold(session: Session) -> None:
-    """Fail-closed hold on SHEL.L / AZN.L / ULVR.L until Board picks a session rule.
+def seed_board_addendum_k(session: Session) -> None:
+    """Write Board Addendum K 2026-09-03 LSE-after-London-cash-close rule.
 
-    Does not rewrite Addendum C flatten. Does not invent US listings.
-    Employees cannot write this. Distinct from PAPER_EXECUTION_CLOSED.
+    Hari explicit yes. Does not rewrite Addendum C flatten. Does not invent
+    US listings. Employees cannot write this. PAPER stays CLOSED.
+    Always reconciles onto a stale UNSET row so main gets one coherent path.
     """
     now = now_london()
-    for key, value, unit in LSE_HOLD_SETTINGS:
+    for key, value, unit in ADDENDUM_K_SETTINGS:
         row = session.get(ControlSetting, key)
         if row is None:
             session.add(
@@ -379,18 +381,23 @@ def seed_lse_session_hold(session: Session) -> None:
                     key=key,
                     value=value,
                     unit=unit,
-                    set_by=LSE_HOLD_SET_BY,
+                    set_by=ADDENDUM_K_SET_BY,
                     set_at=now,
-                    source=LSE_HOLD_LABEL,
+                    source=ADDENDUM_K_LABEL,
                 )
             )
         else:
             row.value = value
             row.unit = unit
-            row.set_by = LSE_HOLD_SET_BY
+            row.set_by = ADDENDUM_K_SET_BY
             row.set_at = now
-            row.source = LSE_HOLD_LABEL
+            row.source = ADDENDUM_K_LABEL
     session.flush()
+
+
+def seed_lse_session_hold(session: Session) -> None:
+    """Alias: Addendum K is the Board-set LSE session rule."""
+    seed_board_addendum_k(session)
 
 
 def seed_board_addendum_i(session: Session) -> None:

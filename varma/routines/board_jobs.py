@@ -118,6 +118,28 @@ BOARD_JOBS: tuple[dict[str, Any], ...] = (
         "fills": False,
         "daemon": False,
     },
+    {
+        "id": "run-paper-trade-path",
+        "label": "Run Trader paper-ticket proposal",
+        "method": "POST",
+        "path": "/routines/run-paper-trade-path",
+        "cli": "python -m varma.routines.run_paper_trade_path",
+        "sample": False,
+        "is_live_trade": False,
+        "is_live_approval": False,
+        "proposer_slug": "trader",
+        "proposer_display_name": "Chris Adeyemi · Trader",
+        "first_paper_trade_path_implemented": True,
+        "internal_simulator": True,
+        "paper_execution_closed": True,
+        "fills_while_closed": False,
+        "paper_fills": False,
+        "fills": False,
+        "live_fills": False,
+        "ai_called": False,
+        "daemon": False,
+        "grand_opening_not_performed": True,
+    },
 )
 
 
@@ -148,6 +170,19 @@ def runnable_jobs_catalog() -> dict[str, Any]:
             item["owner_slug"] = "technology"
             item["owner_display_name"] = "Owen Blake · Technology"
             item["daemon"] = False
+        if job["id"] == "run-paper-trade-path":
+            item["paper_fills"] = False
+            item["fills"] = False
+            item["live_fills"] = False
+            item["fills_while_closed"] = False
+            item["first_paper_trade_path_implemented"] = True
+            item["internal_simulator"] = True
+            item["paper_execution_closed"] = True
+            item["ai_called"] = False
+            item["proposer_slug"] = "trader"
+            item["proposer_display_name"] = "Chris Adeyemi · Trader"
+            item["grand_opening_not_performed"] = True
+            item["daemon"] = False
         items.append(item)
     catalog = {
         "read_only_list": True,
@@ -159,7 +194,9 @@ def runnable_jobs_catalog() -> dict[str, Any]:
             "entry points still work. Running a job does not load BROKER_PAPER or "
             "LIVE, does not change trading_mode, and does not fill against a broker. "
             "Flatten-before-US-close uses the internal paper simulator only. "
-            "After a run, the same panel refreshes from the database."
+            "The Trader paper-ticket path exists; PAPER execution is still CLOSED "
+            "so that job does not fill. After a run, the same panel refreshes from "
+            "the database."
         ),
     }
     catalog.update(JOB_SAFETY_FLAGS)
@@ -188,6 +225,25 @@ def with_job_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
         "broker_paper_status": ports["broker_paper"]["status"],
         "live_status": ports["live"]["status"],
     }
+    return out
+
+
+def with_paper_trade_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
+    """Safety flags for the Trader paper-ticket path. No fills while CLOSED."""
+    out = with_job_safety(session, result)
+    filled = bool(result.get("filled"))
+    out["job_safety"]["fills"] = filled
+    out["job_safety"]["paper_fills"] = filled
+    out["job_safety"]["live_fills"] = False
+    out["job_safety"]["fills_while_closed"] = False
+    out["job_safety"]["first_paper_trade_path_implemented"] = True
+    out["job_safety"]["internal_simulator"] = True
+    out["job_safety"]["ai_called"] = False
+    out["job_safety"]["proposer_slug"] = "trader"
+    out["job_safety"]["loads_broker_ports"] = False
+    out["job_safety"]["changes_trading_mode"] = False
+    out["job_safety"]["writes_controls"] = False
+    out["job_safety"]["grand_opening_not_performed"] = True
     return out
 
 

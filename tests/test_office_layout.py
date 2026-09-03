@@ -85,6 +85,10 @@ def test_office_click_opens_panel_logic():
     assert "/routines/run-nightly-filter" in JS
     assert "/routines/run-flatten-us-close" in JS
     assert "/routines/run-backup" in JS
+    assert "/routines/run-paper-trade-path" in JS
+    assert "Run Trader paper-ticket proposal" in JS
+    assert "first paper-trade PATH exists" in JS
+    assert "PAPER_EXECUTION_CLOSED" in JS
     assert "Board Addendum J" in JS
     assert "Run company backup now" in JS
     assert "last successful backup" in JS.lower()
@@ -115,5 +119,7 @@ def test_office_click_opens_panel_logic():
     assert "job-runs" in CSS
     assert "Board Addendum I" in JS
     assert "CLOSED until Grand Opening" in JS
+    assert "Board Addendum K" in JS
+    assert "LSE after London cash close" in JS
     assert "no Board Member diary invite" in JS
     assert "Talk is disabled" in JS or "talk-disabled" in HTML

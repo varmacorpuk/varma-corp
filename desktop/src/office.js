@@ -185,6 +185,7 @@
     const flattenRun = paperFlatten.run;
     const addendumC = data.addendum_c || {};
     const addendumJ = data.addendum_j || {};
+    const addendumK = data.addendum_k || {};
     const backup = data.backup || {};
     const assumptions = paperLedger.assumptions || {};
     const controls = data.controls || {};
@@ -321,7 +322,9 @@
       </div>
       <p class="meta">Employees cannot reset the kill switch.</p>
       <h3>Board Addendum I 2026-08-27 (CLOSED until Grand Opening)</h3>
-      <p class="meta">The company is CLOSED. Nothing is trading. Not paper, not live. PAPER execution is CLOSED. Allow-list E exists but cannot be used for fills until Hari's explicit Grand Opening PAPER yes. £1000 is the FUTURE paper starting book only. Addendum A numbers are stored but unused until open. LIVE still blocked. Never auto-switch. Silence is not approval. First paper trade path is not implemented.</p>
+      <p class="meta">The company is CLOSED. Nothing is trading. Not paper, not live. PAPER execution is CLOSED. The first paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator). Allow-list E exists but cannot be used for fills until Hari's explicit Grand Opening PAPER yes. £1000 is the FUTURE paper starting book only. Addendum A numbers are stored but unused until open. LIVE still blocked. Never auto-switch. Silence is not approval. Next human step is Board Grand Opening. No fills now.</p>
+      <h3>Board Addendum K 2026-09-03 (LSE after London cash close)</h3>
+      <p class="meta">${escapeHtml(addendumK.label || "Board Addendum K 2026-09-03")}. Hari explicit yes. After London cash shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. Concentrate on the US seven until US flatten. Desk still UK cash open through US cash close. Flatten still at US regular cash close. London close is not the flatten. Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. PAPER still CLOSED. Not Grand Opening. No fills. LIVE_BLOCKED.</p>
       <h3>Board Addendum J 2026-08-27 (company backup)</h3>
       <p class="meta">Company records are not on the Board Member laptop and not in GitHub. GitHub is code only. System of record: ${escapeHtml(backup.system_of_record || "database")}. Encrypted at rest: ${backup.encrypted_at_rest !== false}. Owner: ${escapeHtml(backup.owner_display_name || addendumJ.owner_display_name || "Owen Blake · Technology")}. Owen cannot write trading_mode, allow-list, or open the firm. Schedule: ${escapeHtml(backup.schedule || "daily after US close / end of London evening")} · daemon: ${backup.daemon === true}.</p>
       <p class="meta">Included: paper ledger, evidence, organisational memory, control snapshots. Excluded: secrets, live broker credentials (must not exist yet). Employees including the CEO cannot download secrets. Last successful backup: ${escapeHtml(backup.last_successful_backup_at || "none")}. Last failure: ${escapeHtml(backup.last_failure_at || "none")}${backup.last_failure_reason ? " · " + escapeHtml(backup.last_failure_reason) : ""}.</p>
@@ -392,6 +395,7 @@
       { id: "run-nightly-filter", label: "Run nightly memory filter", path: "/routines/run-nightly-filter" },
       { id: "run-flatten-us-close", label: "Flatten paper before US cash close", path: "/routines/run-flatten-us-close" },
       { id: "run-backup", label: "Run company backup now", path: "/routines/run-backup" },
+      { id: "run-paper-trade-path", label: "Run Trader paper-ticket proposal", path: "/routines/run-paper-trade-path" },
     ];
     return (
       '<div class="job-runs">' +
@@ -542,7 +546,10 @@
         return;
       }
       lastJobNote =
-        path.indexOf("flatten") !== -1
+        path.indexOf("paper-trade-path") !== -1
+          ? label +
+            " finished. Chris Adeyemi proposed a paper ticket. ControlEngine DENY PAPER_EXECUTION_CLOSED. No fill. LIVE still off. Panel refreshed from the database."
+          : path.indexOf("flatten") !== -1
           ? label +
             " finished. Internal simulator flatten only. Panel refreshed from the database. trading_mode unchanged. BROKER_PAPER and LIVE remain UNLOADED. No broker fills."
           : label +

@@ -14,8 +14,9 @@ The simulator still DENIES when:
 Board Addendum I: the firm is CLOSED until Grand Opening. Simulator DENY all
 fills because the firm is not open, even for allow-listed tickers. Allow-list
 E still exists. £1000 is the FUTURE paper starting book only. Addendum A
-numbers are stored but unused until open. Do not implement the first paper
-trade path.
+numbers are stored but unused until open. The first paper-trade PATH exists
+(Trader proposal → ControlEngine → internal simulator). PAPER execution
+remains CLOSED. No fills.
 
 Empty allow-list ⇒ no orders, so production seed records zero fills. Evaluation
 ledger tables still exist (closed trades, pnl, win rate of profitable closes).
@@ -79,7 +80,7 @@ def simulator_assumptions() -> dict[str, Any]:
         "source": ADDENDUM_A_LABEL,
         "paper_execution": "CLOSED",
         "firm_open": False,
-        "first_paper_trade_path_implemented": False,
+        "first_paper_trade_path_implemented": True,
         "addendum_i": ADDENDUM_I_LABEL,
         "note": ASSUMPTIONS_NOTE,
     }

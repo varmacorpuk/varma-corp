@@ -89,6 +89,7 @@ def test_board_observability_api_is_read_only(client):
     assert "runnable_jobs" in office["board_observability"]["includes"]
     assert "backup" in office["board_observability"]["includes"]
     assert "addendum_j" in office["board_observability"]["includes"]
+    assert "addendum_k" in office["board_observability"]["includes"]
     assert "kill_switch" in office["board_observability"]["includes"]
     assert "evaluation" in office["board_observability"]["includes"]
 
@@ -463,7 +464,7 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert gate["paper_execution"] == "CLOSED"
     assert gate["paper_execution_closed"] is True
     assert gate["paper_execution_implemented"] is False
-    assert gate["first_paper_trade_path_implemented"] is False
+    assert gate["first_paper_trade_path_implemented"] is True
     assert gate["internal_simulator"] is True
     assert gate["evaluation_status"] == "ledger ready (unused until open)"
     assert gate["live_trading_recommendation"] == "not"

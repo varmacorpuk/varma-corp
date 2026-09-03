@@ -20,6 +20,7 @@ from varma.routines.run_brief import run_brief
 from varma.routines.run_challenge import run_challenge
 from varma.routines.run_nightly_filter import run_nightly_filter
 from varma.routines.run_risk_deny import run_risk_deny
+from varma.routines.run_paper_trade_path import run_paper_trade_path
 
 REASONING_TASKS = {
     "prepare_daily_intelligence_brief",
@@ -52,6 +53,10 @@ def test_ai_only_for_reasoning_deterministic_ops_make_no_ai_calls(session):
     run_0730_meeting(session, started_by="board-member")
     run_nightly_filter(session)
     run_company_backup(session, started_by="board-member")
+    path = run_paper_trade_path(session, started_by="board-member")
+    assert path["allowed"] is False
+    assert path["reason"] == "PAPER_EXECUTION_CLOSED"
+    assert path["ai_called"] is False
     trader = session.query(Employee).filter_by(slug="trader").one()
     deny = ExecutionPort(session).place_order(
         actor_id=trader.id,
@@ -60,7 +65,7 @@ def test_ai_only_for_reasoning_deterministic_ops_make_no_ai_calls(session):
     )
     assert deny.allowed is False
     assert deny.reason == "PAPER_EXECUTION_CLOSED"
-    assert _ai_count() == before  # meeting/filter/backup/deny used ordinary software only
+    assert _ai_count() == before  # meeting/filter/backup/paper-path/deny used ordinary software only
 
     # Measurement: every AI call is a reasoning task; no real model was used.
     summary = ai_usage_summary(get_session_factory()())

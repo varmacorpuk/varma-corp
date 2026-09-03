@@ -22,7 +22,17 @@ from varma.controls.addendum_c import ADDENDUM_C_LABEL, addendum_c_public
 from varma.controls.addendum_e import ADDENDUM_E_LABEL, addendum_e_public
 from varma.controls.addendum_f import ADDENDUM_F_LABEL, addendum_f_public
 from varma.controls.addendum_i import ADDENDUM_I_LABEL, addendum_i_public
-from varma.controls.lse_session import LSE_HOLD_SYMBOLS, LSE_SESSION_RULE_REASON, lse_session_public
+from varma.controls.addendum_k import (
+    ADDENDUM_K_LABEL,
+    LSE_AFTER_LONDON_CASH_CLOSE_REASON,
+    addendum_k_public,
+)
+from varma.controls.lse_session import (
+    LSE_HOLD_SYMBOLS,
+    LSE_SESSION_RULE_REASON,
+    lse_session_public,
+    lse_session_rule_is_unset,
+)
 from varma.controls.addendum_j import addendum_j_public
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
 from varma.controls.kill_switch import kill_switch_state
@@ -134,6 +144,7 @@ class BoardObservability:
             "addendum_f": control_snap.get("addendum_f") or addendum_f_public(),
             "addendum_i": control_snap.get("addendum_i") or addendum_i_public(),
             "addendum_j": control_snap.get("addendum_j") or addendum_j_public(),
+            "addendum_k": control_snap.get("addendum_k") or addendum_k_public(),
             "paper_session": self._paper_session(control_snap),
             "missing_numeric_limits": self._missing_numeric_limits(control_snap),
             "numeric_limits": self._numeric_limits(control_snap),
@@ -387,7 +398,7 @@ class BoardObservability:
             "paper_execution": "CLOSED",
             "paper_execution_closed": True,
             "paper_execution_implemented": False,
-            "first_paper_trade_path_implemented": False,
+            "first_paper_trade_path_implemented": True,
             "internal_simulator": True,
             "firm_open": False,
             "grand_opening_paper": "not",
@@ -413,9 +424,11 @@ class BoardObservability:
             "addendum_a_unused_until_open": True,
             "lse_session": lse_session_public(self.session),
             "lse_hold_symbols": list(LSE_HOLD_SYMBOLS),
-            "lse_session_rule_unset": True,
+            "lse_session_rule_unset": lse_session_rule_is_unset(self.session),
             "lse_session_rule_reason": LSE_SESSION_RULE_REASON,
-            "cannot_silently_fill_lse_at_grand_opening": True,
+            "lse_after_london_cash_close_reason": LSE_AFTER_LONDON_CASH_CLOSE_REASON,
+            "addendum_k": ADDENDUM_K_LABEL,
+            "cannot_silently_fill_lse_if_unset": True,
             "split_flatten_clocks": False,
             "successful_trade_definition": evaluation["successful_trade_definition"],
             "evaluation_win_rate_threshold": evaluation["win_rate_threshold"],
@@ -427,11 +440,12 @@ class BoardObservability:
             ],
             "note": (
                 "Board Addendum I 2026-08-27: the company is CLOSED until Grand "
-                "Opening. PAPER execution is CLOSED. Do not fill. Do not propose "
-                "fills. Allow-list E exists but cannot be used for fills until Hari's "
-                "explicit Grand Opening PAPER yes. LIVE still blocked. Never auto-switch. "
-                "Silence is not approval. Addendum A numbers are stored but unused "
-                "until open. First paper trade path is not implemented in this slice."
+                "Opening. PAPER execution is CLOSED. The first paper-trade PATH "
+                "exists (Trader proposal → ControlEngine → internal simulator). "
+                "Do not fill. Allow-list E exists but cannot be used for fills until "
+                "Hari's explicit Grand Opening PAPER yes. LIVE still blocked. Never "
+                "auto-switch. Silence is not approval. Addendum A numbers are stored "
+                "but unused until open. Next human step is Board Grand Opening."
             ),
             "two_openings": addendum_i.get("two_openings"),
         }
