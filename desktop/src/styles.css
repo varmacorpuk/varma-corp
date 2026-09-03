@@ -49,9 +49,13 @@ html, body {
 }
 .office-caption, .hint { font-size: 12px; color: #d8d0c4; }
 #office-floor {
-  flex: 1;
+  flex: 1 1 auto;
   width: 100%;
-  background: #318780;
+  height: auto;
+  max-height: calc(100vh - 260px);
+  object-fit: contain;
+  object-position: top center;
+  background: #2e9494;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   cursor: pointer;

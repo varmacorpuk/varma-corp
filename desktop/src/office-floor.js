@@ -32,9 +32,9 @@
   ];
 
   const PAL = {
-    floorA: "#3d9a92",
-    floorB: "#318780",
-    floorShadow: "#246e68",
+    floorA: "#3aa8a8",
+    floorB: "#2e9494",
+    floorShadow: "#217878",
     wall: "#4a4a54",
     wallMid: "#5a5a66",
     wallTop: "#7a7a86",
@@ -69,9 +69,9 @@
 
   const SEATS = {
     ceo: { c: 25, r: 3 },
-    "market-intelligence-research": { c: 3, r: 9 },
-    "quant-strategy": { c: 8, r: 9 },
-    trader: { c: 12, r: 9 },
+    "market-intelligence-research": { c: 2, r: 10 },
+    "quant-strategy": { c: 7, r: 10 },
+    trader: { c: 12, r: 10 },
     technology: { c: 26, r: 9 },
     challenge: { c: 3, r: 16 },
     risk: { c: 22, r: 16 },
@@ -294,16 +294,21 @@
 
   function drawFurniture(ctx) {
     conferenceTable(ctx, 40, 28);
-    chair(ctx, 52, 12, true);
-    chair(ctx, 100, 12, true);
-    chair(ctx, 52, 66, false);
-    chair(ctx, 100, 66, false);
+    chair(ctx, 48, 14, true);
+    chair(ctx, 88, 14, true);
+    chair(ctx, 128, 14, true);
+    chair(ctx, 48, 66, false);
+    chair(ctx, 88, 66, false);
+    chair(ctx, 128, 66, false);
     plant(ctx, 200, 18);
     plant(ctx, 16, 18);
     bin(ctx, 16, 70);
 
-    sofa(ctx, 258, 42);
-    coffeeTable(ctx, 266, 24);
+    box(ctx, 258, 18, 70, 12, PAL.woodMid, PAL.woodDark);
+    px(ctx, 262, 20, 10, 8, PAL.metal);
+    px(ctx, 276, 21, 8, 6, PAL.pot);
+    sofa(ctx, 258, 40);
+    coffeeTable(ctx, 268, 72);
     plant(ctx, 318, 18);
 
     rug(ctx, 376, 22, 96, 64);
@@ -374,18 +379,23 @@
     px(ctx, x + 9, gy + 23, 3, 2, PAL.ink);
   }
 
-  function outlineText(ctx, text, x, y) {
-    ctx.font = Math.round(10 * (S / 2) + 8) + "px ui-monospace, SFMono-Regular, Menlo, monospace";
+  function nameplate(ctx, x, y, displayName) {
+    const raw = String(displayName || "");
+    const parts = raw.split(" · ");
+    const person = parts[0] || raw;
+    const dept = parts[1] ? "· " + parts[1] : "";
+    ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, monospace";
+    const pw = ctx.measureText(person).width / S;
+    const dw = dept ? ctx.measureText(dept).width / S : 0;
+    const bw = Math.max(pw, dw, 36) + 8;
+    const bh = dept ? 18 : 11;
+    const bx = x - bw / 2;
+    px(ctx, bx, y, bw, bh, "rgba(12,22,20,0.82)");
+    px(ctx, bx, y, bw, 1, PAL.ink);
     ctx.textAlign = "center";
-    ctx.fillStyle = PAL.ink;
-    const cx = x * S;
-    const cy = y * S;
-    ctx.fillText(text, cx + 1, cy);
-    ctx.fillText(text, cx - 1, cy);
-    ctx.fillText(text, cx, cy + 1);
-    ctx.fillText(text, cx, cy - 1);
     ctx.fillStyle = PAL.foam;
-    ctx.fillText(text, cx, cy);
+    ctx.fillText(person, x * S, (y + 8) * S);
+    if (dept) ctx.fillText(dept, x * S, (y + 16) * S);
     ctx.textAlign = "left";
   }
 
@@ -427,13 +437,13 @@
       const look = LOOK[emp.slug] || LOOK["market-intelligence-research"];
       const on = selected && selected.slug === emp.slug;
       drawSprite(ctx, pos.x, pos.y, look, on, bob);
-      drawBubble(ctx, pos.x, pos.y + bob, emp.status_bubble || emp.status || "OK");
-      outlineText(ctx, String(emp.display_name || emp.slug), pos.x + 8, pos.y + 30);
+      drawBubble(ctx, pos.x + (i % 2 === 0 ? -6 : 4), pos.y + bob, emp.status_bubble || emp.status || "OK");
+      nameplate(ctx, pos.x + 8, pos.y + 28, emp.display_name || emp.slug);
       emp._hit = {
-        x: (pos.x - 4) * S,
+        x: (pos.x - 16) * S,
         y: (pos.y - 18) * S,
-        w: 24 * S,
-        h: 48 * S,
+        w: 40 * S,
+        h: 52 * S,
       };
     });
   }
