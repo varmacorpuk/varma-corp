@@ -139,7 +139,7 @@ def test_stale_sqlite_is_reconciled_to_board_encoded(db_url):
         d = ControlEngine(session).place_order(
             actor_id=trader.id,
             actor_type="employee",
-            order={"symbol": "MSFT", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+            order={"symbol": "MSFT", "side": "buy", "notional_gbp": 50, "execution_port": "SIMULATOR"},
             at=SESSION_OPEN,
         )
         assert d.reason == "PAPER_FILL_SIMULATED"

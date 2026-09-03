@@ -4,6 +4,7 @@ from tests.conftest import (
     CHALLENGE_HEADERS,
     EMPLOYEE_HEADERS,
     RISK_HEADERS,
+    SESSION_OPEN,
 )
 from varma.clock import now_london
 from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
@@ -495,7 +496,9 @@ def test_observability_paper_gate_not_started_board_only(client):
     after = client.get("/observability", headers=BOARD_HEADERS).json()["paper_gate"]
     assert "LIVE_BLOCKED" in after["paper_status"]
     assert after["trading_mode"] == "LIVE_BLOCKED"
-    assert after["execution"] is False
+    assert after["execution"] is True
+    assert after["paper_execution"] == "OPEN"
+    assert after["live_adapter_loaded"] is False
     live = client.post(
         "/execution/place-order",
         headers=BOARD_HEADERS,

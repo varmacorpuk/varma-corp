@@ -7,7 +7,8 @@ operations. The **source code on the branch you have checked out is authoritativ
 disagrees with that code, the code wins and this file must be corrected.
 
 _Last updated: 2026-09-03._ Grand Opening PAPER (Hari explicit yes, word: Open). LIVE still
-blocked. Do not invent a percent-complete. Chat is not the record.
+blocked. Pytest: **196 passing, 0 failures**. Do not invent a percent-complete. Chat is not
+the record.
 
 ## 0. RECOVERY / CONTINUATION INSTRUCTION
 > Read `BUILD_STATE.md` first. Then read `PROJECT_MAP.md` and `SPEC_INDEX.md`. Do not rescan the
@@ -50,7 +51,7 @@ Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **
 | #28 | yes | Restored BUILD_STATE on `main` |
 | #29 | yes | Landed #24–#26 runtime onto `main` at `f9adb0e`. Pytest **175** |
 | #30 | yes | First paper-trade PATH + Board Addendum K. Pytest **188**. PAPER was still CLOSED |
-| this PR | not yet | Grand Opening PAPER. Practice / paper OPEN. LIVE still blocked. |
+| this PR | not yet | Grand Opening PAPER. Practice / paper OPEN. LIVE still blocked. Pytest **196** |
 
 **Board Grand Opening PAPER** (3 Sep 2026, Hari explicit yes, word: Open) is Board record,
 encoded as a Board-only `write_control`. Silence was not this. Addendum I still exists as the
@@ -149,5 +150,6 @@ repo). Keep changes additive; keep the full test suite green.
 
 ## 10. HOW TO CONTINUE
 Read this file, then `PROJECT_MAP.md` + `SPEC_INDEX.md` (+ `knowledge/index.json` for machine navigation
-and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest`. Continue from Section 8.
+and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **196** passing
+on this Grand Opening PAPER landing; **188** was main after #30). Continue from Section 8.
 Preserve every governance and safety rule in Section 6.
