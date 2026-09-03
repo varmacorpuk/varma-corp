@@ -47,7 +47,7 @@ Secrets: copy .env.example to .env. No live brokerage.
 
 ## Storage
 
-Docker is optional. If Postgres is not running, the kernel uses TEMPORARY SQLite under data/ (gitignored) through a StoragePort. Postgres via docker-compose.yml replaces SQLite without redesigning the company.
+Docker is optional. If Postgres is not running, the kernel uses TEMPORARY SQLite under data/ through a StoragePort. The practice paper-OPEN book `data/varma_paper_open.db` is tracked; `data/varma.db` stays gitignored. Postgres via docker-compose.yml replaces SQLite without redesigning the company.
 
 ## Run
 

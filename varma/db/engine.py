@@ -57,9 +57,10 @@ class SqliteStorage:
 
     def persistence_note(self) -> str:
         return (
-            "TEMPORARY SQLite file under data/ (gitignored). This box is "
-            "DEVELOPMENT, not production runtime. Persistent org data must not "
-            "live on the Board Member's Mac/Windows as source of truth. "
+            "TEMPORARY SQLite file under data/. Practice paper-OPEN book "
+            "data/varma_paper_open.db is tracked; data/varma.db stays gitignored. "
+            "This box is DEVELOPMENT, not production runtime. Persistent org data "
+            "must not live on the Board Member's Mac/Windows as source of truth. "
             "Postgres via docker-compose.yml replaces this through StoragePort "
             "when Docker is available. Backend is designed so it can later run "
             "24/7 off the Board Member's PC."
