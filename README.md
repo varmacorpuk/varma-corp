@@ -14,7 +14,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 6. Brief stored in the database, then handed off to the CEO as the 07:30 meeting recipient (Document 18). Handoff artefact lives in the database, not on a desktop disk.
 7. Challenge reviews a SAMPLE thesis (not a live trade). Thesis and challenge review are database artefacts, handed to Risk.
 8. Risk deny-path demo: reviews an unsafe/out-of-policy LIVE-gold path and DENIES it. Risk cannot approve LIVE.
-9. Desktop: framed 16-bit pixel office (wood conference room, teal checkered carpet, cubicles, walking sprites, speech bubbles), seven Varma staff sprites labelled person · department, click to right-hand peach panel; office remains visible; no covering overlay; status bubble; chat hits the same employee runtime. Chat history is loaded from the database. No Talk/voice. Click never grants authority.
+9. Desktop: vendored W17ant/Claude-Office isometric camera (`office-day.png` + their furniture/character sprites at rooms.ts % positions). Varma staff names only (person · department). Click a person opens the right-hand work/chat panel; office remains visible; no covering overlay; chat hits the same employee runtime. Chat history is loaded from the database. No Talk/voice. Click never grants authority. No sitcom names. Varma did not draw the room art.
 10. pytest without paid APIs. Execution in LIVE mode is denied. Empty allow-list cannot execute.
 11. TEMPORARY DEVELOPMENT DEFAULT watchlist of a few listed stocks. It is not the execution allow-list. No gold.
 12. Nightly Europe/London memory filter (on-demand): archives working context in the database; evidence stays append-only; filter does not write controls.

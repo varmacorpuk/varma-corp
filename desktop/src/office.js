@@ -1,9 +1,9 @@
-/* 2D office canvas. Click employee → right-hand panel. Same kernel runtime for chat. */
+/* Claude-Office DOM floor + right-hand work/chat panel. Same kernel runtime for chat.
+   Click a person opens chat/work. Click never grants authority. LIVE stays blocked. */
 (function () {
   const API = localStorage.getItem("varmaApi") || "http://127.0.0.1:8000";
   const TOKEN = localStorage.getItem("varmaToken") || "dev-board-member";
-  const canvas = document.getElementById("office-floor");
-  const ctx = canvas.getContext("2d");
+  const floor = document.getElementById("office-floor");
   const rightPanel = document.getElementById("right-panel");
   const panelBody = document.getElementById("panel-body");
   const placeholder = document.getElementById("panel-placeholder");
@@ -17,7 +17,6 @@
   let selected = null;
   let lastJobNote = "";
   let jobRunning = false;
-  const sprite = { w: 16, h: 24, scale: 4 };
 
   function headers(json) {
     const h = { Authorization: "Bearer " + TOKEN };
@@ -33,17 +32,22 @@
 
   function draw(now) {
     if (window.VarmaOfficeFloor) {
-      VarmaOfficeFloor.draw(ctx, canvas, employees, selected, now || performance.now());
+      VarmaOfficeFloor.draw(floor, employees, selected, now || performance.now());
     }
     syncStaffBar();
     paintPortraits();
   }
 
   function paintPortraits() {
-    if (!staffBar || !window.VarmaOfficeFloor || !VarmaOfficeFloor.drawPortrait) return;
-    staffBar.querySelectorAll("canvas[data-portrait-slug]").forEach((cv) => {
-      const slug = cv.getAttribute("data-portrait-slug");
-      VarmaOfficeFloor.drawPortrait(cv.getContext("2d"), cv, slug);
+    if (!staffBar || !window.VarmaOfficeFloor) return;
+    staffBar.querySelectorAll("[data-portrait-slug]").forEach((el) => {
+      const slug = el.getAttribute("data-portrait-slug");
+      const url = VarmaOfficeFloor.portraitUrl(slug);
+      if (el.tagName === "IMG") {
+        if (el.getAttribute("src") !== url) el.setAttribute("src", url);
+      } else if (VarmaOfficeFloor.drawPortrait) {
+        VarmaOfficeFloor.drawPortrait(el.getContext("2d"), el, slug);
+      }
     });
   }
 
@@ -56,14 +60,11 @@
     });
   }
 
-  canvas.addEventListener("click", (ev) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = (ev.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (ev.clientY - rect.top) * (canvas.height / rect.height);
-    const hit = employees.find((e) => {
-      const h = e._hit;
-      return h && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h;
-    });
+  floor.addEventListener("click", (ev) => {
+    const wrap = ev.target.closest("[data-employee-slug]");
+    if (!wrap || !floor.contains(wrap)) return;
+    const slug = wrap.getAttribute("data-employee-slug");
+    const hit = employees.find((e) => e.slug === slug);
     if (hit) selectEmployee(hit);
   });
 
@@ -631,50 +632,50 @@
           slug: "market-intelligence-research",
           display_name: "Asha Patel · Research",
           status_bubble: "OFFLINE",
-          office_x: 96,
-          office_y: 108,
+          office_x: 480,
+          office_y: 320,
         },
         {
           slug: "ceo",
           display_name: "Jordan Hale · CEO",
           status_bubble: "OFFLINE",
-          office_x: 220,
-          office_y: 70,
+          office_x: 320,
+          office_y: 320,
         },
         {
           slug: "challenge",
           display_name: "Sam Okeke · Challenge",
           status_bubble: "OFFLINE",
-          office_x: 40,
-          office_y: 48,
+          office_x: 384,
+          office_y: 384,
         },
         {
           slug: "risk",
           display_name: "Elena Voss · Risk",
           status_bubble: "OFFLINE",
-          office_x: 255,
-          office_y: 175,
+          office_x: 192,
+          office_y: 192,
         },
         {
           slug: "trader",
           display_name: "Chris Adeyemi · Trader",
           status_bubble: "OFFLINE",
-          office_x: 160,
-          office_y: 160,
+          office_x: 256,
+          office_y: 192,
         },
         {
           slug: "quant-strategy",
           display_name: "Nina Kapoor · Quant",
           status_bubble: "OFFLINE",
-          office_x: 120,
-          office_y: 40,
+          office_x: 480,
+          office_y: 480,
         },
         {
           slug: "technology",
           display_name: "Owen Blake · Technology",
           status_bubble: "OFFLINE",
-          office_x: 250,
-          office_y: 120,
+          office_x: 640,
+          office_y: 480,
         },
       ];
       draw();

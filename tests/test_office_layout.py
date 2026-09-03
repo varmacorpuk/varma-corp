@@ -138,32 +138,68 @@ def test_office_click_opens_panel_logic():
 
 
 def test_pixel_office_is_not_four_desk_placeholder():
+    vendor = ROOT / "desktop" / "vendor" / "claude-office"
+    room = vendor / "rooms" / "office-day.png"
+    license_file = vendor / "LICENSE"
+    notice = ROOT / "desktop" / "vendor" / "NOTICE.md"
+    desk = vendor / "sprites" / "furniture" / "standing-desk-left-rear.png"
+    chars = [
+        vendor / "sprites" / "characters" / name
+        for name in (
+            "Me-1-rear-left.png",
+            "Claude-1-rear-right.png",
+            "employee-1-front-left.png",
+            "security-audit-1-rear-left.png",
+            "employee-2-rear-right.png",
+            "Frontend-dev-1-rear-left.png",
+            "dev-1-rear-right.png",
+        )
+    ]
+    assert room.is_file()
+    assert room.stat().st_size > 1_000_000
+    assert room.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    assert desk.is_file()
+    assert desk.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    assert license_file.is_file()
+    assert "W17ANT" in license_file.read_text(encoding="utf-8")
+    assert notice.is_file()
+    assert "W17ant/Claude-Office" in notice.read_text(encoding="utf-8")
+    assert "did not draw" in notice.read_text(encoding="utf-8")
+    for path in chars:
+        assert path.is_file(), path
+        assert path.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    assert not (ROOT / "desktop" / "vendor" / "ai-office").exists()
+    assert not (ROOT / "desktop" / "vendor" / "pixel-agents").exists()
     assert 'id="staff-bar"' in HTML
     assert "office-floor.js" in HTML
+    assert "claude-office-layout.js" in HTML
     assert "placeholder pixels" not in HTML.lower()
-    assert "conference table" in HTML.lower() or "conferenceTable" in FLOOR
-    assert "poolTable" in FLOOR
-    assert "plant(" in FLOOR
-    assert "pixel-art-2d" in APP
+    assert "office-day.png" in FLOOR
+    assert "vendor/claude-office" in FLOOR
+    assert "vendor/claude-office/rooms/office-day.png" in FLOOR
+    assert "vendor/ai-office" not in FLOOR
+    assert "fillRect a lookalike" in FLOOR or "Do not fillRect" in FLOOR
+    assert "conferenceTable" not in FLOOR
+    assert "poolTable" not in FLOOR
+    assert "redCabinet" not in FLOOR
+    assert "claude-office-isometric" in APP
     assert "placeholder-pixel-2d" not in APP
     assert "VarmaOfficeFloor" in JS
     assert "SEATS" in FLOOR
-    assert "PATHS" in FLOOR
-    assert "cubicle(" in FLOOR
-    assert "redCabinet" in FLOOR
-    assert "isWood" in FLOOR
-    assert "walkPos" in FLOOR
     assert "drawPortrait" in FLOOR
-    assert "drawBubble" in FLOOR
+    assert "portraitUrl" in FLOOR
+    assert "character-wrapper" in FLOOR
+    assert "furniture-item" in FLOOR
     assert "game-frame" in HTML
     assert "game-frame" in CSS
-    assert "#f4b486" in CSS.lower() or "#F4B486" in CSS
+    assert "room-container" in HTML
     assert "Click on a character to see chat history." in HTML
     assert 'id="board-observability-btn"' in HTML
     assert 'data-employee-slug="board"' not in HTML
     assert "staff-portrait" in HTML
     assert "paintPortraits" in JS
     assert "Press Start 2P" in CSS or "Press Start 2P" in HTML
+    assert "Approve LIVE" not in HTML
     for slug in (
         "ceo",
         "market-intelligence-research",
@@ -175,20 +211,16 @@ def test_pixel_office_is_not_four_desk_placeholder():
     ):
         assert f'data-employee-slug="{slug}"' in HTML
         assert f"{slug}:" in FLOOR or f'"{slug}"' in FLOOR
-    rows = [
-        line.strip().strip('",')
-        for line in FLOOR.splitlines()
-        if line.strip().startswith('"') and line.strip().endswith('",')
-    ]
-    map_rows = [row for row in rows if set(row) <= set("#.")]
-    assert len(map_rows) == 20
-    assert all(len(row) == 32 for row in map_rows)
-    assert "#" in "".join(map_rows)
-    assert "." in "".join(map_rows)
+    assert "ROOM_URL" in FLOOR
+    assert "CHAR_DIR" in FLOOR
+    assert FLOOR.count("Me-1") >= 1
+    assert not (vendor / "sprites" / "office").exists()
+    assert not (vendor / "rooms" / "office-day-dm.png").exists()
 
 
 def test_office_uses_varma_staff_not_sitcom_names():
-    blob = HTML + CSS + JS + FLOOR
+    layout = (ROOT / "desktop" / "src" / "claude-office-layout.js").read_text(encoding="utf-8")
+    blob = HTML + CSS + JS + FLOOR + layout
     for name in SITCOM:
         assert name not in blob
     for label in (

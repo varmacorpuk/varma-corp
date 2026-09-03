@@ -50,8 +50,9 @@ true.
 - `varma/config.py` — pydantic-settings (`VARMA_*` env). Defaults: `llm_provider="fake"`, SQLite.
 
 ### Frontend / desktop UI
-- `desktop/index.html`, `desktop/src/office.js`, `desktop/src/office-floor.js`, `desktop/src/styles.css` — framed 16-bit pixel office + right-hand
-  peach chat panel; fetches kernel on user action (no polling). `electron-main.js`, `preload.js` wrap it.
+- `desktop/index.html`, `desktop/src/office.js`, `desktop/src/office-floor.js`, `desktop/src/styles.css` — vendored W17ant/Claude-Office
+  room PNG + furniture/character sprites at their % layout; Varma staff labels; work/chat panel. Fetches kernel on
+  user action (no polling). `desktop/vendor/` holds MIT assets. `electron-main.js`, `preload.js` wrap it.
 
 ### Database / storage
 - `varma/db/models.py` — all SQLAlchemy tables (source of truth schema).
