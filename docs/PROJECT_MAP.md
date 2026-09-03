@@ -50,7 +50,7 @@ true.
 - `varma/config.py` — pydantic-settings (`VARMA_*` env). Defaults: `llm_provider="fake"`, SQLite.
 
 ### Frontend / desktop UI
-- `desktop/index.html`, `desktop/src/office.js`, `desktop/src/styles.css` — 2D office + right-hand
+- `desktop/index.html`, `desktop/src/office.js`, `desktop/src/office-floor.js`, `desktop/src/styles.css` — pixel-art 2D office + right-hand
   Board panel; fetches kernel on user action (no polling). `electron-main.js`, `preload.js` wrap it.
 
 ### Database / storage

@@ -9,7 +9,7 @@ disagrees with that code, the code wins and this file must be corrected.
 _Last updated: 2026-09-03._ Grand Opening PAPER (Hari explicit yes, word: Open). LIVE still
 blocked. CEO desk 02F is bound in ControlEngine: `split_flatten_clocks` true. Paper-OPEN book is
 `data/varma_paper_open.db`. Named ticket PAPER-20260903-02 (SHEL.L BUY 5) uses that book only.
-LIVE_BLOCKED. Kernel down / no daemon. Pytest **206**. Do not invent a percent-complete. Chat is
+LIVE_BLOCKED. Kernel down / no daemon. Pytest **208**. Do not invent a percent-complete. Chat is
 not the record.
 
 ## 0. RECOVERY / CONTINUATION INSTRUCTION
@@ -40,11 +40,11 @@ not the record.
   ControlEngine stays authority.
 
 ## 2. COMPLETED WORK (GitHub PR state, verified 2026-09-03)
-Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**, **#31**, **#32**, **#34**, **#35**, **#37**.
+Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**, **#31**, **#32**, **#33**, **#34**, **#35**, **#37**.
 (#16 is merged — Addendum I is the two-opening rule, not an unmerged close.)
 #32 recoded Addendum E listing venues (JPM/JNJ NYSE). #34 binds CEO desk 02F in ControlEngine.
-#35/#37 record that landing on `main`. This PR (#33) is the SHEL.L BUY 5 named paper ticket on
-`data/varma_paper_open.db`.
+#35/#37 record that landing on `main`. #33 is the SHEL.L BUY 5 named paper ticket on
+`data/varma_paper_open.db`. This PR (#36) is the pixel-art office floor only.
 
 | PR | On `main`? | What |
 | --- | --- | --- |
@@ -61,7 +61,8 @@ Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **
 | #34 | yes | CEO desk 02F bound in ControlEngine. Venue-split flatten clocks. Pytest **204** |
 | #35 | yes | BUILD_STATE record of #34 on `main` (02F bound, LIVE_BLOCKED, kernel down) |
 | #37 | yes | Align BUILD_STATE and PROJECT_MAP with main after 02F merge |
-| #33 | this PR | Named ticket PAPER-20260903-02: SHEL.L BUY 5 on `data/varma_paper_open.db` only |
+| #33 | yes | Named ticket PAPER-20260903-02: SHEL.L BUY 5 on `data/varma_paper_open.db` only. Pytest **206** |
+| #36 | this PR | Pixel-art Varma office floor. Right-hand panel unchanged. Click does not grant authority. LIVE_BLOCKED |
 
 **Board Grand Opening PAPER** (3 Sep 2026, Hari explicit yes, word: Open) is Board record,
 encoded as a Board-only `write_control`. Silence was not this. Addendum I still exists as the
@@ -104,7 +105,7 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
   after-London-cash-close session rule, CEO desk 02F venue flatten, kill switch, risk).
   Authoritative; AI never enforces controls. Board `write_control` can open or close paper. LIVE
   opening is not implemented.
-- **Virtual office:** `desktop/` (2D office + right-hand Board panel; fetch-on-click, no polling).
+- **Virtual office:** `desktop/` (pixel-art 2D office + right-hand Board panel; fetch-on-click, no polling).
 - **Trading simulation:** internal paper fill simulator `varma/paper/` (not a broker). First
   paper-trade PATH exists: Trader (Chris Adeyemi) proposes → ControlEngine permit/deny →
   simulator fill → paper ledger. Bound session exit is attached on permit. Board-only on-demand
@@ -180,6 +181,6 @@ repo). Keep changes additive; keep the full test suite green.
 
 ## 10. HOW TO CONTINUE
 Read this file, then `PROJECT_MAP.md` + `SPEC_INDEX.md` (+ `knowledge/index.json` for machine navigation
-and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **206** on this
-PAPER-20260903-02 landing; **204** was main after #34). Continue from Section 8. Preserve every
+and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **208** on this
+pixel-office landing; **206** was main after #33). Continue from Section 8. Preserve every
 governance and safety rule in Section 6.
