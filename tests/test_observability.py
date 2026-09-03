@@ -4,6 +4,7 @@ from tests.conftest import (
     CHALLENGE_HEADERS,
     EMPLOYEE_HEADERS,
     RISK_HEADERS,
+    SESSION_OPEN,
 )
 from varma.clock import now_london
 from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
@@ -441,9 +442,10 @@ def test_observability_missing_limits_still_deny_execution(session):
         actor_id=emp.id,
         actor_type="employee",
         order={"symbol": "AAPL", "execution_port": "SIMULATOR"},
+        at=SESSION_OPEN,
     )
     assert d.allowed is False
-    assert d.reason == "PAPER_EXECUTION_CLOSED"
+    assert d.reason == "MISSING_NUMERIC_LIMITS"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert LIVE_ADAPTER_LOADED is False
 
@@ -460,18 +462,18 @@ def test_observability_paper_gate_not_started_board_only(client):
     assert gate["source"] == "database"
     assert gate["writes_controls"] is False
     assert "LIVE_BLOCKED" in gate["paper_status"]
-    assert gate["paper_started"] is False
-    assert gate["paper_execution"] == "CLOSED"
-    assert gate["paper_execution_closed"] is True
-    assert gate["paper_execution_implemented"] is False
+    assert gate["paper_started"] is True
+    assert gate["paper_execution"] == "OPEN"
+    assert gate["paper_execution_closed"] is False
+    assert gate["paper_execution_implemented"] is True
     assert gate["first_paper_trade_path_implemented"] is True
     assert gate["internal_simulator"] is True
-    assert gate["evaluation_status"] == "ledger ready (unused until open)"
+    assert gate["evaluation_status"] == "ledger in use (paper)"
     assert gate["live_trading_recommendation"] == "not"
     assert gate["board_review"] == "not"
     assert gate["explicit_board_approval"] == "not"
     assert gate["trading_mode"] == "LIVE_BLOCKED"
-    assert gate["execution"] is False
+    assert gate["execution"] is True
     assert gate["live_adapter_loaded"] is False
     assert gate["silence_is_not_approval"] is True
     assert gate["values_invented"] is False
@@ -494,7 +496,9 @@ def test_observability_paper_gate_not_started_board_only(client):
     after = client.get("/observability", headers=BOARD_HEADERS).json()["paper_gate"]
     assert "LIVE_BLOCKED" in after["paper_status"]
     assert after["trading_mode"] == "LIVE_BLOCKED"
-    assert after["execution"] is False
+    assert after["execution"] is True
+    assert after["paper_execution"] == "OPEN"
+    assert after["live_adapter_loaded"] is False
     live = client.post(
         "/execution/place-order",
         headers=BOARD_HEADERS,

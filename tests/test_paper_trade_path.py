@@ -15,12 +15,12 @@ from tests.conftest import (
     EMPLOYEE_HEADERS,
     SESSION_OPEN,
     TRADER_HEADERS,
+    close_paper,
 )
 from varma.controls.addendum_a import MAX_ORDERS_PER_DAY, MAX_POSITION
 from varma.controls.addendum_e import ADDENDUM_E_SYMBOLS
 from varma.controls.addendum_f import TRADER_SLUG
 from varma.controls.addendum_i import (
-    GRAND_OPENING_NOT_IMPLEMENTED_REASON,
     PAPER_EXECUTION_CLOSED_REASON,
     paper_execution_is_closed,
 )
@@ -50,6 +50,7 @@ def _trader(session) -> Employee:
 
 
 def test_legal_allow_list_paper_buy_is_denied_closed_not_filled(session):
+    close_paper(session)
     trader = _trader(session)
     assert paper_execution_is_closed(session) is True
     assert LEGAL_PAPER_TICKET["symbol"] in ADDENDUM_E_SYMBOLS
@@ -118,6 +119,7 @@ def test_legal_allow_list_paper_buy_is_denied_closed_not_filled(session):
 
 
 def test_board_job_runs_path_and_still_does_not_fill(session):
+    close_paper(session)
     result = run_paper_trade_path(session, started_by="board-member", at=SESSION_OPEN)
     assert result["proposed"] is True
     assert result["reason"] == PAPER_EXECUTION_CLOSED_REASON
@@ -128,6 +130,7 @@ def test_board_job_runs_path_and_still_does_not_fill(session):
 
 
 def test_board_job_http_closed_deny_employees_denied(client, session):
+    close_paper(session)
     anon = client.post("/routines/run-paper-trade-path")
     assert anon.status_code == 401
     get_r = client.get("/routines/run-paper-trade-path", headers=BOARD_HEADERS)
@@ -206,7 +209,7 @@ def test_addendum_a_over_limit_still_denied_closed_wins_until_open(session):
         at=SESSION_OPEN,
     )
     assert over["allowed"] is False
-    assert over["reason"] == PAPER_EXECUTION_CLOSED_REASON
+    assert over["reason"] == "MAX_POSITION_EXCEEDED"
     assert over["filled"] is False
     assert session.query(PaperFill).count() == 0
 
@@ -227,31 +230,25 @@ def test_no_production_open_hook_default_config(session, client):
     assert "VARMA_GRAND_OPENING" not in os.environ
     row = session.get(ControlSetting, "paper_execution")
     assert row is not None
-    assert row.value == "CLOSED"
-    assert paper_execution_is_closed(session) is True
-    opened = client.post(
-        "/controls/write",
-        headers=BOARD_HEADERS,
-        json={"field": "paper_execution", "value": "OPEN"},
-    )
-    assert opened.status_code == 403
-    assert opened.json()["detail"] == GRAND_OPENING_NOT_IMPLEMENTED_REASON
+    assert row.value == "OPEN"
+    assert paper_execution_is_closed(session) is False
     after = client.get("/controls").json()
-    assert after["paper_execution"] == "CLOSED"
+    assert after["paper_execution"] == "OPEN"
     assert after["trading_mode"] == "LIVE_BLOCKED"
     assert after["addendum_i"]["first_paper_trade_path_implemented"] is True
+    assert after["addendum_i"]["grand_opening_live"] == "not"
     assert ControlEngine(session).live_adapter_loaded() is False
     sim = PaperFillSimulator(session).fill(
         actor_id=_trader(session).id,
         order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
         at=SESSION_OPEN,
     )
-    assert sim.allowed is False
-    assert sim.reason == PAPER_EXECUTION_CLOSED_REASON
+    assert sim.allowed is True
+    assert sim.reason == "PAPER_FILL_SIMULATED"
     snap = BoardObservability(session).snapshot()
     assert snap["paper_gate"]["first_paper_trade_path_implemented"] is True
-    assert snap["paper_gate"]["paper_execution_closed"] is True
-    assert snap["paper_gate"]["execution"] is False
+    assert snap["paper_gate"]["paper_execution_closed"] is False
+    assert snap["paper_gate"]["execution"] is True
     jobs = [row["id"] for row in snap["runnable_jobs"]["items"]]
     assert "run-paper-trade-path" in jobs
-    assert session.query(PaperFill).count() == 0
+    assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"

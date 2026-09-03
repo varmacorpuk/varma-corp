@@ -188,15 +188,14 @@ def test_learning_writes_memory_never_controls(session):
         assert GOVERNED_PROMOTION_REQUIRED in str(exc)
     assert session.get(ControlState, 1).trading_mode == before_mode == "LIVE_BLOCKED"
     assert [r.symbol for r in session.query(AllowListInstrument).all()] == before_allow
-    assert ControlEngine(session).paper_execution_closed() is before_paper is True
+    assert ControlEngine(session).paper_execution_closed() is before_paper is False
     d = ExecutionPort(session).place_order(
         actor_id=trader.id,
         actor_type="employee",
-        order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "LIVE"},
     )
     assert d.allowed is False
-    assert d.reason == "PAPER_EXECUTION_CLOSED"
-    assert session.query(PaperFill).count() == 0
+    assert d.reason == "LIVE_BLOCKED"
 
 
 def test_nightly_filter_after_learning_still_skips_controls(session):
@@ -205,7 +204,7 @@ def test_nightly_filter_after_learning_still_skips_controls(session):
     result = run_nightly_filter(session)
     assert result["controls_written"] is False
     assert session.get(ControlState, 1).trading_mode == before == "LIVE_BLOCKED"
-    assert ControlEngine(session).paper_execution_closed() is True
+    assert ControlEngine(session).paper_execution_closed() is False
 
 
 def test_employee_api_exposes_durable_brain(client):
@@ -224,10 +223,10 @@ def test_employee_api_exposes_durable_brain(client):
     trader_live = client.post(
         "/execution/place-order",
         headers=TRADER_HEADERS,
-        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "LIVE"},
     )
     assert trader_live.status_code == 403
-    assert trader_live.json()["detail"]["reason"] == "PAPER_EXECUTION_CLOSED"
+    assert trader_live.json()["detail"]["reason"] == "LIVE_BLOCKED"
     obs = client.get("/observability", headers=BOARD_HEADERS).json()
     assert obs["trading_mode"] == "LIVE_BLOCKED"
-    assert obs["paper_gate"]["paper_execution_closed"] is True
+    assert obs["paper_gate"]["paper_execution_closed"] is False

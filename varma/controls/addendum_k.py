@@ -11,8 +11,8 @@ While London cash is open, those three remain on Addendum E (subject to
 CLOSED, limits, kill switch). Dual-listed US lines SHEL / AZN / ULVR are
 not on the allow-list. Do not invent them.
 
-PAPER stays CLOSED (Board Addendum I). This is not Grand Opening. No fills.
-trading_mode stays LIVE_BLOCKED.
+PAPER opening is a separate Board control (Addendum I). This is not live
+opening. No real broker. trading_mode stays LIVE_BLOCKED.
 
 The Addendum K letter exists outside the repo. Chat is not the record.
 """
@@ -74,9 +74,11 @@ def addendum_k_public() -> dict[str, Any]:
         "london_cash_close_is_not_flatten": True,
         "split_flatten_clocks": False,
         "overnight_holds": False,
-        "paper_execution_stays": "CLOSED",
-        "not_grand_opening": True,
-        "does_not_fill": True,
+        "paper_execution_stays": "OPEN_OR_CLOSED_BY_ADDENDUM_I",
+        "not_grand_opening": False,
+        "not_grand_opening_live": True,
+        "does_not_fill": False,
+        "does_not_open_live": True,
         "trading_mode_stays": "LIVE_BLOCKED",
         "employees_cannot_write": True,
         "ceo_cannot_write": True,
@@ -87,7 +89,7 @@ def addendum_k_public() -> dict[str, Any]:
             "on the US seven until US flatten. Desk still UK cash open through US "
             "cash close. Flatten still at US regular cash close. London close is "
             "not the flatten. Dual-listed US lines are not on the allow-list. "
-            "PAPER still CLOSED (Addendum I). Not Grand Opening. No fills. "
-            "LIVE_BLOCKED. The letter exists outside the repo. Chat is not the record."
+            "Addendum I is the two-opening rule. LIVE_BLOCKED. The letter "
+            "exists outside the repo. Chat is not the record."
         ),
     }

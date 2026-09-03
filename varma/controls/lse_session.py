@@ -6,8 +6,8 @@ US regular cash close, not London cash close 16:30.
 
 Board Addendum K 2026-09-03 (Hari explicit yes): after London cash market
 shuts, deny paper orders in those three names only. While London cash is
-open they remain on Addendum E (subject to CLOSED, limits, kill switch).
-US names are not denied by K. PAPER stays CLOSED. Not Grand Opening.
+open they remain on Addendum E (subject to paper OPEN/CLOSED, limits, kill switch).
+US names are not denied by K. LIVE stays blocked. Not a live opening.
 
 If the session-rule setting is missing, fail closed with distinct deny
 LSE_SESSION_RULE_UNSET so the three cannot silently fill. Employees cannot

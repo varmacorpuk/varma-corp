@@ -1,9 +1,9 @@
 """Flatten ALL paper before US regular cash close (Board Addendum C 2026-08-27).
 
 Internal PAPER FILL SIMULATOR only. Not BROKER_PAPER. Not LIVE.
-Board Addendum I: do not run flatten-as-if-there-were-positions. While PAPER
-execution is CLOSED there are no positions to flatten; this is a no-op.
-GET /observability must not call this.
+Board Addendum I: while PAPER execution is CLOSED there are no positions
+to flatten; this is a no-op. After Grand Opening PAPER, flatten closes
+open paper via the internal simulator. GET /observability must not call this.
 """
 
 from __future__ import annotations

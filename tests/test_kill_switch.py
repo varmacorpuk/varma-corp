@@ -4,6 +4,7 @@ from tests.conftest import (
     CHALLENGE_HEADERS,
     EMPLOYEE_HEADERS,
     RISK_HEADERS,
+    SESSION_OPEN,
 )
 from varma.clock import now_london
 from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
@@ -106,8 +107,9 @@ def test_auto_trip_on_equity_floor(session):
         actor_id=emp.id,
         actor_type="employee",
         order={"symbol": "AAPL", "side": "buy", "notional_gbp": 50, "execution_port": "SIMULATOR"},
+        at=SESSION_OPEN,
     )
     assert d.allowed is False
-    assert d.reason == "PAPER_EXECUTION_CLOSED"
-    assert session.get(ControlState, 1).kill_switch is False
+    assert d.reason == "KILL_SWITCH"
+    assert session.get(ControlState, 1).kill_switch is True
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"

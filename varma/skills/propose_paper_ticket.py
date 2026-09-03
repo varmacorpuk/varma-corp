@@ -2,10 +2,9 @@
 
 Chris Adeyemi · Trader proposes a paper order. ControlEngine is the
 authoritative permit/deny. If allowed, the internal paper fill simulator
-updates the paper ledger. PAPER execution remains CLOSED until Grand Opening,
-so a would-be-valid allow-list ticket is DENIED (PAPER_EXECUTION_CLOSED) and
-does not fill. LIVE and BROKER_PAPER stay UNLOADED. FakeLLM is not called:
-permit/deny, hours, kill switch, and fills are never AI.
+updates the paper ledger. After Grand Opening PAPER a legal allow-list
+ticket may fill in the simulator. LIVE and BROKER_PAPER stay UNLOADED.
+FakeLLM is not called: permit/deny, hours, kill switch, and fills are never AI.
 """
 
 from __future__ import annotations
@@ -34,7 +33,6 @@ ONLY_TRADER_MAY_PROPOSE = "ONLY_TRADER_MAY_PROPOSE_PAPER_TICKETS"
 
 # Legal allow-list paper buy inside Addendum A numeric limits (max_position 200 GBP,
 # max_orders_per_day 6, max_daily_loss 50 GBP). AAPL is on Addendum E. Not LSE.
-# Not a fill while PAPER execution is CLOSED.
 LEGAL_PAPER_TICKET: dict[str, Any] = {
     "symbol": "AAPL",
     "side": "buy",
@@ -106,7 +104,8 @@ def run_propose_paper_ticket(
         "note": (
             "Trader proposes. ControlEngine permit/deny is authoritative. "
             "If allowed, PaperFillSimulator.fill updates the paper ledger. "
-            "While PAPER execution is CLOSED the engine DENY before fill."
+            "While PAPER execution is CLOSED the engine DENY before fill. "
+            "After Grand Opening PAPER a legal ticket may fill in the simulator."
         ),
     }
 
@@ -166,7 +165,8 @@ def run_propose_paper_ticket(
         "broker_paper_loaded": bool(BROKER_PAPER_LOADED),
         "live_adapter_loaded": bool(LIVE_ADAPTER_LOADED) or bool(LIVE_PORT_LOADED),
         "first_paper_trade_path_implemented": True,
-        "grand_opening_not_performed": True,
+        "grand_opening_not_performed": False,
+        "grand_opening_paper_done": True,
         "path": path,
         "started_by": started_by,
         "daemon": False,
@@ -177,7 +177,7 @@ def run_propose_paper_ticket(
         "note": (
             "Chris Adeyemi · Trader proposed a paper ticket. ControlEngine "
             "permit/deny is authoritative. Internal simulator fills only if "
-            "the engine allows. PAPER execution is CLOSED until Grand Opening. "
-            "Nothing fills now. LIVE stays off."
+            "the engine allows. After Grand Opening PAPER a legal allow-list "
+            "practice order may fill in the internal simulator. LIVE stays off."
         ),
     }

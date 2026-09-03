@@ -88,7 +88,7 @@ def test_addendum_j_backup_status_before_run(session):
     assert snap["addendum_j"]["encrypted_at_rest"] is True
     assert snap["addendum_j"]["daemon"] is False
     assert snap["trading_mode"] == "LIVE_BLOCKED"
-    assert snap["paper_execution"] == "CLOSED"
+    assert snap["paper_execution"] == "OPEN"
     obs = BoardObservability(session).snapshot()
     backup = obs["backup"]
     assert backup["last_successful_backup_at"] is None
@@ -108,7 +108,7 @@ def test_addendum_j_backup_status_before_run(session):
     assert get_llm().provider_name == "fake"
 
 
-def test_paper_still_closed_allow_listed_ticker_denied(session):
+def test_paper_open_allow_listed_ticker_may_fill(session):
     emp = _grant_place(session)
     d = ControlEngine(session).place_order(
         actor_id=emp.id,
@@ -116,16 +116,10 @@ def test_paper_still_closed_allow_listed_ticker_denied(session):
         order={"symbol": "AAPL", "side": "buy", "notional_gbp": 50, "execution_port": "SIMULATOR"},
         at=SESSION_OPEN,
     )
-    assert d.allowed is False
-    assert d.reason == PAPER_EXECUTION_CLOSED_REASON
-    assert session.query(PaperFill).count() == 0
-    assert session.query(PaperPosition).count() == 0
-    sim = PaperFillSimulator(session).fill(
-        actor_id=emp.id,
-        order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
-        at=SESSION_OPEN,
-    )
-    assert sim.reason == PAPER_EXECUTION_CLOSED_REASON
+    assert d.allowed is True
+    assert d.reason == "PAPER_FILL_SIMULATED"
+    assert session.query(PaperFill).count() == 1
+    assert session.query(PaperPosition).count() == 1
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
 
 
@@ -164,14 +158,14 @@ def test_live_denied_and_backup_does_not_fill(client):
     assert after["backup"]["ciphertext_shown"] is False
     assert after["backup"]["encryption_key_shown"] is False
     assert after["trading_mode"] == "LIVE_BLOCKED"
-    assert after["paper_gate"]["paper_execution"] == "CLOSED"
+    assert after["paper_gate"]["paper_execution"] == "OPEN"
     paper = client.post(
         "/execution/place-order",
         headers=BOARD_HEADERS,
-        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "LIVE"},
     )
     assert paper.status_code == 403
-    assert paper.json()["detail"]["reason"] == PAPER_EXECUTION_CLOSED_REASON
+    assert paper.json()["detail"]["reason"] in {"LIVE_BLOCKED", "LIVE_ADAPTER_NOT_LOADED"}
     assert LIVE_ADAPTER_LOADED is False
     assert BROKER_PAPER_LOADED is False
     assert LIVE_PORT_LOADED is False
@@ -241,7 +235,7 @@ def test_employees_cannot_open_the_firm_or_download_secrets(client):
     ceo_secrets = client.get("/backup/secrets", headers=CEO_HEADERS)
     assert ceo_secrets.status_code == 403
     after = client.get("/controls").json()
-    assert after["paper_execution"] == "CLOSED"
+    assert after["paper_execution"] == "OPEN"
     assert after["trading_mode"] == "LIVE_BLOCKED"
 
 

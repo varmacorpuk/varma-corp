@@ -1,7 +1,8 @@
 """Board-only on-demand jobs. POST endpoints, not GET /observability.
 
-CLI entry points remain. Running a job must not load broker ports,
-must not change trading_mode, and must not fill paper/live orders.
+CLI entry points remain. Running a job must not load broker ports and must
+not change trading_mode. Paper-path and flatten jobs may use the internal
+simulator after Grand Opening PAPER. LIVE stays off.
 """
 
 from __future__ import annotations
@@ -131,14 +132,15 @@ BOARD_JOBS: tuple[dict[str, Any], ...] = (
         "proposer_display_name": "Chris Adeyemi · Trader",
         "first_paper_trade_path_implemented": True,
         "internal_simulator": True,
-        "paper_execution_closed": True,
+        "paper_execution_closed": False,
         "fills_while_closed": False,
-        "paper_fills": False,
-        "fills": False,
+        "paper_fills": True,
+        "fills": True,
         "live_fills": False,
         "ai_called": False,
         "daemon": False,
-        "grand_opening_not_performed": True,
+        "grand_opening_not_performed": False,
+        "grand_opening_paper_done": True,
     },
 )
 
@@ -171,17 +173,18 @@ def runnable_jobs_catalog() -> dict[str, Any]:
             item["owner_display_name"] = "Owen Blake · Technology"
             item["daemon"] = False
         if job["id"] == "run-paper-trade-path":
-            item["paper_fills"] = False
-            item["fills"] = False
+            item["paper_fills"] = True
+            item["fills"] = True
             item["live_fills"] = False
             item["fills_while_closed"] = False
             item["first_paper_trade_path_implemented"] = True
             item["internal_simulator"] = True
-            item["paper_execution_closed"] = True
+            item["paper_execution_closed"] = False
             item["ai_called"] = False
             item["proposer_slug"] = "trader"
             item["proposer_display_name"] = "Chris Adeyemi · Trader"
-            item["grand_opening_not_performed"] = True
+            item["grand_opening_not_performed"] = False
+            item["grand_opening_paper_done"] = True
             item["daemon"] = False
         items.append(item)
     catalog = {
@@ -194,9 +197,9 @@ def runnable_jobs_catalog() -> dict[str, Any]:
             "entry points still work. Running a job does not load BROKER_PAPER or "
             "LIVE, does not change trading_mode, and does not fill against a broker. "
             "Flatten-before-US-close uses the internal paper simulator only. "
-            "The Trader paper-ticket path exists; PAPER execution is still CLOSED "
-            "so that job does not fill. After a run, the same panel refreshes from "
-            "the database."
+            "The Trader paper-ticket path exists; after Grand Opening PAPER that "
+            "job may fill in the internal simulator. LIVE stays off. After a run, "
+            "the same panel refreshes from the database."
         ),
     }
     catalog.update(JOB_SAFETY_FLAGS)
@@ -229,9 +232,10 @@ def with_job_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
 
 
 def with_paper_trade_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
-    """Safety flags for the Trader paper-ticket path. No fills while CLOSED."""
+    """Safety flags for the Trader paper-ticket path. Simulator fills only if allowed."""
     out = with_job_safety(session, result)
     filled = bool(result.get("filled"))
+    closed = bool(result.get("paper_execution_closed"))
     out["job_safety"]["fills"] = filled
     out["job_safety"]["paper_fills"] = filled
     out["job_safety"]["live_fills"] = False
@@ -243,7 +247,9 @@ def with_paper_trade_safety(session: Session, result: dict[str, Any]) -> dict[st
     out["job_safety"]["loads_broker_ports"] = False
     out["job_safety"]["changes_trading_mode"] = False
     out["job_safety"]["writes_controls"] = False
-    out["job_safety"]["grand_opening_not_performed"] = True
+    out["job_safety"]["grand_opening_not_performed"] = False
+    out["job_safety"]["grand_opening_paper_done"] = True
+    out["job_safety"]["paper_execution_closed"] = closed
     return out
 
 

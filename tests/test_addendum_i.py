@@ -8,11 +8,13 @@ from tests.conftest import (
     SESSION_OPEN,
     TECH_HEADERS,
     TRADER_HEADERS,
+    close_paper,
 )
 from varma.controls.addendum_e import ADDENDUM_E_SYMBOLS
 from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
-    GRAND_OPENING_NOT_IMPLEMENTED_REASON,
+    GRAND_OPENING_LIVE_NOT_IMPLEMENTED_REASON,
+    GRAND_OPENING_PAPER_REASON,
     PAPER_EXECUTION_CLOSED_REASON,
     addendum_i_public,
     paper_execution_is_closed,
@@ -59,34 +61,37 @@ def _grant_place(session):
     return emp
 
 
-def test_addendum_i_paper_execution_is_closed(session):
+def test_addendum_i_two_opening_rule_paper_open_live_blocked(session):
     engine = ControlEngine(session)
-    assert paper_execution_is_closed(session) is True
+    assert paper_execution_is_closed(session) is False
     snap = engine.snapshot()
     assert snap["trading_mode"] == "LIVE_BLOCKED"
-    assert snap["paper_execution"] == "CLOSED"
-    assert snap["paper_execution_closed"] is True
+    assert snap["paper_execution"] == "OPEN"
+    assert snap["paper_execution_closed"] is False
     assert snap["addendum_i"]["label"] == ADDENDUM_I_LABEL
-    assert snap["addendum_i"]["paper_execution_closed"] is True
+    assert snap["addendum_i"]["two_opening_rule_still_exists"] is True
+    assert snap["addendum_i"]["grand_opening_paper_done"] is True
+    assert snap["addendum_i"]["grand_opening_live_done"] is False
     assert snap["addendum_i"]["first_paper_trade_path_implemented"] is True
-    assert snap["addendum_i"]["simulated_capital_status"] == "FUTURE_PAPER_STARTING_BOOK_ONLY"
-    assert snap["addendum_i"]["addendum_a_numbers_unused_until_open"] is True
+    assert snap["addendum_i"]["simulated_capital_status"] == "PAPER_STARTING_BOOK"
+    assert snap["addendum_i"]["addendum_a_numbers_unused_until_open"] is False
     assert snap["addendum_i"]["board_member_0730_diary_invite"] is False
     assert set(engine.allow_list_symbols()) == set(ADDENDUM_E_SYMBOLS)
     row = session.get(ControlSetting, "paper_execution")
     assert row is not None
-    assert row.value == "CLOSED"
-    assert row.source == ADDENDUM_I_LABEL
+    assert row.value == "OPEN"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
-    pub = addendum_i_public()
+    pub = addendum_i_public(session)
     assert pub["employees_cannot_open_the_firm"] is True
     assert pub["ceo_cannot_open_the_firm"] is True
+    assert pub["employees_cannot_close_the_firm"] is True
     assert LIVE_ADAPTER_LOADED is False
     assert BROKER_PAPER_LOADED is False
     assert LIVE_PORT_LOADED is False
 
 
-def test_no_fills_while_paper_closed_even_for_allow_listed(session):
+def test_closed_gate_still_denies_when_reapplied(session):
+    close_paper(session)
     emp = _grant_place(session)
     engine = ControlEngine(session)
     d = engine.place_order(
@@ -111,7 +116,7 @@ def test_no_fills_while_paper_closed_even_for_allow_listed(session):
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
 
 
-def test_live_denied_while_closed(client):
+def test_live_denied_while_paper_open(client):
     live = client.post(
         "/execution/place-order",
         headers=BOARD_HEADERS,
@@ -144,7 +149,7 @@ def test_employees_cannot_open_the_firm(client):
             assert r.status_code == 403
             assert r.json()["detail"] == "EMPLOYEE_CANNOT_WRITE_CONTROLS"
     after = client.get("/controls").json()
-    assert after["paper_execution"] == "CLOSED"
+    assert after["paper_execution"] == "OPEN"
     assert after["trading_mode"] == "LIVE_BLOCKED"
 
 
@@ -168,17 +173,17 @@ def test_ceo_cannot_open_the_firm(client, session):
         json={"field": "grand_opening_paper", "value": "yes"},
     )
     assert paper.status_code == 403
-    order = client.post(
-        "/execution/place-order",
+    close = client.post(
+        "/controls/write",
         headers=CEO_HEADERS,
-        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        json={"field": "paper_execution", "value": "CLOSED"},
     )
-    assert order.status_code == 403
-    assert client.get("/controls").json()["paper_execution"] == "CLOSED"
+    assert close.status_code == 403
+    assert client.get("/controls").json()["paper_execution"] == "OPEN"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
 
 
-def test_gold_denied_while_closed(session):
+def test_gold_denied_while_open(session):
     emp = _grant_place(session)
     d = ControlEngine(session).place_order(
         actor_id=emp.id,
@@ -191,33 +196,29 @@ def test_gold_denied_while_closed(session):
     assert session.query(PaperFill).count() == 0
 
 
-def test_board_cannot_open_firm_in_this_slice(client):
+def test_board_can_open_paper_cannot_open_live(client, session):
+    close_paper(session)
     r = client.post(
         "/controls/write",
         headers=BOARD_HEADERS,
         json={"field": "paper_execution", "value": "OPEN"},
     )
-    assert r.status_code == 403
-    assert r.json()["detail"] == GRAND_OPENING_NOT_IMPLEMENTED_REASON
+    assert r.status_code == 200
+    assert r.json()["reason"] == GRAND_OPENING_PAPER_REASON
     live = client.post(
         "/controls/write",
         headers=BOARD_HEADERS,
         json={"field": "grand_opening_live", "value": "yes"},
     )
     assert live.status_code == 403
+    assert live.json()["detail"] == GRAND_OPENING_LIVE_NOT_IMPLEMENTED_REASON
     after = client.get("/controls").json()
-    assert after["paper_execution"] == "CLOSED"
+    assert after["paper_execution"] == "OPEN"
     assert after["trading_mode"] == "LIVE_BLOCKED"
-    paper = client.post(
-        "/execution/place-order",
-        headers=BOARD_HEADERS,
-        json={"symbol": "AAPL", "side": "buy", "notional_gbp": 50, "execution_port": "SIMULATOR"},
-    )
-    assert paper.status_code == 403
-    assert paper.json()["detail"]["reason"] == PAPER_EXECUTION_CLOSED_REASON
 
 
-def test_flatten_is_noop_while_closed(session):
+def test_flatten_is_noop_while_closed_fixture(session):
+    close_paper(session)
     emp = _grant_place(session)
     denied = ControlEngine(session).place_order(
         actor_id=emp.id,
@@ -247,6 +248,6 @@ def test_0730_does_not_invite_board_member(session):
     assert "diary invite" in meeting["description"]
     obs = BoardObservability(session).snapshot()
     assert obs["company_meeting"]["board_member_diary_invite"] is False
-    assert obs["paper_gate"]["paper_execution"] == "CLOSED"
+    assert obs["paper_gate"]["paper_execution"] == "OPEN"
     assert obs["paper_gate"]["first_paper_trade_path_implemented"] is True
     assert obs["addendum_i"]["label"] == ADDENDUM_I_LABEL

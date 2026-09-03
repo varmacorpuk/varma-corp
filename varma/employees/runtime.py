@@ -224,7 +224,8 @@ class EmployeeRuntime:
         """Chris Adeyemi proposes a paper ticket. ControlEngine permit/deny. No AI.
 
         Permit/deny, hours, kill switch, and fills are never an LLM call.
-        Only the Trader may use this skill. PAPER stays CLOSED until Grand Opening.
+        Only the Trader may use this skill. After Grand Opening PAPER a legal
+        ticket may fill in the internal simulator. LIVE stays blocked.
         """
         from varma.skills.propose_paper_ticket import (
             ONLY_TRADER_MAY_PROPOSE,

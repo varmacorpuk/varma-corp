@@ -4,13 +4,13 @@
   "generated_by": "PR #1 (Safe Token-Efficiency Foundation) — hand-authored, additive, non-invasive",
   "handover": {
     "path": "docs/BUILD_STATE.md",
-    "purpose": "READ FIRST: current build state on this paper-trade-path PR (token-efficiency runtime from #24-#26 is on main; first paper-trade PATH exists and is still CLOSED; Addendum K is encoded here; stages 4-5 are not), governance/safety, open Board decisions, and the NEXT STEP. Do not rescan the repo or re-read Documents 00-18 unless required. Do not call AI for deterministic ops. PR #21 leftover draft: supersede after merge. Next human step is Board Grand Opening.",
+    "purpose": "READ FIRST: current build state. Grand Opening PAPER is done (practice / paper OPEN, £1000 fake book). LIVE still blocked. Addendum I remains the two-opening rule. FakeLLM default. Do not rescan the repo or re-read Documents 00-18 unless required. Do not call AI for deterministic ops. Next human step is paper operation; LIVE later only if the Board says so.",
     "then_read": ["docs/PROJECT_MAP.md", "docs/SPEC_INDEX.md", "docs/GLOSSARY.md"]
   },
   "specs_note": "Authoritative Documents 00-18 live OUTSIDE this repository. See docs/SPEC_INDEX.md for pointers.",
   "runtime_invariants": [
     "trading_mode=LIVE_BLOCKED",
-    "PAPER execution CLOSED (Addendum I)",
+    "PAPER execution OPEN for practice (Addendum I two-opening rule; live not opened)",
     "BROKER_PAPER and LIVE ports UNLOADED",
     "default LLM provider is FakeLLM (deterministic, no network)",
     "AI never enforces controls; ControlEngine is authoritative",

@@ -177,4 +177,4 @@ def test_missing_limits_deny_after_allow_list(session):
         at=SESSION_OPEN,
     )
     assert d.allowed is False
-    assert d.reason == "PAPER_EXECUTION_CLOSED"
+    assert d.reason == "MISSING_NUMERIC_LIMITS"
