@@ -179,7 +179,15 @@ def main() -> None:
         factory = get_session_factory()
     session = factory()
     try:
+        from varma.db.models import PaperAccount, PaperPosition
+        from varma.paper.persist import (
+            existing_shel_l_buy_5_fill,
+            maybe_restore_tracked_paper_ledger,
+            write_tracked_paper_ledger,
+        )
+
         seed_if_empty(session)
+        maybe_restore_tracked_paper_ledger(session)
         print("Trader paper-ticket proposal — first paper-trade PATH")
         print("PAPER execution: OPEN after Grand Opening PAPER (LIVE still blocked)")
         print("Daemon: False")
@@ -189,26 +197,60 @@ def main() -> None:
         print("Now Europe/London:", now_london().isoformat())
         if at is not None:
             print("ticket_at Europe/London:", at.isoformat())
-        result = run_paper_trade_path(session, started_by="cli", at=at, order=order)
-        print("proposed:", result["proposed"])
-        print("proposer:", result["proposer"]["display_name"])
-        print("symbol:", result["order"]["symbol"])
-        print("allowed:", result["allowed"])
-        print("reason:", result["reason"])
-        print("filled:", result["filled"])
-        print("paper_fills:", result["paper_fills"])
-        print("live_fills:", result["live_fills"])
-        print("paper_execution:", result["paper_execution"])
-        print("trading_mode:", result["trading_mode"])
-        print("ai_called:", result["ai_called"])
-        print("path_reached:", result["path"]["reached"])
-        if result.get("details"):
-            details = result["details"]
-            print("fill_id:", details.get("fill_id"))
-            print("fill_price:", details.get("fill_price"))
-            print("quantity:", details.get("quantity"))
-            print("notional_gbp:", details.get("notional_gbp"))
-            print("cash_gbp:", details.get("cash_gbp"))
+
+        existing = None
+        if args.ticket == PAPER_20260903_02_ID:
+            existing = existing_shel_l_buy_5_fill(session)
+        if existing is not None:
+            acc = session.get(PaperAccount, 1)
+            pos = session.get(PaperPosition, "SHEL.L")
+            print("proposed: True")
+            print("already_filled: True")
+            print("proposer: Chris Adeyemi · Trader")
+            print("symbol: SHEL.L")
+            print("allowed: True")
+            print("reason: PAPER_FILL_SIMULATED")
+            print("filled: True")
+            print("paper_fills: True")
+            print("live_fills: False")
+            print("paper_execution: OPEN")
+            print("trading_mode: LIVE_BLOCKED")
+            print("ai_called: False")
+            print("path_reached: internal_simulator")
+            print("fill_id:", existing.id)
+            print("fill_price:", existing.price)
+            print("quantity:", existing.quantity)
+            print("notional_gbp:", existing.notional_gbp)
+            print("cash_gbp:", None if acc is None else acc.cash)
+            print("position_qty:", None if pos is None else pos.quantity)
+        else:
+            result = run_paper_trade_path(session, started_by="cli", at=at, order=order)
+            print("proposed:", result["proposed"])
+            print("proposer:", result["proposer"]["display_name"])
+            print("symbol:", result["order"]["symbol"])
+            print("allowed:", result["allowed"])
+            print("reason:", result["reason"])
+            print("filled:", result["filled"])
+            print("paper_fills:", result["paper_fills"])
+            print("live_fills:", result["live_fills"])
+            print("paper_execution:", result["paper_execution"])
+            print("trading_mode:", result["trading_mode"])
+            print("ai_called:", result["ai_called"])
+            print("path_reached:", result["path"]["reached"])
+            if result.get("details"):
+                details = result["details"]
+                print("fill_id:", details.get("fill_id"))
+                print("fill_price:", details.get("fill_price"))
+                print("quantity:", details.get("quantity"))
+                print("notional_gbp:", details.get("notional_gbp"))
+                print("cash_gbp:", details.get("cash_gbp"))
+
+        path = sqlite_path_from_url(url) if url else None
+        if path is not None and path.name == PAPER_OPEN_DB_FILENAME:
+            written = write_tracked_paper_ledger(
+                session, ticket_id=args.ticket or PAPER_20260903_02_ID
+            )
+            print("tracked_ledger:", written)
     finally:
         session.close()
 

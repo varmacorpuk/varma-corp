@@ -4,10 +4,15 @@
 .env.*.local
 
 # TEMPORARY DEVELOPMENT SQLite (StoragePort). Not the system of record.
-data/
+# Exception: the practice paper-OPEN book (and its JSON ledger) are tracked so
+# the firm floor keeps SHEL.L fills across VMs. Never commit data/varma.db.
+data/*
+!data/varma_paper_open.db
+!data/paper_open_ledger.json
 *.db
 *.sqlite
 *.sqlite3
+!data/varma_paper_open.db
 
 # Encrypted backup keys and dump files — never commit company records
 *.key

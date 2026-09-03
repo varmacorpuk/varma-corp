@@ -18,7 +18,7 @@ Authoritative specifications are **Documents 00–18**, which live **outside thi
 | `tests/` | Pytest suite: Grand Opening PAPER on #30 main (practice OPEN, LIVE blocked). Do not invent a percent-complete. |
 | `scripts/` | Dev helper scripts (`dev.sh`) |
 | `docs/` | `BUILD_STATE.md` (read first — current handover), this map, spec index, glossary, `knowledge/index.json` (navigation only) |
-| `data/` | TEMPORARY dev SQLite (gitignored). Paper-OPEN book is `varma_paper_open.db`. Never empty `varma.db` |
+| `data/` | Practice paper-OPEN book `varma_paper_open.db` plus tracked `paper_open_ledger.json`. Never empty `varma.db` |
 | `docker-compose.yml` | Optional Postgres for the same StoragePort |
 | `README.md`, `ARCHITECTURE.md` | Overview + pointer to Documents 00–18 |
 | `Makefile`, `pyproject.toml`, `requirements.txt`, `.env.example` | Build / config |
@@ -81,6 +81,7 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - `varma/paper/simulator.py` — internal paper fill simulator (not a broker). Fill only after
   ControlEngine allows. After Grand Opening PAPER a legal allow-list practice order may fill.
 - `varma/paper/ledger.py` — paper account/positions/P&L, evaluation snapshot.
+- `varma/paper/persist.py` — git-tracked practice ledger JSON; hydrates the paper-OPEN book.
 - `varma/paper/flatten.py` — venue-aware flatten (LSE London auction / US close; 02F bound).
 - `varma/skills/propose_paper_ticket.py` — Trader (Chris Adeyemi) paper-ticket proposal.
   Deterministic. No AI. ControlEngine is authoritative.

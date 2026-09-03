@@ -79,6 +79,9 @@ async def lifespan(_app: FastAPI):
     session = get_session_factory()()
     try:
         seed_if_empty(session)
+        from varma.paper.persist import maybe_restore_tracked_paper_ledger
+
+        maybe_restore_tracked_paper_ledger(session)
     finally:
         session.close()
     yield
