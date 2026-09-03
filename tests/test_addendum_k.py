@@ -176,7 +176,10 @@ def test_no_invented_us_listings_and_addendum_c_unrewritten(session):
     assert snap["addendum_c"]["flatten_at"] == FLATTEN_AT == "US_REGULAR_CASH_CLOSE"
     assert snap["addendum_c"]["flatten_not_at"] == FLATTEN_NOT_AT == "LONDON_CASH_CLOSE"
     assert snap["addendum_c"]["flatten_at_london_cash_close"] is False
-    assert snap["lse_session"]["split_flatten_clocks"] is False
+    assert snap["lse_session"]["split_flatten_clocks"] is True
+    assert snap["split_flatten_clocks"] is True
+    assert snap["risk_02f"]["bound"] is True
+    assert snap["risk_02f"]["id"] == "02F"
     assert snap["lse_session"]["invented_us_listings"] is False
     assert snap["addendum_k"]["invented_us_listings"] is False
 

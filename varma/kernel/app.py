@@ -17,6 +17,7 @@ from varma.clock import (
     describe_0630_weekday_routine,
     describe_0730_company_meeting,
     describe_company_backup,
+    describe_flatten_london_close,
     describe_flatten_us_close,
     describe_nightly_memory_filter,
     describe_paper_session,
@@ -50,6 +51,7 @@ from varma.routines.run_nightly_filter import run_nightly_filter
 from varma.routines.run_risk_deny import run_risk_deny
 from varma.routines.run_0730_meeting import run_0730_meeting
 from varma.routines.run_flatten_us_close import run_flatten_us_close
+from varma.routines.run_flatten_london_close import run_flatten_london_close
 from varma.routines.run_paper_trade_path import run_paper_trade_path
 from varma.routines.board_jobs import with_flatten_safety, with_job_safety, with_paper_trade_safety
 from varma.controls.addendum_j import (
@@ -391,6 +393,16 @@ def create_app() -> FastAPI:
             run_flatten_us_close(session, started_by="board-member"),
         )
 
+    @app.post("/routines/run-flatten-london-close")
+    def api_run_flatten_london_close(
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        return with_flatten_safety(
+            session,
+            run_flatten_london_close(session, started_by="board-member"),
+        )
+
     @app.post("/routines/run-backup")
     def api_run_backup(
         _board: Actor = Depends(require_board_member),
@@ -480,7 +492,10 @@ def create_app() -> FastAPI:
             "schedule": "before US regular cash close",
             "timezone": "Europe/London",
             "flatten_at": "US_REGULAR_CASH_CLOSE",
-            "flatten_not_at": "LONDON_CASH_CLOSE",
+            "flatten_not_at": "LONDON_CLOSING_AUCTION",
+            "venue_scope": "US",
+            "split_flatten_clocks": True,
+            "risk_02f_bound": True,
             "daemon": False,
             "overnight_holds": False,
             "us_after_hours": False,
@@ -488,6 +503,28 @@ def create_app() -> FastAPI:
             "description": describe_flatten_us_close(),
             "session": describe_paper_session(),
             "cli": "python -m varma.routines.run_flatten_us_close",
+            "writes_controls": False,
+            "get_observability_flattens": False,
+            "internal_simulator": True,
+            "broker": False,
+        }
+
+    @app.get("/routines/flatten-london-close-schedule")
+    def flatten_london_close_schedule() -> dict[str, Any]:
+        return {
+            "schedule": "London closing auction 16:30-16:35 Europe/London",
+            "timezone": "Europe/London",
+            "flatten_at": "LONDON_CLOSING_AUCTION",
+            "flatten_not_at": "US_REGULAR_CASH_CLOSE",
+            "venue_scope": "LSE",
+            "split_flatten_clocks": True,
+            "risk_02f_bound": True,
+            "cannot_drop_independently": True,
+            "daemon": False,
+            "overnight_holds": False,
+            "description": describe_flatten_london_close(),
+            "session": describe_paper_session(),
+            "cli": "python -m varma.routines.run_flatten_london_close",
             "writes_controls": False,
             "get_observability_flattens": False,
             "internal_simulator": True,

@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     env: str = "development"
     # SQLite under data/ is TEMPORARY DEVELOPMENT storage (StoragePort).
-    database_url: str = f"sqlite:///{DATA_DIR / 'varma.db'}"
+    database_url: str = f"sqlite:///{DATA_DIR / 'varma_paper_open.db'}"
     timezone: str = "Europe/London"
     llm_provider: str = "fake"
     llm_api_key: str | None = None  # unused by default; never commit a live key

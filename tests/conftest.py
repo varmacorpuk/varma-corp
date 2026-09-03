@@ -26,6 +26,8 @@ from varma.kernel.app import create_app
 # Thursday 27 Aug 2026, 10:00 Europe/London — inside Addendum C window (UK open, before US close).
 SESSION_OPEN = datetime(2026, 8, 27, 10, 0, tzinfo=LONDON)
 LONDON_CASH_CLOSE = datetime(2026, 8, 27, 16, 30, tzinfo=LONDON)
+LONDON_CLOSING_AUCTION_END = datetime(2026, 8, 27, 16, 35, tzinfo=LONDON)
+US_HOURS_AFTER_LONDON = datetime(2026, 8, 27, 17, 0, tzinfo=LONDON)
 BEFORE_UK_OPEN = datetime(2026, 8, 27, 7, 59, tzinfo=LONDON)
 WEEKEND = datetime(2026, 8, 29, 10, 0, tzinfo=LONDON)
 

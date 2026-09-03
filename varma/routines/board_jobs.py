@@ -92,7 +92,30 @@ BOARD_JOBS: tuple[dict[str, Any], ...] = (
         "is_live_approval": False,
         "internal_simulator_flatten": True,
         "flatten_at": "US_REGULAR_CASH_CLOSE",
-        "flatten_not_at": "LONDON_CASH_CLOSE",
+        "flatten_not_at": "LONDON_CLOSING_AUCTION",
+        "venue_scope": "US",
+        "split_flatten_clocks": True,
+        "paper_fills": False,
+        "fills": False,
+        "allow_list_not_required_for_flatten": True,
+        "flatten_as_if_there_were_positions": False,
+        "daemon": False,
+    },
+    {
+        "id": "run-flatten-london-close",
+        "label": "Flatten LSE paper in London closing auction",
+        "method": "POST",
+        "path": "/routines/run-flatten-london-close",
+        "cli": "python -m varma.routines.run_flatten_london_close",
+        "sample": False,
+        "is_live_trade": False,
+        "is_live_approval": False,
+        "internal_simulator_flatten": True,
+        "flatten_at": "LONDON_CLOSING_AUCTION",
+        "flatten_not_at": "US_REGULAR_CASH_CLOSE",
+        "venue_scope": "LSE",
+        "split_flatten_clocks": True,
+        "risk_02f_bound": True,
         "paper_fills": False,
         "fills": False,
         "allow_list_not_required_for_flatten": True,
@@ -158,7 +181,22 @@ def runnable_jobs_catalog() -> dict[str, Any]:
             item["allow_list_not_required_for_flatten"] = True
             item["flatten_as_if_there_were_positions"] = False
             item["flatten_at"] = "US_REGULAR_CASH_CLOSE"
-            item["flatten_not_at"] = "LONDON_CASH_CLOSE"
+            item["flatten_not_at"] = "LONDON_CLOSING_AUCTION"
+            item["venue_scope"] = "US"
+            item["split_flatten_clocks"] = True
+            item["daemon"] = False
+        if job["id"] == "run-flatten-london-close":
+            item["paper_fills"] = False
+            item["fills"] = False
+            item["internal_simulator_flatten"] = True
+            item["broker_fills"] = False
+            item["allow_list_not_required_for_flatten"] = True
+            item["flatten_as_if_there_were_positions"] = False
+            item["flatten_at"] = "LONDON_CLOSING_AUCTION"
+            item["flatten_not_at"] = "US_REGULAR_CASH_CLOSE"
+            item["venue_scope"] = "LSE"
+            item["split_flatten_clocks"] = True
+            item["risk_02f_bound"] = True
             item["daemon"] = False
         if job["id"] == "run-backup":
             item["paper_fills"] = False
@@ -196,7 +234,9 @@ def runnable_jobs_catalog() -> dict[str, Any]:
             "panel or the API. Not GET /observability. Employees are denied. CLI "
             "entry points still work. Running a job does not load BROKER_PAPER or "
             "LIVE, does not change trading_mode, and does not fill against a broker. "
-            "Flatten-before-US-close uses the internal paper simulator only. "
+            "Flatten-before-US-close uses the internal paper simulator for US names. "
+            "LSE names flatten in the London closing auction (CEO desk 02F; "
+            "split_flatten_clocks true). "
             "The Trader paper-ticket path exists; after Grand Opening PAPER that "
             "job may fill in the internal simulator. LIVE stays off. After a run, "
             "the same panel refreshes from the database."
@@ -263,8 +303,11 @@ def with_flatten_safety(session: Session, result: dict[str, Any]) -> dict[str, A
     out["job_safety"]["broker_fills"] = False
     out["job_safety"]["allow_list_not_required"] = True
     out["job_safety"]["flatten_as_if_there_were_positions"] = False
-    out["job_safety"]["flatten_at"] = "US_REGULAR_CASH_CLOSE"
-    out["job_safety"]["flatten_not_at"] = "LONDON_CASH_CLOSE"
+    out["job_safety"]["flatten_at"] = result.get("flatten_at") or "US_REGULAR_CASH_CLOSE"
+    out["job_safety"]["flatten_not_at"] = result.get("flatten_not_at")
+    out["job_safety"]["venue_scope"] = result.get("venue_scope")
+    out["job_safety"]["split_flatten_clocks"] = True
+    out["job_safety"]["risk_02f_bound"] = True
     out["job_safety"]["loads_broker_ports"] = False
     out["job_safety"]["changes_trading_mode"] = False
     return out

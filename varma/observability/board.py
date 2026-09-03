@@ -13,6 +13,7 @@ from varma.clock import (
     describe_0630_weekday_routine,
     describe_0730_company_meeting,
     describe_company_backup,
+    describe_flatten_london_close,
     describe_flatten_us_close,
     describe_nightly_memory_filter,
     describe_paper_session,
@@ -35,6 +36,7 @@ from varma.controls.lse_session import (
 )
 from varma.controls.addendum_j import addendum_j_public
 from varma.controls.engine import REQUIRED_LIMIT_KEYS, ControlEngine
+from varma.controls.venue_flatten import SPLIT_FLATTEN_CLOCKS, risk_02f_public
 from varma.controls.kill_switch import kill_switch_state
 from varma.cost.ledger import CostLedger, TEMPORARY_BRIEF_COST_CAP_LABEL
 from varma.paper.flatten import flatten_run_to_dict
@@ -145,6 +147,9 @@ class BoardObservability:
             "addendum_i": control_snap.get("addendum_i") or addendum_i_public(),
             "addendum_j": control_snap.get("addendum_j") or addendum_j_public(),
             "addendum_k": control_snap.get("addendum_k") or addendum_k_public(),
+            "ceo_desk": control_snap.get("ceo_desk"),
+            "risk_02f": control_snap.get("risk_02f") or risk_02f_public(),
+            "split_flatten_clocks": SPLIT_FLATTEN_CLOCKS,
             "paper_session": self._paper_session(control_snap),
             "missing_numeric_limits": self._missing_numeric_limits(control_snap),
             "numeric_limits": self._numeric_limits(control_snap),
@@ -277,8 +282,9 @@ class BoardObservability:
             "note": (
                 "Internal paper ledger. Not a broker. £1000 is the paper starting "
                 "book (Board Addendum I / Grand Opening PAPER). LIVE still blocked. "
-                "trading_mode stays LIVE_BLOCKED. Flatten ALL paper before US "
-                "regular cash close (Board Addendum C). "
+                "trading_mode stays LIVE_BLOCKED. Flatten US names before US "
+                "regular cash close. LSE names flatten in the London closing "
+                "auction 16:30–16:35 (CEO desk 02F; split_flatten_clocks true). "
                 "Do not flatten-as-if-there-were-positions."
             ),
         }
@@ -300,8 +306,11 @@ class BoardObservability:
             "us_regular_cash_close_tz": "America/New_York",
             "us_close_converted_not_hardcoded": True,
             "flatten_at": "US_REGULAR_CASH_CLOSE",
-            "flatten_not_at": "LONDON_CASH_CLOSE",
+            "flatten_not_at": "LONDON_CLOSING_AUCTION",
             "flatten_at_london_cash_close": False,
+            "split_flatten_clocks": SPLIT_FLATTEN_CLOCKS,
+            "lse_flatten_at": "LONDON_CLOSING_AUCTION",
+            "risk_02f": risk_02f_public(),
             "overnight_holds": False,
             "us_after_hours": False,
             "extended_hours": False,
@@ -330,20 +339,24 @@ class BoardObservability:
             "daemon": False,
             "get_observability_flattens": False,
             "flatten_at": "US_REGULAR_CASH_CLOSE",
-            "flatten_not_at": "LONDON_CASH_CLOSE",
+            "flatten_not_at": "LONDON_CLOSING_AUCTION",
+            "split_flatten_clocks": SPLIT_FLATTEN_CLOCKS,
+            "lse_flatten_at": "LONDON_CLOSING_AUCTION",
+            "risk_02f": risk_02f_public(),
             "internal_simulator": True,
             "broker": False,
             "run": flatten_run_to_dict(row) if row else None,
         }
         if row is None:
             data["note"] = (
-                "No flatten-before-US-close run stored yet. "
-                "Board Member: POST /routines/run-flatten-us-close or "
-                "python -m varma.routines.run_flatten_us_close"
+                "No venue flatten run stored yet. US names: POST "
+                "/routines/run-flatten-us-close. LSE names: POST "
+                "/routines/run-flatten-london-close. GET /observability does not flatten."
             )
         else:
             data["note"] = (
-                "Latest on-demand flatten-before-US-close from the database. "
+                "Latest on-demand venue flatten from the database. "
+                "US names at US close; LSE names at London closing auction (02F bound). "
                 "Internal simulator only. GET /observability does not flatten."
             )
         return data
@@ -440,7 +453,8 @@ class BoardObservability:
             "lse_after_london_cash_close_reason": LSE_AFTER_LONDON_CASH_CLOSE_REASON,
             "addendum_k": ADDENDUM_K_LABEL,
             "cannot_silently_fill_lse_if_unset": True,
-            "split_flatten_clocks": False,
+            "split_flatten_clocks": SPLIT_FLATTEN_CLOCKS,
+            "risk_02f": risk_02f_public(),
             "successful_trade_definition": evaluation["successful_trade_definition"],
             "evaluation_win_rate_threshold": evaluation["win_rate_threshold"],
             "evaluation_requires_book_profitable": True,
@@ -724,13 +738,35 @@ class BoardObservability:
                     "timezone": "Europe/London",
                     "daemon": False,
                     "flatten_at": "US_REGULAR_CASH_CLOSE",
-                    "flatten_not_at": "LONDON_CASH_CLOSE",
+                    "flatten_not_at": "LONDON_CLOSING_AUCTION",
+                    "venue_scope": "US",
+                    "split_flatten_clocks": True,
+                    "risk_02f_bound": True,
                     "overnight_holds": False,
                     "method": "POST",
                     "path": "/routines/run-flatten-us-close",
                     "cli": "python -m varma.routines.run_flatten_us_close",
                     "description": describe_flatten_us_close(),
                     "session": describe_paper_session(),
+                    "get_observability_flattens": False,
+                    "internal_simulator": True,
+                    "broker": False,
+                    "flatten_as_if_there_were_positions": False,
+                },
+                "flatten_london_close": {
+                    "schedule": "London closing auction 16:30-16:35 Europe/London",
+                    "timezone": "Europe/London",
+                    "daemon": False,
+                    "flatten_at": "LONDON_CLOSING_AUCTION",
+                    "flatten_not_at": "US_REGULAR_CASH_CLOSE",
+                    "venue_scope": "LSE",
+                    "split_flatten_clocks": True,
+                    "risk_02f_bound": True,
+                    "overnight_holds": False,
+                    "method": "POST",
+                    "path": "/routines/run-flatten-london-close",
+                    "cli": "python -m varma.routines.run_flatten_london_close",
+                    "description": describe_flatten_london_close(),
                     "get_observability_flattens": False,
                     "internal_simulator": True,
                     "broker": False,
