@@ -32,6 +32,7 @@ from varma.paper.ledger import PaperLedger
 from varma.paper.quote import mark_gbp, paper_order_economics
 from varma.ports.bars import BarsProvider, completed_bars, timeframe_minutes
 from varma.technical import technical_snapshot
+from varma.technical.structure import compute_opening_range
 
 SCAN_START = time(14, 32)
 SCAN_END = time(15, 0)
@@ -253,10 +254,18 @@ class OpenScanner:
                 five_upto = done_5m.loc[done_5m.index + pd.Timedelta(minutes=5) <= t_complete]
                 if five_upto.empty:
                     five_upto = done_5m
-                snap5 = _snapshot(feed_symbol, five_upto, timeframe="5m")
-                or_high = snap5.get("structure", {}).get("opening_range", {}).get("OR_high")
-                or_low = snap5.get("structure", {}).get("opening_range", {}).get("OR_low")
-                or_break = snap5.get("candles", {}).get("or_break")
+                # Toolkit OR: compute_opening_range works on the first completed 5m bar.
+                # technical_snapshot needs ≥2 bars; fall back to the same toolkit helper.
+                or_levels = compute_opening_range(five_upto, timeframe="5m")
+                or_high = or_levels.get("OR_high")
+                or_low = or_levels.get("OR_low")
+                or_break = None
+                if len(five_upto) >= 2:
+                    snap5 = _snapshot(feed_symbol, five_upto, timeframe="5m")
+                    or_break = snap5.get("candles", {}).get("or_break")
+                    struct_or = snap5.get("structure", {}).get("opening_range") or {}
+                    or_high = struct_or.get("OR_high", or_high)
+                    or_low = struct_or.get("OR_low", or_low)
                 if or_high is not None and curr_close > float(or_high):
                     side = side or "buy"
                     reasons.append(f"1m close broke 5m OR high {float(or_high):.6f}")

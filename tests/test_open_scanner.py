@@ -86,24 +86,30 @@ def test_next_bar_fill_not_signal_close(session):
 
 
 def test_all_fifteen_names_covered(session):
+    """Each of the 15 names can trigger. Firm-wide 6-order cap is tested separately."""
     book = _book_for_all()
-    levels = {sym: TRIGGER for sym in ADDENDUM_E_SYMBOLS}
-    scanner = OpenScanner(latency_buffer_seconds=0, meeting_trigger_levels=levels)
-    rows = scanner.scan(session, bar_provider=book, as_of=_ts(14, 33))
-    got = {row["feed_symbol"] for row in rows}
-    assert got == set(ADDENDUM_E_SYMBOLS)
-    assert len(rows) == 15
-    desks = {row["symbol"] for row in rows}
+    got = []
+    desks = []
+    for sym in ADDENDUM_E_SYMBOLS:
+        scanner = OpenScanner(
+            latency_buffer_seconds=0,
+            meeting_trigger_levels={sym: TRIGGER},
+            symbols=(sym,),
+        )
+        rows = scanner.scan(session, bar_provider=book, as_of=_ts(14, 33))
+        assert len(rows) == 1, f"{sym} produced {rows}"
+        got.append(rows[0]["feed_symbol"])
+        desks.append(rows[0]["symbol"])
+        assert rows[0]["currency"] == "USD"
+        assert 0 < rows[0]["gbp_notional"] <= 200.0
+        assert rows[0]["trigger_time"].startswith("2026-09-03T14:32")
+        assert rows[0]["stop"] is not None
+        assert rows[0]["target"] is not None
+    assert got == list(ADDENDUM_E_SYMBOLS)
     assert "BRK.B" in desks
     assert "BRK-B" not in desks
     for etp in ADDENDUM_M_ETP_SYMBOLS:
         assert etp in got
-    for row in rows:
-        assert row["currency"] == "USD"
-        assert 0 < row["gbp_notional"] <= 200.0
-        assert row["trigger_time"].startswith("2026-09-03T14:32")
-        assert row["stop"] is not None
-        assert row["target"] is not None
 
 
 def test_duplicate_entry_prevention_per_name(session):
@@ -195,7 +201,8 @@ def test_scanner_does_not_place_orders(session):
         meeting_trigger_levels={sym: TRIGGER for sym in ADDENDUM_E_SYMBOLS},
     )
     assert result["places_orders"] is False
-    assert result["candidate_count"] == 15
+    assert result["candidate_count"] == 6  # Addendum A max_orders_per_day
+    assert set(result["symbols_scanned"]) == set(ADDENDUM_E_SYMBOLS)
     assert result["daemon"] is False
     assert result["trading_mode"] == "LIVE_BLOCKED"
     assert session.query(PaperFill).count() == fills_before
