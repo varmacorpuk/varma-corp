@@ -20,7 +20,7 @@ a percent-complete. Chat is not the record.
 ## 1. CURRENT BUILD STATUS
 - **Formal completion percentage: not established — do not invent one.** The project is the first
   vertical slice per Document 18.
-- **On current `main` plus this 02F venue-split flatten PR:** FastAPI kernel; 7 durable AI employees;
+- **On current `main` (02F bound, PR #34):** FastAPI kernel; 7 durable AI employees;
   skills (brief, challenge, risk, Trader paper-ticket proposal); on-demand routines (brief,
   challenge, risk-deny, 07:30 meeting, nightly memory filter, US flatten, London-auction flatten,
   backup, Trader paper-ticket proposal); four memory stores; durable DB handoffs; deterministic
@@ -38,9 +38,9 @@ a percent-complete. Chat is not the record.
   ControlEngine stays authority.
 
 ## 2. COMPLETED WORK (GitHub PR state, verified 2026-09-03)
-Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**, **#31**, **#32**.
+Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **#30**, **#31**, **#32**, **#34**.
 (#16 is merged — Addendum I is the two-opening rule, not an unmerged close.)
-#32 recoded Addendum E listing venues (JPM/JNJ NYSE). This PR binds CEO desk 02F in ControlEngine.
+#32 recoded Addendum E listing venues (JPM/JNJ NYSE). #34 binds CEO desk 02F in ControlEngine.
 
 | PR | On `main`? | What |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ Merged **into `main`:** PRs **#1–#20**, **#22**, **#23**, **#28**, **#29**, **
 | #30 | yes | First paper-trade PATH + Board Addendum K. Pytest **188**. PAPER was still CLOSED |
 | #31 | yes | Grand Opening PAPER. Practice / paper OPEN. LIVE still blocked. Pytest **196** |
 | #32 | yes | Addendum E listing venues: JPM and JNJ recoded NASDAQ → NYSE. Encoding only. Pytest **198** |
-| this PR | landing | CEO desk 02F bound in ControlEngine. Venue-split flatten clocks. Pytest **204** |
+| #34 | yes | CEO desk 02F bound in ControlEngine. Venue-split flatten clocks. Pytest **204** |
 
 **Board Grand Opening PAPER** (3 Sep 2026, Hari explicit yes, word: Open) is Board record,
 encoded as a Board-only `write_control`. Silence was not this. Addendum I still exists as the
@@ -68,11 +68,10 @@ Firm day still runs to NY close. Risk reads `engine.snapshot()["risk_02f"]` (`bo
 re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
 
 ## 3. CURRENT BRANCH / REPOSITORY STATE
-- **Default branch `main` HEAD at start of this PR:** `c5ad388` — PR #32. JPM/JNJ NYSE. Pytest
-  **198**. PAPER execution OPEN. LIVE_BLOCKED. Flatten was still one US-close job for every name.
-- **This PR:** Bind 02F in ControlEngine. Venue-aware flatten. JPM/JNJ stay NYSE. Capital £1,000
-  and Addendum A limits unchanged. Allow-list membership unchanged. Kill switch unchanged.
-  FakeLLM remains default. No fills on the paper-OPEN book. Kernel not started.
+- **Default branch `main` HEAD:** `2e03dbe` — PR **#34** merged. CEO desk 02F bound.
+  `split_flatten_clocks` **true**. Pytest **204**. PAPER execution OPEN. LIVE_BLOCKED. Kernel down.
+  JPM/JNJ NYSE (from #32). Capital £1,000 and Addendum A limits unchanged. Allow-list membership
+  unchanged. Kill switch unchanged. FakeLLM remains default. No fills on the paper-OPEN book.
 - **Paper-OPEN book:** `data/varma_paper_open.db`. Never empty `data/varma.db`. Never reset/wipe a
   different sqlite file.
 - Verify live state with `git log --oneline origin/main` and `gh pr list --state all` before
@@ -147,7 +146,7 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
 6. Any **real LLM provider binding** and, separately, Grand Opening LIVE (much later, only if Board says so).
 
 ## 8. CURRENT NEXT STEP
-- Treat **this file on the branch** as the handover. Do not rescan the repo or re-read Documents 00–18
+- Treat **this file on `main`** as the handover. Do not rescan the repo or re-read Documents 00–18
   unless a specific task requires it.
 - **Do not merge PR #21.** Leave it open.
 - **Do not bind a real LLM.** FakeLLM remains default.
@@ -168,6 +167,6 @@ repo). Keep changes additive; keep the full test suite green.
 
 ## 10. HOW TO CONTINUE
 Read this file, then `PROJECT_MAP.md` + `SPEC_INDEX.md` (+ `knowledge/index.json` for machine navigation
-and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **204** after this
-02F landing; **198** was main after #32). Continue from Section 8. Preserve every governance and
+and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **204** on `main`
+after #34; **198** was main after #32). Continue from Section 8. Preserve every governance and
 safety rule in Section 6.
