@@ -10,68 +10,69 @@
   <link rel="stylesheet" href="src/styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand-block">
-      <div class="brand">VARMA CORP</div>
-      <div class="tagline">A virtual office with some digital employees…</div>
+  <main class="office-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <h1 class="brand">VARMA CORP</h1>
+        <p class="tagline">A virtual office with some digital employees…</p>
+      </div>
+      <div class="header-meta">
+        <div class="role">Board Member control room</div>
+        <div id="mode-banner" class="mode">trading_mode: …</div>
+      </div>
+    </header>
+    <div class="game-frame" aria-label="Varma office window">
+      <section class="office-pane" aria-label="Virtual office">
+        <canvas id="office-floor" width="800" height="800"></canvas>
+      </section>
+      <aside id="right-panel" class="right-panel" aria-label="Right-hand information panel">
+        <h2>Information</h2>
+        <nav class="panel-nav" aria-label="Panel views">
+          <button type="button" id="board-observability-btn">Board observability</button>
+        </nav>
+        <p id="panel-placeholder">Click on a character to see chat history.</p>
+        <p class="panel-note">Select Asha Patel · Research, Jordan Hale · CEO, Sam Okeke · Challenge, Elena Voss · Risk, Chris Adeyemi · Trader, Nina Kapoor · Quant, or Owen Blake · Technology on the floor for their work. Chat reaches the same employee runtime. Talk/voice is disabled (OPEN BOARD DECISION). AI employees do not approve live trading. Click never grants authority. This panel does not write allow-list or trading_mode. Job runs and the kill switch are Board-only POST endpoints, not GET /observability. Board observability is a panel button, not a floor tap. No covering overlay.</p>
+        <div id="panel-body" hidden></div>
+        <form id="chat-form" hidden>
+          <label for="chat-input">Chat with selected employee</label>
+          <textarea id="chat-input" rows="3" maxlength="4000" placeholder="Ask the selected employee…"></textarea>
+          <button type="submit">Send chat</button>
+          <p class="talk-disabled">Talk / voice: disabled</p>
+        </form>
+      </aside>
     </div>
-    <div class="header-meta">
-      <div class="role">Board Member control room</div>
-      <div id="mode-banner" class="mode">trading_mode: …</div>
-    </div>
-  </header>
-  <p class="office-caption">16-bit pixel office (rooms, desks, plants, conference table). Office is a projection, not the source of truth. Click never grants authority. No covering overlay.</p>
-  <div class="game-frame" aria-label="Varma office window">
-    <section class="office-pane" aria-label="Virtual office">
-      <canvas id="office-floor" width="1024" height="640"></canvas>
-    </section>
-    <aside id="right-panel" class="right-panel" aria-label="Right-hand information panel">
-      <h2>Information</h2>
-      <nav class="panel-nav" aria-label="Panel views">
-        <button type="button" id="board-observability-btn">Board observability</button>
-      </nav>
-      <p id="panel-placeholder">Click on a character to see chat history.</p>
-      <p class="panel-note">Select Asha Patel · Research, Jordan Hale · CEO, Sam Okeke · Challenge, Elena Voss · Risk, Chris Adeyemi · Trader, Nina Kapoor · Quant, or Owen Blake · Technology on the floor for their work. Chat reaches the same employee runtime. Talk/voice is disabled (OPEN BOARD DECISION). AI employees do not approve live trading. Click never grants authority. This panel does not write allow-list or trading_mode. Job runs and the kill switch are Board-only POST endpoints, not GET /observability.</p>
-      <div id="panel-body" hidden></div>
-      <form id="chat-form" hidden>
-        <label for="chat-input">Chat with selected employee</label>
-        <textarea id="chat-input" rows="3" maxlength="4000" placeholder="Ask the selected employee…"></textarea>
-        <button type="submit">Send chat</button>
-        <p class="talk-disabled">Talk / voice: disabled</p>
-      </form>
-    </aside>
-  </div>
-  <nav id="staff-bar" class="staff-bar" aria-label="Varma staff">
-    <button type="button" data-employee-slug="ceo">
-      <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="ceo"></canvas>
-      Jordan Hale · CEO
-    </button>
-    <button type="button" data-employee-slug="market-intelligence-research">
-      <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="market-intelligence-research"></canvas>
-      Asha Patel · Research
-    </button>
-    <button type="button" data-employee-slug="challenge">
-      <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="challenge"></canvas>
-      Sam Okeke · Challenge
-    </button>
-    <button type="button" data-employee-slug="risk">
-      <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="risk"></canvas>
-      Elena Voss · Risk
-    </button>
-    <button type="button" data-employee-slug="trader">
-      <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="trader"></canvas>
-      Chris Adeyemi · Trader
-    </button>
-    <button type="button" data-employee-slug="quant-strategy">
-      <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="quant-strategy"></canvas>
-      Nina Kapoor · Quant
-    </button>
-    <button type="button" data-employee-slug="technology">
-      <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="technology"></canvas>
-      Owen Blake · Technology
-    </button>
-  </nav>
-  <p class="hint">Click an employee, a staff button, or a status bubble for their work. Board observability is a panel button, not a floor tap. Run on-demand jobs from that panel. The office stays visible. No covering overlay. Talk/voice is disabled. No live trading.</p>
+    <nav id="staff-bar" class="staff-bar" aria-label="Varma staff">
+      <button type="button" data-employee-slug="ceo">
+        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="ceo"></canvas>
+        Jordan Hale · CEO
+      </button>
+      <button type="button" data-employee-slug="market-intelligence-research">
+        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="market-intelligence-research"></canvas>
+        Asha Patel · Research
+      </button>
+      <button type="button" data-employee-slug="challenge">
+        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="challenge"></canvas>
+        Sam Okeke · Challenge
+      </button>
+      <button type="button" data-employee-slug="risk">
+        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="risk"></canvas>
+        Elena Voss · Risk
+      </button>
+      <button type="button" data-employee-slug="trader">
+        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="trader"></canvas>
+        Chris Adeyemi · Trader
+      </button>
+      <button type="button" data-employee-slug="quant-strategy">
+        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="quant-strategy"></canvas>
+        Nina Kapoor · Quant
+      </button>
+      <button type="button" data-employee-slug="technology">
+        <canvas class="staff-portrait" width="32" height="32" data-portrait-slug="technology"></canvas>
+        Owen Blake · Technology
+      </button>
+    </nav>
+    <p class="hint">Click an employee, a staff button, or a status bubble for their work. Board observability is a panel button, not a floor tap. Run on-demand jobs from that panel. The office stays visible. No covering overlay. Talk/voice is disabled. No live trading. Click never grants authority.</p>
+  </main>
   <footer>
     DEVELOPMENT box. Watchlist is a TEMPORARY DEVELOPMENT DEFAULT — not the execution allow-list. PAPER allow-list is Board Addendum E. No live trading. No gold execution. Staff cannot approve LIVE.
   </footer>

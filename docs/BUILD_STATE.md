@@ -67,7 +67,8 @@ commits the filled practice book.
 | #33 | yes | Named ticket PAPER-20260903-02: SHEL.L BUY 5 on `data/varma_paper_open.db` only. Pytest **206** |
 | #36 | yes | Pixel-art Varma office floor. Click does not grant authority. LIVE_BLOCKED. Pytest **208** |
 | #38 | yes | Tracked filled practice book (sqlite + JSON). SHEL.L 5, cash £829.279217 |
-| this office | this PR | Replace #36 flat map with framed 16-bit office (wood conference, teal carpet, walking sprites). Click never grants authority. No Board tap. LIVE_BLOCKED. |
+| #39 | yes | Lookalike framed canvas. Hari rejected — not the photographed tileset. |
+| this office | this PR | Vendor Parcha-ai/ai-office `rpg-tileset.png` + peach panel + portrait bar; Metro City people for Varma staff. Click never grants authority. No Board tap. LIVE_BLOCKED. |
 
 **Board Grand Opening PAPER** (3 Sep 2026, Hari explicit yes, word: Open) is Board record,
 encoded as a Board-only `write_control`. Silence was not this. Addendum I still exists as the

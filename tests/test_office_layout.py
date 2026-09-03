@@ -138,26 +138,45 @@ def test_office_click_opens_panel_logic():
 
 
 def test_pixel_office_is_not_four_desk_placeholder():
+    tileset = ROOT / "desktop" / "vendor" / "ai-office" / "rpg-tileset.png"
+    frame = ROOT / "desktop" / "vendor" / "ai-office" / "ui" / "frame.svg"
+    notice = ROOT / "desktop" / "vendor" / "NOTICE.md"
+    chars = [
+        ROOT / "desktop" / "vendor" / "pixel-agents" / "characters" / f"char_{n}.png"
+        for n in range(6)
+    ]
+    assert tileset.is_file()
+    assert tileset.stat().st_size > 100_000
+    assert tileset.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+    assert frame.is_file()
+    assert notice.is_file()
+    assert "Parcha-ai/ai-office" in notice.read_text(encoding="utf-8")
+    assert "Metro City" in notice.read_text(encoding="utf-8")
+    for path in chars:
+        assert path.is_file()
+        assert path.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
     assert 'id="staff-bar"' in HTML
     assert "office-floor.js" in HTML
     assert "placeholder pixels" not in HTML.lower()
-    assert "conference table" in HTML.lower() or "conferenceTable" in FLOOR
-    assert "poolTable" in FLOOR
-    assert "plant(" in FLOOR
+    assert "rpg-tileset.png" in FLOOR
+    assert "vendor/ai-office" in FLOOR
+    assert "vendor/pixel-agents/characters" in FLOOR
+    assert "fillRect a lookalike" in FLOOR or "Do not fillRect" in FLOOR
+    assert "conferenceTable" not in FLOOR
+    assert "poolTable" not in FLOOR
+    assert "redCabinet" not in FLOOR
     assert "pixel-art-2d" in APP
     assert "placeholder-pixel-2d" not in APP
     assert "VarmaOfficeFloor" in JS
     assert "SEATS" in FLOOR
     assert "PATHS" in FLOOR
-    assert "cubicle(" in FLOOR
-    assert "redCabinet" in FLOOR
-    assert "isWood" in FLOOR
     assert "walkPos" in FLOOR
     assert "drawPortrait" in FLOOR
     assert "drawBubble" in FLOOR
     assert "game-frame" in HTML
     assert "game-frame" in CSS
-    assert "#f4b486" in CSS.lower() or "#F4B486" in CSS
+    assert "frame.svg" in CSS
+    assert "#e4a672" in CSS.lower() or "#E4A672" in CSS
     assert "Click on a character to see chat history." in HTML
     assert 'id="board-observability-btn"' in HTML
     assert 'data-employee-slug="board"' not in HTML
@@ -175,16 +194,8 @@ def test_pixel_office_is_not_four_desk_placeholder():
     ):
         assert f'data-employee-slug="{slug}"' in HTML
         assert f"{slug}:" in FLOOR or f'"{slug}"' in FLOOR
-    rows = [
-        line.strip().strip('",')
-        for line in FLOOR.splitlines()
-        if line.strip().startswith('"') and line.strip().endswith('",')
-    ]
-    map_rows = [row for row in rows if set(row) <= set("#.")]
-    assert len(map_rows) == 20
-    assert all(len(row) == 32 for row in map_rows)
-    assert "#" in "".join(map_rows)
-    assert "." in "".join(map_rows)
+    assert "TILESET_URL" in FLOOR
+    assert FLOOR.count("char_") >= 1
 
 
 def test_office_uses_varma_staff_not_sitcom_names():
