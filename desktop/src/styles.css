@@ -1,96 +1,178 @@
-/* Layout: office left, information panel RIGHT. Not an overlay. Office remains visible. */
+/* Layout: framed game window, office left, information panel RIGHT. Not an overlay. Office remains visible. */
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
 :root {
   --ink: #1b1b18;
-  --paper: #1a1a1e;
-  --panel: #f3c4a0;
-  --accent: #1a2744;
+  --paper: #12121a;
+  --panel: #f4b486;
+  --accent: #2d3250;
   --warn: #8b1e1e;
-  --tile: #3d9a92;
+  --tile: #4a908f;
+  --frame-hi: #8a94a8;
+  --frame-mid: #4a5570;
+  --frame-lo: #1c2238;
+  --pixel: "Press Start 2P", ui-monospace, "IBM Plex Mono", monospace;
 }
 * { box-sizing: border-box; }
 html, body {
   margin: 0;
-  height: 100%;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  min-height: 100%;
+  font-family: var(--pixel);
   background: var(--paper);
-  color: var(--ink);
+  color: #f4efe4;
 }
 .topbar {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 10px 16px;
-  background: #0d0d10;
+  gap: 8px;
+  padding: 18px 16px 8px;
+  background: #12121a;
   color: #f4efe4;
-  border-bottom: 4px solid #2b2b2b;
 }
-.brand-block { display: flex; flex-direction: column; gap: 4px; }
-.brand {
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 18px;
-}
-.tagline { font-size: 11px; color: #c8c0b0; }
-.role { flex: 1; font-size: 14px; }
-.mode { background: var(--warn); color: white; padding: 4px 10px; font-size: 13px; }
-.workspace {
+.brand-block {
   display: flex;
-  height: calc(100vh - 88px);
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.brand {
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  font-family: var(--pixel);
+  font-size: 22px;
+  color: #ffffff;
+  text-shadow: 3px 3px 0 #000;
+}
+.tagline {
+  font-size: 8px;
+  color: #d8d0c4;
+  text-align: center;
+  line-height: 1.6;
+  max-width: 720px;
+}
+.header-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.role { font-size: 8px; color: #c8c0b0; }
+.mode {
+  background: var(--warn);
+  color: white;
+  padding: 6px 10px;
+  font-size: 8px;
+  line-height: 1.4;
+}
+.office-caption, .hint {
+  font-size: 8px;
+  color: #a8a090;
+  text-align: center;
+  line-height: 1.6;
+  padding: 0 16px 8px;
+  font-family: ui-monospace, "IBM Plex Mono", monospace;
+}
+.game-frame {
+  display: flex;
+  margin: 0 16px;
   min-height: 420px;
+  height: calc(100vh - 280px);
+  background: #1a2030;
+  border-style: solid;
+  border-width: 10px 12px 14px 12px;
+  border-color: var(--frame-hi) var(--frame-lo) var(--frame-lo) var(--frame-mid);
+  box-shadow:
+    inset 0 0 0 3px #2a3048,
+    inset 0 0 0 6px #6a7488,
+    0 8px 0 #0a0c14;
 }
 .office-pane {
   flex: 1 1 62%;
-  padding: 12px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: #222228;
+  background: #1c3c3c;
 }
-.office-caption, .hint { font-size: 12px; color: #d8d0c4; }
 #office-floor {
   flex: 1 1 auto;
   width: 100%;
-  height: auto;
-  max-height: calc(100vh - 260px);
+  height: 100%;
   object-fit: contain;
   object-position: top center;
-  background: #2e9494;
+  background: #3a7a7a;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   cursor: pointer;
-  border: 6px solid #1c1c20;
-  box-shadow: inset 0 0 0 2px #5a5a66;
 }
 .staff-bar {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
-  margin: 8px 0 6px;
+  margin: 12px 16px 6px;
 }
 .staff-bar button {
   background: #1a2744;
   color: #f4efe4;
   border: 2px solid #0d1320;
-  padding: 8px 10px;
-  font-size: 11px;
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  box-shadow: 2px 2px 0 #0a0c14, inset 1px 1px 0 #3d5a80;
+  padding: 6px 10px;
+  font-size: 8px;
+  line-height: 1.4;
+  font-family: var(--pixel);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .staff-bar button.selected,
 .staff-bar button[aria-pressed="true"] {
   background: #3d5a80;
   outline: 2px solid #f0d878;
 }
+.staff-portrait {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  background: #0d1320;
+  flex-shrink: 0;
+}
 #right-panel, .right-panel {
-  flex: 0 0 38%;
-  max-width: 440px;
+  flex: 0 0 34%;
+  max-width: 420px;
   background: var(--panel);
+  color: var(--ink);
   border-left: 4px solid #2b2b2b;
   padding: 16px;
   overflow: auto;
+  font-family: ui-monospace, "IBM Plex Mono", "Segoe UI", sans-serif;
 }
-.right-panel h2 { margin-top: 0; font-size: 16px; }
+.right-panel h2 {
+  margin-top: 0;
+  font-size: 14px;
+  color: #fff;
+  font-family: var(--pixel);
+  line-height: 1.5;
+  text-shadow: 2px 2px 0 #8a4a28;
+}
 .right-panel h3 { font-size: 14px; margin-bottom: 4px; }
+#panel-placeholder {
+  font-family: var(--pixel);
+  font-size: 11px;
+  line-height: 1.7;
+  color: #fff;
+  text-shadow: 2px 2px 0 #8a4a28;
+  margin: 24px 8px;
+}
+.panel-note {
+  font-size: 11px;
+  color: #5a3a28;
+  line-height: 1.45;
+}
 .panel-nav { display: flex; gap: 8px; margin: 0 0 12px; }
 .panel-nav button { font-size: 12px; padding: 6px 10px; }
 .job-runs { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 12px; }
@@ -116,5 +198,11 @@ html, body {
 #chat-form textarea { font: inherit; }
 button { background: var(--accent); color: white; border: 0; padding: 8px 12px; cursor: pointer; }
 .talk-disabled { font-size: 12px; color: #666; }
-footer { padding: 6px 12px; font-size: 11px; background: #ece4d4; }
+footer {
+  padding: 8px 12px;
+  font-size: 10px;
+  background: #0d0d10;
+  color: #a8a090;
+  font-family: ui-monospace, "IBM Plex Mono", monospace;
+}
 .bubble-note { font-size: 12px; }

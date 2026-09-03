@@ -36,6 +36,15 @@
       VarmaOfficeFloor.draw(ctx, canvas, employees, selected, now || performance.now());
     }
     syncStaffBar();
+    paintPortraits();
+  }
+
+  function paintPortraits() {
+    if (!staffBar || !window.VarmaOfficeFloor || !VarmaOfficeFloor.drawPortrait) return;
+    staffBar.querySelectorAll("canvas[data-portrait-slug]").forEach((cv) => {
+      const slug = cv.getAttribute("data-portrait-slug");
+      VarmaOfficeFloor.drawPortrait(cv.getContext("2d"), cv, slug);
+    });
   }
 
   function syncStaffBar() {
@@ -615,7 +624,6 @@
       const state = await get("/office/state");
       employees = state.employees || [];
       draw();
-      await showBoardObservability();
     } catch (err) {
       modeBanner.textContent = "kernel unreachable — start the API";
       employees = [
@@ -670,7 +678,6 @@
         },
       ];
       draw();
-      showBoardObservability();
     }
     requestAnimationFrame(function tick(now) {
       draw(now);
