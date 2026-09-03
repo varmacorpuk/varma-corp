@@ -148,6 +148,22 @@ def test_pixel_office_is_not_four_desk_placeholder():
     assert "placeholder-pixel-2d" not in APP
     assert "VarmaOfficeFloor" in JS
     assert "SEATS" in FLOOR
+    assert "PATHS" in FLOOR
+    assert "cubicle(" in FLOOR
+    assert "redCabinet" in FLOOR
+    assert "isWood" in FLOOR
+    assert "walkPos" in FLOOR
+    assert "drawPortrait" in FLOOR
+    assert "drawBubble" in FLOOR
+    assert "game-frame" in HTML
+    assert "game-frame" in CSS
+    assert "#f4b486" in CSS.lower() or "#F4B486" in CSS
+    assert "Click on a character to see chat history." in HTML
+    assert 'id="board-observability-btn"' in HTML
+    assert 'data-employee-slug="board"' not in HTML
+    assert "staff-portrait" in HTML
+    assert "paintPortraits" in JS
+    assert "Press Start 2P" in CSS or "Press Start 2P" in HTML
     for slug in (
         "ceo",
         "market-intelligence-research",
