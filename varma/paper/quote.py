@@ -20,9 +20,9 @@ from varma.ports.data import FakeMarketData
 
 PENCE_PER_POUND = 100.0
 QTY_DECIMALS = 6
-# Pence quote unit tokens.
+# Pence quote unit tokens. Yahoo uses "GBp" for pence.
 # Important: `GBp` (pence) must not be conflated with `GBP` (pounds).
-PENCE_UNITS = frozenset({"GBX", "GBPENCE", "PENCE", "P"})
+PENCE_UNITS = frozenset({"GBX", "GBp", "GBPENCE", "PENCE", "P"})
 
 # Spread/slippage copied as numbers so quote.py does not import simulator.
 # Must stay in lockstep with varma.paper.simulator ADVERSE_BPS (10).
@@ -39,12 +39,19 @@ def floor_qty(value: float) -> float:
 
 
 def is_pence_unit(quote_unit: str | None) -> bool:
+    """True for pence tokens (GBp, GBX, etc.). False for GBP (pounds).
+
+    The feed's own currency/quote_unit field drives this — never assumed
+    from the ticker suffix. Yahoo uses ``GBp`` for pence; ``GBP`` is pounds.
+    """
     token = str(quote_unit or "").strip()
-    # The only safe case-insensitive pence token here is upper-cased
-    # GBX/GBPENCE/PENCE/P. Do not treat `GBP` as pence.
-    if token in {"GBp", "GbP"}:
+    if not token:
+        return False
+    if token == "GBP":
+        return False
+    if token in PENCE_UNITS:
         return True
-    return token.upper() in {u.upper() for u in PENCE_UNITS}
+    return token.upper() in {u.upper() for u in PENCE_UNITS} and token.upper() != "GBP"
 
 
 def major_units(last: float, quote_unit: str | None) -> float:
