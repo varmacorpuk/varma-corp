@@ -11,6 +11,7 @@
   const chatInput = document.getElementById("chat-input");
   const modeBanner = document.getElementById("mode-banner");
   const boardObservabilityBtn = document.getElementById("board-observability-btn");
+  const staffBar = document.getElementById("staff-bar");
 
   let employees = [];
   let selected = null;
@@ -30,96 +31,20 @@
     return r.json();
   }
 
-  function draw() {
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = "#6b8f71";
-    ctx.fillRect(0, 0, w, h);
-    for (let y = 0; y < h; y += 16) {
-      for (let x = 0; x < w; x += 16) {
-        ctx.fillStyle = ((x + y) / 16) % 2 === 0 ? "#7aa078" : "#628a68";
-        ctx.fillRect(x, y, 16, 16);
-      }
+  function draw(now) {
+    if (window.VarmaOfficeFloor) {
+      VarmaOfficeFloor.draw(ctx, canvas, employees, selected, now || performance.now());
     }
-    desk(60, 150, "RESEARCH");
-    desk(400, 70, "CEO");
-    desk(30, 50, "CHALLENGE");
-    desk(480, 250, "RISK");
-    desk(280, 250, "TRADER");
-    desk(200, 40, "QUANT");
-    desk(500, 140, "TECH");
+    syncStaffBar();
+  }
 
-    employees.forEach((e) => {
-      const x = (e.office_x || 96) * 2;
-      const y = (e.office_y || 108) * 1.4;
-      drawSprite(x, y, selected && selected.slug === e.slug, e.slug);
-      drawBubble(x, y, e.status_bubble || e.status || "OK");
-      drawName(x, y, e.display_name || e.slug);
-      e._hit = { x: x - 8, y: y - 40, w: 80, h: 90 };
+  function syncStaffBar() {
+    if (!staffBar) return;
+    staffBar.querySelectorAll("[data-employee-slug]").forEach((btn) => {
+      const on = selected && selected.slug === btn.getAttribute("data-employee-slug");
+      btn.classList.toggle("selected", Boolean(on));
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
     });
-  }
-
-  function desk(dx, dy, label) {
-    ctx.fillStyle = "#6b4a2e";
-    ctx.fillRect(dx, dy, 110, 36);
-    ctx.fillStyle = "#d8c39a";
-    ctx.fillRect(dx + 8, dy - 8, 48, 12);
-    ctx.fillStyle = "#111";
-    ctx.font = "10px monospace";
-    ctx.fillText(label, dx + 10, dy - 14);
-  }
-
-  function drawSprite(x, y, highlight, kind) {
-    const s = sprite.scale;
-    const px = (gx, gy, c, gw, gh) => {
-      ctx.fillStyle = c;
-      ctx.fillRect(x + gx * s, y + gy * s, (gw || 1) * s, (gh || 1) * s);
-    };
-    if (highlight) {
-      ctx.fillStyle = "rgba(255,255,180,0.5)";
-      ctx.fillRect(x - 6, y - 6, 16 * s + 12, 24 * s + 12);
-    }
-    const body =
-      kind === "ceo"
-        ? "#1d3557"
-        : kind === "challenge"
-          ? "#6b3a2a"
-          : kind === "risk"
-            ? "#8b1e1e"
-            : kind === "trader"
-              ? "#3d5a80"
-              : kind === "quant-strategy"
-                ? "#4a3f6b"
-                : kind === "technology"
-                  ? "#2c3e50"
-                  : "#2f5d50";
-    const hair = kind === "ceo" ? "#1a1a1a" : "#2b2118";
-    px(4, 2, hair, 8, 6);
-    px(5, 4, "#e6c8a8", 6, 6);
-    px(3, 10, body, 10, 8);
-    px(4, 18, "#1d3557", 3, 6);
-    px(9, 18, "#1d3557", 3, 6);
-  }
-
-  function drawBubble(x, y, text) {
-    const label = (text || "OK").slice(0, 14);
-    ctx.fillStyle = "#fff";
-    ctx.strokeStyle = "#111";
-    const bw = Math.max(48, label.length * 7);
-    const bx = x - 4;
-    const by = y - 22;
-    ctx.fillRect(bx, by, bw, 14);
-    ctx.strokeRect(bx, by, bw, 14);
-    ctx.fillStyle = "#111";
-    ctx.font = "9px monospace";
-    ctx.fillText(label, bx + 3, by + 10);
-  }
-
-  function drawName(x, y, name) {
-    ctx.fillStyle = "#111";
-    ctx.font = "10px monospace";
-    ctx.fillText(String(name || "").slice(0, 28), x - 4, y + 28 * sprite.scale / 4 + 20);
   }
 
   canvas.addEventListener("click", (ev) => {
@@ -132,6 +57,15 @@
     });
     if (hit) selectEmployee(hit);
   });
+
+  if (staffBar) {
+    staffBar.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("[data-employee-slug]");
+      if (!btn) return;
+      const emp = employees.find((e) => e.slug === btn.getAttribute("data-employee-slug"));
+      if (emp) selectEmployee(emp);
+    });
+  }
 
   if (boardObservabilityBtn) {
     boardObservabilityBtn.addEventListener("click", () => {
@@ -738,6 +672,10 @@
       draw();
       showBoardObservability();
     }
+    requestAnimationFrame(function tick(now) {
+      draw(now);
+      requestAnimationFrame(tick);
+    });
   }
 
   boot();

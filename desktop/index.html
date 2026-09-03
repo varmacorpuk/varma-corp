@@ -8,15 +8,27 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">VARMA CORP.</div>
+    <div class="brand-block">
+      <div class="brand">VARMA CORP.</div>
+      <div class="tagline">A virtual office with Varma staff. Projection only — click never grants authority.</div>
+    </div>
     <div class="role">Board Member control room</div>
     <div id="mode-banner" class="mode">trading_mode: …</div>
   </header>
   <main class="workspace">
     <section class="office-pane" aria-label="Virtual office">
-      <div class="office-caption">2D office (placeholder pixels). Office is a projection, not the source of truth. Click never grants authority.</div>
-      <canvas id="office-floor" width="640" height="400"></canvas>
-      <p class="hint">Click an employee or status bubble for their work, or Board observability in the right-hand panel. Run on-demand jobs from that panel. The office stays visible. No covering overlay.</p>
+      <div class="office-caption">2D pixel office (rooms, desks, plants, conference table). Office is a projection, not the source of truth. Click never grants authority.</div>
+      <canvas id="office-floor" width="1024" height="640"></canvas>
+      <nav id="staff-bar" class="staff-bar" aria-label="Varma staff">
+        <button type="button" data-employee-slug="ceo">Jordan Hale · CEO</button>
+        <button type="button" data-employee-slug="market-intelligence-research">Asha Patel · Research</button>
+        <button type="button" data-employee-slug="challenge">Sam Okeke · Challenge</button>
+        <button type="button" data-employee-slug="risk">Elena Voss · Risk</button>
+        <button type="button" data-employee-slug="trader">Chris Adeyemi · Trader</button>
+        <button type="button" data-employee-slug="quant-strategy">Nina Kapoor · Quant</button>
+        <button type="button" data-employee-slug="technology">Owen Blake · Technology</button>
+      </nav>
+      <p class="hint">Click an employee, a staff button, or a status bubble for their work, or Board observability in the right-hand panel. Run on-demand jobs from that panel. The office stays visible. No covering overlay. Talk/voice is disabled. No live trading.</p>
     </section>
     <aside id="right-panel" class="right-panel" aria-label="Right-hand information panel">
       <h2>Information</h2>
@@ -36,6 +48,7 @@
   <footer>
     DEVELOPMENT box. Watchlist is a TEMPORARY DEVELOPMENT DEFAULT — not the execution allow-list. PAPER allow-list is Board Addendum E. No live trading. No gold execution. Staff cannot approve LIVE.
   </footer>
+  <script src="src/office-floor.js"></script>
   <script src="src/office.js"></script>
 </body>
 </html>

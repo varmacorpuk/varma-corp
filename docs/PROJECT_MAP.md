@@ -15,7 +15,7 @@ Authoritative specifications are **Documents 00–18**, which live **outside thi
 | --- | --- |
 | `varma/` | Python package: the company kernel and all domain logic |
 | `desktop/` | Static 2D "virtual office" UI (Electron/browser). Projection only, not source of truth |
-| `tests/` | Pytest suite: Grand Opening PAPER on #30 main (practice OPEN, LIVE blocked). Do not invent a percent-complete. |
+| `tests/` | Pytest suite on `main` after #34: **204**. 02F venue-split flatten bound. Practice OPEN, LIVE blocked. Kernel down. |
 | `scripts/` | Dev helper scripts (`dev.sh`) |
 | `docs/` | `BUILD_STATE.md` (read first — current handover), this map, spec index, glossary, `knowledge/index.json` (navigation only) |
 | `data/` | Practice paper-OPEN book `varma_paper_open.db` plus tracked `paper_open_ledger.json`. Never empty `varma.db` |
@@ -34,9 +34,12 @@ desktop/ (UI projection)  ──HTTP──>  varma/kernel/app.py (FastAPI)
 ```
 
 The database is the source of truth. The office UI is a projection. There is no scheduler/daemon;
-routines are on-demand (Board-only POST endpoints or CLI). Runtime AI is `FakeLLM` (deterministic,
-no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; trading_mode is
-`LIVE_BLOCKED`; PAPER execution is OPEN for practice after Grand Opening PAPER.
+routines are on-demand (Board-only POST endpoints or CLI). Kernel down — do not start it for this
+encoding. Runtime AI is `FakeLLM` (deterministic, no network) by default. `BROKER_PAPER` and `LIVE`
+execution ports are UNLOADED; trading_mode is `LIVE_BLOCKED`; PAPER execution is OPEN for practice
+after Grand Opening PAPER. CEO desk 02F is bound: LSE three flatten in the London closing auction
+16:30–16:35; US names flatten at US close; firm day still runs to NY close; `split_flatten_clocks`
+true.
 
 ## Components (location · purpose · key deps · key dependants)
 
@@ -47,7 +50,7 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - `varma/config.py` — pydantic-settings (`VARMA_*` env). Defaults: `llm_provider="fake"`, SQLite.
 
 ### Frontend / desktop UI
-- `desktop/index.html`, `desktop/src/office.js`, `desktop/src/styles.css` — 2D office + right-hand
+- `desktop/index.html`, `desktop/src/office.js`, `desktop/src/office-floor.js`, `desktop/src/styles.css` — pixel-art 2D office + right-hand
   Board panel; fetches kernel on user action (no polling). `electron-main.js`, `preload.js` wrap it.
 
 ### Database / storage
@@ -142,4 +145,4 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - Memory/data: `varma/memory/`, `data/` (dev SQLite).
 - Tests: `tests/` (one file per addendum/feature).
 - Specs: Documents 00–18 (outside repo); pointers in `docs/SPEC_INDEX.md`.
-- Handover: `docs/BUILD_STATE.md` (read first; Grand Opening PAPER done; LIVE still blocked).
+- Handover: `docs/BUILD_STATE.md` (read first; 02F bound on `main` via #34; LIVE_BLOCKED; kernel down / no daemon).
