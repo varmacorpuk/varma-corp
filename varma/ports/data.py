@@ -66,6 +66,9 @@ class FakeMarketData:
                     "symbol": s,
                     "last": last_px.get(s, 1.0),
                     "currency": "GBP" if s.endswith(".L") else "USD",
+                    # LSE last above is already pounds (pence/100). quote_unit GBP
+                    # prevents a second /100. A GBX last (e.g. 3281p) converts separately.
+                    "quote_unit": "GBP" if s.endswith(".L") else "USD",
                     "source": "fake-delayed-snapshot",
                     "observed_at": observed.isoformat(),
                     "delay_label": "DELAYED — TEMPORARY DEVELOPMENT DEFAULT",

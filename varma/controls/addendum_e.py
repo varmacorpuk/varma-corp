@@ -35,6 +35,47 @@ ADDENDUM_E_INSTRUMENTS: tuple[tuple[str, str], ...] = (
 ADDENDUM_E_SYMBOLS: tuple[str, ...] = tuple(symbol for symbol, _venue in ADDENDUM_E_INSTRUMENTS)
 ADDENDUM_E_VENUES: dict[str, str] = dict(ADDENDUM_E_INSTRUMENTS)
 
+# Instrument currency. Membership and venues are unchanged. US seven are USD;
+# LSE three are GBP (pence-quoted cash lines). Limits, cash, and P&L stay GBP.
+ADDENDUM_E_CURRENCIES: dict[str, str] = {
+    "AAPL": "USD",
+    "MSFT": "USD",
+    "NVDA": "USD",
+    "AMZN": "USD",
+    "GOOGL": "USD",
+    "JPM": "USD",
+    "JNJ": "USD",
+    "SHEL.L": "GBP",
+    "AZN.L": "GBP",
+    "ULVR.L": "GBP",
+}
+
+# LSE cash lines are pence-quoted (GBX). US names are major USD.
+ADDENDUM_E_QUOTE_UNITS: dict[str, str] = {
+    symbol: ("GBX" if currency == "GBP" else "USD")
+    for symbol, currency in ADDENDUM_E_CURRENCIES.items()
+}
+
+
+def instrument_currency(symbol: str) -> str:
+    """USD for the seven US names; GBP for LSE three. Infer .L as GBP."""
+    key = str(symbol or "")
+    if key in ADDENDUM_E_CURRENCIES:
+        return ADDENDUM_E_CURRENCIES[key]
+    if key.endswith(".L"):
+        return "GBP"
+    return "USD"
+
+
+def instrument_quote_unit(symbol: str) -> str:
+    """Native quote unit. LSE cash is pence (GBX). Does not change membership."""
+    key = str(symbol or "")
+    if key in ADDENDUM_E_QUOTE_UNITS:
+        return ADDENDUM_E_QUOTE_UNITS[key]
+    if key.endswith(".L"):
+        return "GBX"
+    return "USD"
+
 
 def addendum_e_public() -> dict[str, Any]:
     return {
@@ -51,6 +92,8 @@ def addendum_e_public() -> dict[str, Any]:
         "ceo_cannot_write": True,
         "symbols": list(ADDENDUM_E_SYMBOLS),
         "venues": dict(ADDENDUM_E_INSTRUMENTS),
+        "currencies": dict(ADDENDUM_E_CURRENCIES),
+        "quote_units": dict(ADDENDUM_E_QUOTE_UNITS),
         "count": len(ADDENDUM_E_SYMBOLS),
         "allow_list_e_cannot_fill_until_open": True,
         "note": (

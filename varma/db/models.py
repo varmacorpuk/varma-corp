@@ -199,6 +199,15 @@ class PaperOrder(Base):
     cancel_reason: Mapped[str] = mapped_column(Text, default="")
     notes: Mapped[str] = mapped_column(Text, default="")
     is_flatten: Mapped[bool] = mapped_column(Boolean, default=False)
+    instrument_currency: Mapped[str] = mapped_column(String(8), default="")
+    quote_currency: Mapped[str] = mapped_column(String(8), default="")
+    quote_unit: Mapped[str] = mapped_column(String(8), default="")
+    native_mid: Mapped[float | None] = mapped_column(Float, nullable=True)
+    native_fill_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fx_pair: Mapped[str] = mapped_column(String(16), default="")
+    fx_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fx_source: Mapped[str] = mapped_column(String(160), default="")
+    fx_quoted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class PaperFill(Base):
@@ -217,6 +226,14 @@ class PaperFill(Base):
     london_day: Mapped[str] = mapped_column(String(16), nullable=False)
     filled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     is_live: Mapped[bool] = mapped_column(Boolean, default=False)
+    instrument_currency: Mapped[str] = mapped_column(String(8), default="")
+    quote_currency: Mapped[str] = mapped_column(String(8), default="")
+    quote_unit: Mapped[str] = mapped_column(String(8), default="")
+    native_price: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fx_pair: Mapped[str] = mapped_column(String(16), default="")
+    fx_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fx_source: Mapped[str] = mapped_column(String(160), default="")
+    fx_quoted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class PaperPosition(Base):

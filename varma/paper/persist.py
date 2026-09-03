@@ -110,6 +110,15 @@ def dump_paper_ledger(session: Session, *, ticket_id: str | None = None) -> dict
                 "cancel_reason": row.cancel_reason,
                 "notes": row.notes,
                 "is_flatten": row.is_flatten,
+                "instrument_currency": getattr(row, "instrument_currency", "") or "",
+                "quote_currency": getattr(row, "quote_currency", "") or "",
+                "quote_unit": getattr(row, "quote_unit", "") or "",
+                "native_mid": getattr(row, "native_mid", None),
+                "native_fill_price": getattr(row, "native_fill_price", None),
+                "fx_pair": getattr(row, "fx_pair", "") or "",
+                "fx_rate": getattr(row, "fx_rate", None),
+                "fx_source": getattr(row, "fx_source", "") or "",
+                "fx_quoted_at": _dt_to_str(getattr(row, "fx_quoted_at", None)),
             }
             for row in orders
         ],
@@ -126,6 +135,14 @@ def dump_paper_ledger(session: Session, *, ticket_id: str | None = None) -> dict
                 "london_day": row.london_day,
                 "filled_at": _dt_to_str(row.filled_at),
                 "is_live": row.is_live,
+                "instrument_currency": getattr(row, "instrument_currency", "") or "",
+                "quote_currency": getattr(row, "quote_currency", "") or "",
+                "quote_unit": getattr(row, "quote_unit", "") or "",
+                "native_price": getattr(row, "native_price", None),
+                "fx_pair": getattr(row, "fx_pair", "") or "",
+                "fx_rate": getattr(row, "fx_rate", None),
+                "fx_source": getattr(row, "fx_source", "") or "",
+                "fx_quoted_at": _dt_to_str(getattr(row, "fx_quoted_at", None)),
             }
             for row in fills
         ],
@@ -224,6 +241,15 @@ def restore_paper_ledger(session: Session, payload: dict[str, Any]) -> dict[str,
                 cancel_reason=str(row.get("cancel_reason") or ""),
                 notes=str(row.get("notes") or ""),
                 is_flatten=bool(row.get("is_flatten", False)),
+                instrument_currency=str(row.get("instrument_currency") or ""),
+                quote_currency=str(row.get("quote_currency") or ""),
+                quote_unit=str(row.get("quote_unit") or ""),
+                native_mid=row.get("native_mid"),
+                native_fill_price=row.get("native_fill_price"),
+                fx_pair=str(row.get("fx_pair") or ""),
+                fx_rate=row.get("fx_rate"),
+                fx_source=str(row.get("fx_source") or ""),
+                fx_quoted_at=_parse_dt(row.get("fx_quoted_at")),
             )
         )
 
@@ -244,6 +270,14 @@ def restore_paper_ledger(session: Session, payload: dict[str, Any]) -> dict[str,
                 london_day=row["london_day"],
                 filled_at=_parse_dt(row["filled_at"]),
                 is_live=bool(row.get("is_live", False)),
+                instrument_currency=str(row.get("instrument_currency") or ""),
+                quote_currency=str(row.get("quote_currency") or ""),
+                quote_unit=str(row.get("quote_unit") or ""),
+                native_price=row.get("native_price"),
+                fx_pair=str(row.get("fx_pair") or ""),
+                fx_rate=row.get("fx_rate"),
+                fx_source=str(row.get("fx_source") or ""),
+                fx_quoted_at=_parse_dt(row.get("fx_quoted_at")),
             )
         )
 
