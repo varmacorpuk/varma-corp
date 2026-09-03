@@ -3,7 +3,8 @@
    File: vendor/claude-office/rooms/office-day.png
    Do not fillRect a lookalike. Do not blit a third-party tileset as the floor.
    Staff are Board Addendum F names (person · department). No sitcom names.
-   Click a person opens chat/work. Click never grants authority.
+   Bubbles are current job text. Empty, OFFLINE, or AVAILABLE → Resting.
+   Not kernel presence. Click a person opens chat/work. Click never grants authority.
    Talk/voice stays disabled. LIVE stays blocked. */
 (function (global) {
   const LAYOUT = global.CLAUDE_OFFICE_LAYOUT;
@@ -153,13 +154,13 @@
       wrap.classList.toggle("selected-staff", Boolean(on));
       wrap.setAttribute("aria-pressed", on ? "true" : "false");
       const bubble = wrap.querySelector(".speech-bubble");
-      const text = emp.status_bubble || "";
-      if (text) {
-        bubble.hidden = false;
-        bubble.textContent = text;
-      } else {
-        bubble.hidden = true;
-      }
+      const raw = String(emp.status_bubble || emp.current_job || "").trim();
+      const text =
+        !raw || raw === "OFFLINE" || raw === "AVAILABLE"
+          ? "Resting"
+          : raw;
+      bubble.hidden = false;
+      bubble.textContent = text;
       emp._hit = { slug: emp.slug };
     });
 
