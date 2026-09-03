@@ -9,8 +9,10 @@ disagrees with that code, the code wins and this file must be corrected.
 _Last updated: 2026-09-03._ Grand Opening PAPER (Hari explicit yes, word: Open). LIVE still
 blocked. CEO desk 02F is bound in ControlEngine: `split_flatten_clocks` true. Pixel-art office
 floor is on `main` (#36). Paper-OPEN book is `data/varma_paper_open.db` (tracked) plus
-`data/paper_open_ledger.json`. Named ticket PAPER-20260903-02 filled: SHEL.L BUY 5,
-cash £829.279217, fill `917138ec-34d0-45fa-8080-380ab59334fc` at 34.127093 GBP. LIVE_BLOCKED.
+`data/paper_open_ledger.json`. Named ticket PAPER-20260903-02 filled SHEL.L BUY 5
+(`917138ec-34d0-45fa-8080-380ab59334fc` at 34.127093 GBP) then on-demand SELL 5
+(`2b147fa3-df6e-4e8e-82a2-1b797bc3a217` at 34.058907 GBP). Position qty 0. Cash
+£999.488605. Round-trip cash P&L −£0.511395. LIVE_BLOCKED.
 Kernel down / no daemon. Do not invent a percent-complete. Chat is not the record.
 
 ## 0. RECOVERY / CONTINUATION INSTRUCTION
@@ -29,12 +31,13 @@ Kernel down / no daemon. Do not invent a percent-complete. Chat is not the recor
   handoffs; deterministic ControlEngine with bound 02F; internal paper simulator; Board observability;
   pixel-art 2D desktop UI; chat (Board-only); FakeLLM default wrapped by MeasuredLLM; `AICallLog` +
   `ai_usage_summary`; token-efficiency runtime; first paper-trade PATH; Board Addendum K; Grand
-  Opening PAPER; Addendum E JPM/JNJ NYSE. Named ticket PAPER-20260903-02 (SHEL.L BUY 5) filled on
-  `data/varma_paper_open.db` only. Never `data/varma.db`. Practice / paper only. LIVE stays BLOCKED.
-  BROKER_PAPER and LIVE ports stay UNLOADED. No real broker. No real money. FakeLLM stays default.
-  Do not call AI for permit/deny/fills. Not a Board tap. Not a Hari card. The practice book is
-  tracked (`data/varma_paper_open.db` + `data/paper_open_ledger.json`) so the floor keeps the
-  SHEL.L 5 fill. Kernel down; do not start it for this landing. Do not place new orders.
+  Opening PAPER; Addendum E JPM/JNJ NYSE. Named ticket PAPER-20260903-02 (SHEL.L BUY 5) then
+  on-demand SELL 5 filled on `data/varma_paper_open.db` only. Position is flat (qty 0). Never
+  `data/varma.db`. Practice / paper only. LIVE stays BLOCKED. BROKER_PAPER and LIVE ports stay
+  UNLOADED. No real broker. No real money. FakeLLM stays default. Do not call AI for
+  permit/deny/fills. Not a Board tap. Not a Hari card. The practice book is tracked
+  (`data/varma_paper_open.db` + `data/paper_open_ledger.json`) so the floor keeps the closed
+  SHEL.L round trip. Kernel down; do not start it for this landing. Do not place new orders.
 - **Incomplete / not built:** Grand Opening LIVE; real LLM binding; live/broker execution;
   semantic memory summarisation; response caching; event-idempotency schema.
 - **Deliberately closed/disabled:** `trading_mode=LIVE_BLOCKED`; BROKER_PAPER and LIVE ports
@@ -66,7 +69,7 @@ commits the filled practice book.
 | #37 | yes | Align BUILD_STATE and PROJECT_MAP with main after 02F merge |
 | #33 | yes | Named ticket PAPER-20260903-02: SHEL.L BUY 5 on `data/varma_paper_open.db` only. Pytest **206** |
 | #36 | yes | Pixel-art Varma office floor. Click does not grant authority. LIVE_BLOCKED. Pytest **208** |
-| #38 | yes | Tracked filled practice book (sqlite + JSON). SHEL.L 5, cash £829.279217 |
+| #38 | yes | Tracked filled practice book (sqlite + JSON). SHEL.L BUY 5, cash £829.279217 |
 | #39 | yes | Lookalike framed canvas. Hari rejected — not the photographed tileset. |
 | this office | this PR | Vendor W17ant/Claude-Office `office-day.png` + their furniture/character sprites (not a lookalike). Varma staff only. Click never grants authority. No Board tap. LIVE_BLOCKED. |
 
@@ -87,8 +90,9 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
   Capital £1,000 and Addendum A limits unchanged. Allow-list membership unchanged. Kill switch
   unchanged. FakeLLM remains default. Do not start the office kernel. Do not place new orders.
 - **Paper-OPEN book:** `data/varma_paper_open.db` (tracked) plus `data/paper_open_ledger.json`.
-  SHEL.L BUY 5 is filled. Cash £829.279217. Fill id `917138ec-34d0-45fa-8080-380ab59334fc`.
-  Never empty `data/varma.db`. Never reset/wipe a different sqlite file.
+  SHEL.L BUY 5 (`917138ec-34d0-45fa-8080-380ab59334fc`) and SELL 5
+  (`2b147fa3-df6e-4e8e-82a2-1b797bc3a217` at 34.058907 GBP) are filled. Position qty 0.
+  Cash £999.488605. Never empty `data/varma.db`. Never reset/wipe a different sqlite file.
 - Verify live state with `git log --oneline origin/main` and `gh pr list --state all` before
   continuing.
 
@@ -117,8 +121,8 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
   paper-trade PATH exists: Trader (Chris Adeyemi) proposes → ControlEngine permit/deny →
   simulator fill → paper ledger. Bound session exit is attached on permit. Board-only on-demand
   jobs `run_flatten_london_close` (LSE) and `run_flatten_us_close` (US). Named ticket
-  PAPER-20260903-02 is already filled on `data/varma_paper_open.db`. PAPER execution is OPEN for
-  practice. LIVE stays blocked.
+  PAPER-20260903-02 BUY 5 and the on-demand SELL 5 are filled on `data/varma_paper_open.db`.
+  SHEL.L is flat. PAPER execution is OPEN for practice. LIVE stays blocked.
 - **AI/LLM boundary:** `varma/ports/llm.py` — `FakeLLM` default, wrapped by `MeasuredLLM`. Four task
   strings only: `prepare_daily_intelligence_brief`, `challenge_sample_thesis`, `review_unsafe_path`, `chat`.
   Do not bind a real LLM.
@@ -173,12 +177,12 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
 - **Do not implement token-efficiency stages 4–5.** Measure with `ai_usage_summary` before further
   runtime token work.
 - **Do not start the office kernel.** Do not place new orders. LIVE stays blocked. Overnight off.
-- **Paper book:** named ticket `PAPER-20260903-02` filled SHEL.L BUY 5 on
-  `data/varma_paper_open.db` (fill `917138ec-34d0-45fa-8080-380ab59334fc`, cash £829.279217).
-  Never `data/varma.db`. Stop/target are desk-managed, not resting engine orders. LSE three flatten
-  in the London closing auction (02F); that exit is a later job.
+- **Paper book:** `PAPER-20260903-02` SHEL.L BUY 5 then on-demand SELL 5 on
+  `data/varma_paper_open.db` (sell fill `2b147fa3-df6e-4e8e-82a2-1b797bc3a217` at 34.058907 GBP,
+  cash £999.488605, position qty 0). Simulator mid stayed 34.093 GBP (FakeMarketData), not the
+  3281p cash print. Never `data/varma.db`. Stop/target are desk-managed, not resting engine orders.
 - **Next human step:** further paper operation on the practice book, then flatten-before-London-auction
-  for the LSE three (02F) / flatten-before-US-close for US names as later jobs. LIVE later only if
+  for any later LSE three (02F) / flatten-before-US-close for US names as later jobs. LIVE later only if
   the Board says so. Do not open live in code. Risk can re-clear 02F from engine state
   (`risk_02f.bound` / `split_flatten_clocks`).
 
