@@ -281,6 +281,14 @@ class BoardObservability:
                     "commission_gbp": row.commission_gbp,
                     "is_live": row.is_live,
                     "filled_at": row.filled_at.isoformat() if row.filled_at else None,
+                    "instrument_currency": getattr(row, "instrument_currency", "") or "",
+                    "fx_rate": getattr(row, "fx_rate", None),
+                    "fx_source": getattr(row, "fx_source", "") or "",
+                    "fx_quoted_at": (
+                        row.fx_quoted_at.isoformat()
+                        if getattr(row, "fx_quoted_at", None) is not None
+                        else None
+                    ),
                 }
                 for row in self.session.query(PaperFill).order_by(PaperFill.filled_at.asc()).all()
             ],

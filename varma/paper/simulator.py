@@ -19,15 +19,19 @@ and LIVE remain UNLOADED. The first paper-trade PATH exists (Trader proposal
 Empty allow-list ⇒ no orders, so production seed records zero fills. Evaluation
 ledger tables still exist (closed trades, pnl, win rate of profitable closes).
 
-INTERNAL SIMULATOR ASSUMPTIONS (not a vendor contract, not Board FX, not LIVE):
-- Currency: GBP. Timezone: Europe/London (Board Addendum A 2026-08-27).
-- Mid: FakeMarketData delayed last, treated as GBP notional for this simulator
-  only. There is no FX vendor in this slice. Labelled INTERNAL ASSUMPTION.
+INTERNAL SIMULATOR ASSUMPTIONS (not a vendor contract, not LIVE):
+- Book currency: GBP. Timezone: Europe/London (Board Addendum A 2026-08-27).
+- Instruments carry a currency: USD for the seven US names, GBP for SHEL.L /
+  AZN.L / ULVR.L. LSE cash is pence-quoted (3281p = £32.81). GBP names are
+  not FX-converted. A feed last already in pounds is not divided again.
+- USD last is converted to GBP with a stamped quote (source + timestamp)
+  stored on the order/fill. No AI. No silent unnamed USDGBP constant.
+- Sizing is GBP exposure (target notional or fractional qty), not whole shares.
 - Spread: 10 bps (0.10%) of mid. Half-spread is charged against the taker.
 - Slippage: 5 bps (0.05%) of mid, additional adverse movement.
 - Combined adverse vs mid: 10 bps (half-spread 5 + slippage 5).
 - Commission: 5 bps (0.05%) of fill notional, deducted from cash.
-- Buy fill = mid * (1 + 10 bps). Sell fill = mid * (1 - 10 bps).
+- Buy fill = mid_gbp * (1 + 10 bps). Sell fill = mid_gbp * (1 - 10 bps).
 - No short-locate, borrow, or overnight financing in this slice.
 """
 
@@ -38,7 +42,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from varma.clock import london_day, now_london
-from varma.controls.addendum_a import ADDENDUM_A_LABEL, CURRENCY, TIMEZONE
+from varma.controls.addendum_a import ADDENDUM_A_LABEL, CURRENCY, MAX_POSITION, TIMEZONE
 from varma.controls.venue_flatten import flatten_fill_note
 from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
@@ -48,6 +52,7 @@ from varma.controls.addendum_i import (
 from varma.controls.engine import Decision
 from varma.db.models import ClosedPaperTrade, Evidence, PaperFill, PaperOrder, PaperPosition
 from varma.paper.ledger import PaperLedger
+from varma.paper.quote import mark_gbp, paper_order_economics
 from varma.ports.data import FakeMarketData
 
 # --- Internal simulator assumptions (Document 12). Not a broker schedule. ---
@@ -58,8 +63,9 @@ ADVERSE_BPS = (SPREAD_BPS / 2.0) + SLIPPAGE_BPS  # 10 bps vs mid
 ASSUMPTIONS_NOTE = (
     "INTERNAL PAPER FILL SIMULATOR assumptions: spread 10 bps of mid; "
     "half-spread + slippage 5 bps = 10 bps adverse vs mid; commission 5 bps "
-    "of notional; FakeMarketData last treated as GBP (no FX vendor). "
-    "Not BROKER_PAPER. Not LIVE. Not a vendor contract."
+    "of GBP notional; USD last converted with a stamped FX quote stored on "
+    "the fill; LSE pence/100 to GBP and never double-converted. "
+    "Not BROKER_PAPER. Not LIVE. Not a vendor contract. No AI."
 )
 
 
@@ -75,7 +81,10 @@ def simulator_assumptions() -> dict[str, Any]:
         "slippage_bps": SLIPPAGE_BPS,
         "commission_bps": COMMISSION_BPS,
         "adverse_bps_vs_mid": ADVERSE_BPS,
-        "fx": "none — FakeMarketData last treated as GBP (INTERNAL ASSUMPTION)",
+        "fx": (
+            "stamped quote per fill (source + timestamp). USD→GBP. "
+            "GBP identity. No silent unnamed constant. No AI."
+        ),
         "source": ADDENDUM_A_LABEL,
         "paper_execution": "see_control_tables",
         "firm_open": "see_control_tables",
@@ -92,9 +101,7 @@ class PaperFillSimulator:
         self.data = FakeMarketData()
 
     def mid_gbp(self, symbol: str) -> float:
-        rows = self.data.delayed_prices([symbol])
-        last = float(rows[0]["last"]) if rows else 1.0
-        return last if last > 0 else 1.0
+        return mark_gbp(symbol)
 
     def fill(self, *, actor_id: str, order: dict[str, Any], at=None, is_flatten: bool = False) -> Decision:
         """Simulate a paper fill. Caller has already passed control gates.
@@ -117,22 +124,23 @@ class PaperFillSimulator:
         side = str(order.get("side") or "buy").lower()
         if side not in {"buy", "sell"}:
             return self._deny("INVALID_SIDE", actor_id, order)
-        mid = self.mid_gbp(symbol)
-        quantity = abs(float(order.get("quantity") or 0))
-        requested_notional = order.get("notional_gbp")
-        if quantity == 0 and requested_notional:
-            quantity = abs(float(requested_notional)) / mid
+        econ = paper_order_economics(order, at=now, max_position_gbp=MAX_POSITION)
+        mid = econ.mid_gbp
+        quantity = econ.quantity
+        if not is_flatten and econ.cap_check_gbp > MAX_POSITION:
+            return self._deny(
+                "MAX_POSITION_EXCEEDED",
+                actor_id,
+                {**dict(order), "is_flatten": is_flatten},
+            )
         if quantity <= 0:
             return self._deny("INVALID_QUANTITY", actor_id, order)
 
-        if side == "buy":
-            fill_price = mid * (1.0 + ADVERSE_BPS / 10000.0)
-        else:
-            fill_price = mid * (1.0 - ADVERSE_BPS / 10000.0)
-        fill_price = round(fill_price, 6)
-        notional = round(quantity * fill_price, 6)
+        fill_price = econ.fill_price_gbp
+        notional = econ.notional_gbp
         commission = round(notional * COMMISSION_BPS / 10000.0, 6)
         day = london_day(now)
+        fx = econ.fx
 
         paper_order = PaperOrder(
             symbol=symbol,
@@ -153,6 +161,15 @@ class PaperFillSimulator:
             is_flatten=is_flatten,
             created_at=now,
             notes=ASSUMPTIONS_NOTE if not is_flatten else flatten_fill_note(symbol),
+            instrument_currency=econ.instrument_currency,
+            quote_currency=econ.quote_currency,
+            quote_unit=econ.quote_unit,
+            native_mid=econ.native_mid,
+            native_fill_price=econ.native_fill_price,
+            fx_pair=fx.pair,
+            fx_rate=fx.rate,
+            fx_source=fx.source,
+            fx_quoted_at=fx.quoted_at,
         )
         self.session.add(paper_order)
         self.session.flush()
@@ -168,10 +185,18 @@ class PaperFillSimulator:
             london_day=day,
             filled_at=now,
             is_live=False,
+            instrument_currency=econ.instrument_currency,
+            quote_currency=econ.quote_currency,
+            quote_unit=econ.quote_unit,
+            native_price=econ.native_fill_price,
+            fx_pair=fx.pair,
+            fx_rate=fx.rate,
+            fx_source=fx.source,
+            fx_quoted_at=fx.quoted_at,
         )
         self.session.add(fill_row)
         closed = self._apply_position(symbol, side, quantity, fill_price, commission, day, now)
-        account = self.ledger.account()
+        account = self.ledger.account(at=now)
         if side == "buy":
             account.cash = round(account.cash - notional - commission, 6)
         else:
@@ -192,6 +217,13 @@ class PaperFillSimulator:
             "notional_gbp": notional,
             "commission_gbp": commission,
             "currency": CURRENCY,
+            "instrument_currency": econ.instrument_currency,
+            "quote_currency": econ.quote_currency,
+            "quote_unit": econ.quote_unit,
+            "native_mid": econ.native_mid,
+            "native_fill_price": econ.native_fill_price,
+            "fx": fx.to_dict(),
+            "sized_from_notional": econ.sized_from_notional,
             "london_day": day,
             "is_paper": True,
             "is_live": False,

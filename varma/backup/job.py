@@ -126,14 +126,39 @@ def _snapshot_payload(session: Session) -> dict[str, Any]:
         "orders": [
             _row_public(
                 row,
-                ("id", "symbol", "side", "quantity", "notional_gbp", "status", "london_day", "is_live"),
+                (
+                    "id",
+                    "symbol",
+                    "side",
+                    "quantity",
+                    "notional_gbp",
+                    "status",
+                    "london_day",
+                    "is_live",
+                    "fx_rate",
+                    "fx_source",
+                    "fx_quoted_at",
+                ),
             )
             for row in session.query(PaperOrder).all()
         ],
         "fills": [
             _row_public(
                 row,
-                ("id", "order_id", "symbol", "side", "quantity", "price", "notional_gbp", "london_day", "is_live"),
+                (
+                    "id",
+                    "order_id",
+                    "symbol",
+                    "side",
+                    "quantity",
+                    "price",
+                    "notional_gbp",
+                    "london_day",
+                    "is_live",
+                    "fx_rate",
+                    "fx_source",
+                    "fx_quoted_at",
+                ),
             )
             for row in session.query(PaperFill).all()
         ],

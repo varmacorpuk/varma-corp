@@ -31,7 +31,7 @@ from varma.db.models import (
     PaperOrder,
     PaperPosition,
 )
-from varma.ports.data import FakeMarketData
+from varma.paper.quote import mark_gbp
 
 
 def _round_gbp(value: float) -> float:
@@ -73,9 +73,8 @@ class PaperLedger:
         return self.ensure_account(at=at)
 
     def mark_price(self, symbol: str) -> float:
-        rows = FakeMarketData().delayed_prices([symbol])
-        last = float(rows[0]["last"]) if rows else 0.0
-        return last
+        """Mark in GBP after pence handling and stamped FX. GBP names unchanged."""
+        return mark_gbp(symbol)
 
     def positions_market_value(self) -> float:
         total = 0.0

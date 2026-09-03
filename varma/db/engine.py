@@ -6,12 +6,59 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Protocol
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from varma.config import DATA_DIR, get_settings
 from varma.db.models import Base
+
+# Additive columns only. Do not rewrite existing SHEL.L fills. NULL on old rows
+# means pre-FX-slice GBP identity.
+_PAPER_FX_COLUMNS: tuple[tuple[str, tuple[tuple[str, str], ...]], ...] = (
+    (
+        "paper_orders",
+        (
+            ("instrument_currency", "VARCHAR(8) DEFAULT ''"),
+            ("quote_currency", "VARCHAR(8) DEFAULT ''"),
+            ("quote_unit", "VARCHAR(8) DEFAULT ''"),
+            ("native_mid", "FLOAT"),
+            ("native_fill_price", "FLOAT"),
+            ("fx_pair", "VARCHAR(16) DEFAULT ''"),
+            ("fx_rate", "FLOAT"),
+            ("fx_source", "VARCHAR(160) DEFAULT ''"),
+            ("fx_quoted_at", "DATETIME"),
+        ),
+    ),
+    (
+        "paper_fills",
+        (
+            ("instrument_currency", "VARCHAR(8) DEFAULT ''"),
+            ("quote_currency", "VARCHAR(8) DEFAULT ''"),
+            ("quote_unit", "VARCHAR(8) DEFAULT ''"),
+            ("native_price", "FLOAT"),
+            ("fx_pair", "VARCHAR(16) DEFAULT ''"),
+            ("fx_rate", "FLOAT"),
+            ("fx_source", "VARCHAR(160) DEFAULT ''"),
+            ("fx_quoted_at", "DATETIME"),
+        ),
+    ),
+)
+
+
+def ensure_additive_columns(engine: Engine) -> None:
+    """Add FX audit columns on an existing paper book. Never UPDATE fill rows."""
+    insp = inspect(engine)
+    names = set(insp.get_table_names())
+    with engine.begin() as conn:
+        for table, cols in _PAPER_FX_COLUMNS:
+            if table not in names:
+                continue
+            existing = {c["name"] for c in inspect(engine).get_columns(table)}
+            for col_name, ddl in cols:
+                if col_name in existing:
+                    continue
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {ddl}"))
 
 
 class StoragePort(Protocol):
@@ -122,4 +169,5 @@ def get_session_factory(url: str | None = None, *, reset: bool = False) -> sessi
 def init_db(url: str | None = None, *, reset: bool = False) -> Engine:
     engine = get_engine(url, reset=reset)
     Base.metadata.create_all(engine)
+    ensure_additive_columns(engine)
     return engine

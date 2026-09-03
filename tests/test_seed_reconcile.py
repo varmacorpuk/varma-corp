@@ -126,9 +126,10 @@ def test_stale_sqlite_is_reconciled_to_board_encoded(db_url):
         assert names == EXPECTED_DISPLAY
         assert set(r.symbol for r in session.query(AllowListInstrument).all()) == set(ADDENDUM_E_SYMBOLS)
         venues = {r.symbol: r.venue for r in session.query(AllowListInstrument).all()}
-        assert venues == ADDENDUM_E_VENUES
-        assert venues["JPM"] == "NYSE"
-        assert venues["JNJ"] == "NYSE"
+        for sym, venue in ADDENDUM_E_VENUES.items():
+            assert venues[sym] == venue
+        assert venues["BRK-B"] == "NYSE"
+        assert venues["SPCX"] == "NASDAQ"
         for key, value, _unit in ADDENDUM_A_LIMITS:
             assert session.get(NumericLimit, key).value == value
         assert session.get(ControlSetting, "paper_execution").value == "OPEN"
@@ -160,7 +161,8 @@ def test_stale_sqlite_is_reconciled_to_board_encoded(db_url):
         init_db("sqlite:///:memory:", reset=True)
 
 
-def test_stale_nasdaq_jpm_jnj_are_recoded_to_nyse(db_url):
+def test_stale_allow_list_is_reconciled_to_final_strategy(db_url):
+    """A stale SQLite copy with old names gets the final 10-name universe."""
     init_db(db_url, reset=True)
     factory = get_session_factory(db_url, reset=False)
     session = factory()
@@ -172,44 +174,29 @@ def test_stale_nasdaq_jpm_jnj_are_recoded_to_nyse(db_url):
                 trading_mode="LIVE_BLOCKED",
                 kill_switch=False,
                 updated_at=now,
-                updated_by="stale-nasdaq-copy",
+                updated_by="stale-copy",
             )
         )
-        for symbol in ("JPM", "JNJ", "AAPL"):
+        for symbol in ("AAPL", "MSFT"):
             session.add(
                 AllowListInstrument(
                     symbol=symbol,
                     venue="NASDAQ",
-                    approved_by="stale-nasdaq-copy",
+                    approved_by="stale-copy",
                     approved_at=now,
                 )
             )
-        session.add(
-            AllowListInstrument(
-                symbol="SHEL.L",
-                venue="LSE",
-                approved_by="stale-nasdaq-copy",
-                approved_at=now,
-            )
-        )
         session.commit()
-        assert session.query(AllowListInstrument).filter_by(symbol="JPM").one().venue == "NASDAQ"
-        assert session.query(AllowListInstrument).filter_by(symbol="JNJ").one().venue == "NASDAQ"
 
         seed_if_empty(session)
 
         venues = {r.symbol: r.venue for r in session.query(AllowListInstrument).all()}
-        assert venues == ADDENDUM_E_VENUES
-        assert venues["JPM"] == "NYSE"
-        assert venues["JNJ"] == "NYSE"
+        for sym, venue in ADDENDUM_E_VENUES.items():
+            assert venues[sym] == venue
+        assert venues["BRK-B"] == "NYSE"
+        assert venues["SPCX"] == "NASDAQ"
         assert venues["AAPL"] == "NASDAQ"
-        assert venues["MSFT"] == "NASDAQ"
-        assert venues["NVDA"] == "NASDAQ"
-        assert venues["AMZN"] == "NASDAQ"
         assert venues["GOOGL"] == "NASDAQ"
-        assert venues["SHEL.L"] == "LSE"
-        assert venues["AZN.L"] == "LSE"
-        assert venues["ULVR.L"] == "LSE"
         assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
         assert session.get(ControlSetting, "paper_execution").value == "OPEN"
         account = session.get(PaperAccount, 1)

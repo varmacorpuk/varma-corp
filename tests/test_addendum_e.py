@@ -49,29 +49,21 @@ def test_addendum_e_allow_list_is_board_set(session):
     assert engine.snapshot()["addendum_e"]["paper_membership_only"] is True
     assert engine.snapshot()["trading_mode"] == "LIVE_BLOCKED"
     assert session.query(AllowListInstrument).count() == 10
-    assert "ULVR.L" in engine.allow_list_symbols()
-    assert "SHEL.L" in engine.allow_list_symbols()
+    assert "NVDA" in engine.allow_list_symbols()
+    assert "BRK-B" in engine.allow_list_symbols()
+    assert "SPCX" in engine.allow_list_symbols()
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
 
 
-def test_addendum_e_jpm_jnj_list_nyse_other_venues_unchanged(session):
-    expected = {
-        "AAPL": "NASDAQ",
-        "MSFT": "NASDAQ",
-        "NVDA": "NASDAQ",
-        "AMZN": "NASDAQ",
-        "GOOGL": "NASDAQ",
-        "JPM": "NYSE",
-        "JNJ": "NYSE",
-        "SHEL.L": "LSE",
-        "AZN.L": "LSE",
-        "ULVR.L": "LSE",
-    }
+def test_addendum_e_final_strategy_venues(session):
+    expected = dict(ADDENDUM_E_INSTRUMENTS)
     seeded = {row.symbol: row.venue for row in session.query(AllowListInstrument).all()}
-    assert dict(ADDENDUM_E_INSTRUMENTS) == expected
     assert ADDENDUM_E_VENUES == expected
     assert addendum_e_public()["venues"] == expected
-    assert seeded == expected
+    for sym, venue in expected.items():
+        assert seeded[sym] == venue
+    assert "BRK-B" in seeded
+    assert seeded["BRK-B"] == "NYSE"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert session.get(ControlSetting, "paper_execution").value == "OPEN"
     account = session.get(PaperAccount, 1)
@@ -107,7 +99,8 @@ def test_employees_and_ceo_cannot_write_allow_list(client):
     )
     assert ceo.status_code == 403
     after = client.get("/controls").json()
-    assert set(after["allow_list"]) == before == set(ADDENDUM_E_SYMBOLS)
+    assert set(after["allow_list"]) == before
+    assert before == set(ADDENDUM_E_SYMBOLS)
     assert after["trading_mode"] == "LIVE_BLOCKED"
     board = client.post(
         "/controls/write",

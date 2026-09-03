@@ -32,7 +32,18 @@ def test_test_session_is_not_the_paper_open_book(session):
     assert DEFAULT_DEV_DB_FILENAME not in bind or "test" in bind
 
 
+def _add_lse_to_allow_list(session):
+    from varma.clock import now_london as _now
+    from varma.db.models import AllowListInstrument
+    now = _now()
+    for sym in ("SHEL.L", "AZN.L", "ULVR.L"):
+        if session.query(AllowListInstrument).filter_by(symbol=sym).one_or_none() is None:
+            session.add(AllowListInstrument(symbol=sym, venue="LSE", approved_by="test-only", approved_at=now))
+    session.commit()
+
+
 def test_dump_restore_roundtrip_keeps_shel_l_fill(session):
+    _add_lse_to_allow_list(session)
     result = run_paper_trade_path(
         session,
         started_by="cli",
@@ -76,6 +87,7 @@ def test_dump_restore_roundtrip_keeps_shel_l_fill(session):
 
 
 def test_observability_floor_book_shows_fill_rows(session):
+    _add_lse_to_allow_list(session)
     run_paper_trade_path(
         session,
         started_by="cli",

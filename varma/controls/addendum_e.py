@@ -1,39 +1,77 @@
-"""Board Addendum E 2026-08-27.
+"""Board Addendum E 2026-09-03 (revised).
 
-Hari asked the Founding Architect to encode the starting PAPER execution
-allow-list from the CEO recommendation, now Board-used. These are Board-set
-control-table values, labelled Board Addendum E 2026-08-27. They are not
-invented silent defaults.
+Board-set PAPER execution allow-list. Revised 2026-09-03 to the final
+strategy universe: ten US-listed names. No LSE, no non-US sessions.
+The existing SHEL.L paper book (PAPER-20260903-02) stays valid as
+historical data; SHEL.L / AZN.L / ULVR.L are removed from the
+executable allow-list going forward.
 
 PAPER membership only. trading_mode stays LIVE_BLOCKED. The internal paper
 fill simulator is the paper ledger. Do not load LIVE or BROKER_PAPER.
 Employees (including the CEO) cannot write this list.
+
+SpaceX (SPCX) is Nasdaq-listed since 12 Jun 2026. Berkshire Hathaway
+uses the class-B line; the feed symbol is BRK-B (dash form) but the
+canonical desk symbol is BRK.B.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-ADDENDUM_E_LABEL = "Board Addendum E 2026-08-27"
+ADDENDUM_E_LABEL = "Board Addendum E 2026-09-03"
 ADDENDUM_E_SET_BY = "board-member"
 
-# US listed names, then LSE names in the instrument form already used by this repo.
-# JPM and JNJ are NYSE names. US tech stays NASDAQ. LSE three stay LSE.
+# Final strategy universe: ten US-listed names. US market only.
+# BRK-B is the feed/Yahoo form; canonical desk symbol BRK.B.
 ADDENDUM_E_INSTRUMENTS: tuple[tuple[str, str], ...] = (
-    ("AAPL", "NASDAQ"),
-    ("MSFT", "NASDAQ"),
     ("NVDA", "NASDAQ"),
-    ("AMZN", "NASDAQ"),
+    ("AAPL", "NASDAQ"),
     ("GOOGL", "NASDAQ"),
-    ("JPM", "NYSE"),
-    ("JNJ", "NYSE"),
-    ("SHEL.L", "LSE"),
-    ("AZN.L", "LSE"),
-    ("ULVR.L", "LSE"),
+    ("MSFT", "NASDAQ"),
+    ("AMZN", "NASDAQ"),
+    ("SPCX", "NASDAQ"),
+    ("AVGO", "NASDAQ"),
+    ("META", "NASDAQ"),
+    ("TSLA", "NASDAQ"),
+    ("BRK-B", "NYSE"),
 )
 
 ADDENDUM_E_SYMBOLS: tuple[str, ...] = tuple(symbol for symbol, _venue in ADDENDUM_E_INSTRUMENTS)
 ADDENDUM_E_VENUES: dict[str, str] = dict(ADDENDUM_E_INSTRUMENTS)
+
+# All ten are USD. No GBP names in the final strategy.
+ADDENDUM_E_CURRENCIES: dict[str, str] = {
+    symbol: "USD" for symbol, _venue in ADDENDUM_E_INSTRUMENTS
+}
+
+# All US names are major USD. No pence.
+ADDENDUM_E_QUOTE_UNITS: dict[str, str] = {
+    symbol: "USD" for symbol in ADDENDUM_E_CURRENCIES
+}
+
+# Keep backward-compat functions for existing SHEL.L paper book history.
+# SHEL.L fills pre-date the universe revision and remain valid GBP data.
+
+
+def instrument_currency(symbol: str) -> str:
+    """USD for US-venue names; GBP for .L names. Default USD for unknowns."""
+    key = str(symbol or "")
+    if key in ADDENDUM_E_CURRENCIES:
+        return ADDENDUM_E_CURRENCIES[key]
+    if key.endswith(".L"):
+        return "GBP"
+    return "USD"
+
+
+def instrument_quote_unit(symbol: str) -> str:
+    """Native quote unit. LSE cash is pence (GBX). Does not change membership."""
+    key = str(symbol or "")
+    if key in ADDENDUM_E_QUOTE_UNITS:
+        return ADDENDUM_E_QUOTE_UNITS[key]
+    if key.endswith(".L"):
+        return "GBX"
+    return "USD"
 
 
 def addendum_e_public() -> dict[str, Any]:
@@ -51,6 +89,8 @@ def addendum_e_public() -> dict[str, Any]:
         "ceo_cannot_write": True,
         "symbols": list(ADDENDUM_E_SYMBOLS),
         "venues": dict(ADDENDUM_E_INSTRUMENTS),
+        "currencies": dict(ADDENDUM_E_CURRENCIES),
+        "quote_units": dict(ADDENDUM_E_QUOTE_UNITS),
         "count": len(ADDENDUM_E_SYMBOLS),
         "allow_list_e_cannot_fill_until_open": True,
         "note": (

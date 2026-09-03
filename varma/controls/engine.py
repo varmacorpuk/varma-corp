@@ -39,6 +39,7 @@ from varma.controls.addendum_c import (
 )
 from varma.controls.addendum_e import addendum_e_public
 from varma.controls.addendum_f import addendum_f_public
+from varma.controls.addendum_l import addendum_l_public
 from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
     FIRM_CLOSED_REASON,
@@ -297,6 +298,22 @@ class ControlEngine:
         if missing:
             return self._deny("MISSING_NUMERIC_LIMITS", actor_id, order, {"missing": missing})
 
+        # Session check before sizing so overnight/closed fires before cap math.
+        session_status = paper_session_status(now)
+        if not paper_desk_open(now):
+            reason = session_status.get("closed_reason") or "PAPER_SESSION_CLOSED"
+            return self._deny(
+                reason,
+                actor_id,
+                order,
+                {
+                    "paper_session": session_status,
+                    "overnight": bool(session_status.get("overnight")),
+                    "flatten_at": session_status.get("flatten_at"),
+                    "source": ADDENDUM_C_LABEL,
+                },
+            )
+
         notional = self._requested_notional_gbp(order)
         max_position = self.limit_value("max_position")
         if max_position is not None and notional > max_position:
@@ -306,6 +323,29 @@ class ControlEngine:
                 order,
                 {"notional_gbp": notional, "max_position": max_position, "currency": CURRENCY},
             )
+        if max_position is not None:
+            from varma.paper.quote import mark_gbp
+            from varma.db.models import PaperPosition
+
+            pos = self.session.get(PaperPosition, symbol)
+            if pos is not None and pos.quantity != 0:
+                existing = abs(float(pos.quantity)) * mark_gbp(symbol)
+                side = str(order.get("side") or "buy").lower()
+                adding = (side == "buy" and pos.quantity > 0) or (
+                    side == "sell" and pos.quantity < 0
+                )
+                if adding and existing + notional > max_position:
+                    return self._deny(
+                        "MAX_POSITION_EXCEEDED",
+                        actor_id,
+                        order,
+                        {
+                            "notional_gbp": notional,
+                            "existing_name_gbp": existing,
+                            "max_position": max_position,
+                            "currency": CURRENCY,
+                        },
+                    )
 
         from varma.paper.ledger import PaperLedger
 
@@ -331,21 +371,6 @@ class ControlEngine:
                 {"london_day_pnl_gbp": pnl, "max_daily_loss": max_daily_loss},
             )
 
-        session_status = paper_session_status(now)
-        if not paper_desk_open(now):
-            reason = session_status.get("closed_reason") or "PAPER_SESSION_CLOSED"
-            return self._deny(
-                reason,
-                actor_id,
-                order,
-                {
-                    "paper_session": session_status,
-                    "overnight": bool(session_status.get("overnight")),
-                    "flatten_at": session_status.get("flatten_at"),
-                    "source": ADDENDUM_C_LABEL,
-                },
-            )
-
         if execution_port != "SIMULATOR":
             return self._deny("EXECUTION_PORT_NOT_SIMULATOR", actor_id, order)
 
@@ -360,14 +385,13 @@ class ControlEngine:
         return decision
 
     def _requested_notional_gbp(self, order: dict[str, Any]) -> float:
-        raw = order.get("notional_gbp")
-        if raw not in (None, ""):
-            return abs(float(raw))
-        quantity = abs(float(order.get("quantity") or 0))
-        from varma.paper.simulator import PaperFillSimulator
+        from varma.controls.addendum_a import MAX_POSITION
+        from varma.paper.quote import paper_order_economics
 
-        mid = PaperFillSimulator(self.session).mid_gbp(str(order.get("symbol") or ""))
-        return quantity * mid
+        econ = paper_order_economics(order, max_position_gbp=MAX_POSITION)
+        if econ.fx and not order.get("fx_quote"):
+            order["fx_quote"] = econ.fx.to_dict()
+        return econ.cap_check_gbp
 
     def write_control(
         self,
@@ -511,6 +535,7 @@ class ControlEngine:
             "addendum": addendum_a_public(),
             "addendum_c": addendum_c_public(),
             "addendum_e": addendum_e_public(),
+            "addendum_l": addendum_l_public(),
             "addendum_f": addendum_f_public(),
             "addendum_i": addendum_i_public(self.session),
             "addendum_j": addendum_j_public(),
