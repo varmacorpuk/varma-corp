@@ -67,10 +67,10 @@ def test_outside_window_denies_allow_listed_ticker(session):
             at=when,
         )
         assert d.allowed is False, d.reason
-        assert d.reason == "PAPER_EXECUTION_CLOSED"
+        assert d.reason == "PAPER_SESSION_CLOSED"
 
 
-def test_london_1630_still_denies_paper_fill_while_closed(session):
+def test_london_1630_aapl_still_inside_session(session):
     emp = _grant_place(session)
     d = ControlEngine(session).place_order(
         actor_id=emp.id,
@@ -78,12 +78,12 @@ def test_london_1630_still_denies_paper_fill_while_closed(session):
         order={"symbol": "AAPL", "side": "buy", "notional_gbp": 50, "execution_port": "SIMULATOR"},
         at=LONDON_CASH_CLOSE,
     )
-    assert d.allowed is False
-    assert d.reason == "PAPER_EXECUTION_CLOSED"
+    assert d.allowed is True
+    assert d.reason == "PAPER_FILL_SIMULATED"
     assert LIVE_ADAPTER_LOADED is False
 
 
-def test_flatten_at_us_close_is_noop_while_closed(session):
+def test_flatten_at_us_close_closes_open_paper(session):
     emp = _grant_place(session)
     filled = ControlEngine(session).place_order(
         actor_id=emp.id,
@@ -91,9 +91,9 @@ def test_flatten_at_us_close_is_noop_while_closed(session):
         order={"symbol": "MSFT", "side": "buy", "notional_gbp": 40, "execution_port": "SIMULATOR"},
         at=SESSION_OPEN,
     )
-    assert filled.allowed is False
-    assert filled.reason == "PAPER_EXECUTION_CLOSED"
-    assert session.query(PaperPosition).count() == 0
+    assert filled.allowed is True
+    assert filled.reason == "PAPER_FILL_SIMULATED"
+    assert session.query(PaperPosition).count() == 1
     close = us_regular_cash_close_london(SESSION_OPEN)
     result = flatten_all_paper(
         session,
@@ -104,8 +104,8 @@ def test_flatten_at_us_close_is_noop_while_closed(session):
     assert result["flatten_at"] == "US_REGULAR_CASH_CLOSE"
     assert result["flatten_not_at"] == "LONDON_CASH_CLOSE"
     assert result["flatten_at_london_cash_close"] is False
-    assert result["closed_positions"] == 0
-    assert result["flatten_fills"] == 0
+    assert result["closed_positions"] == 1
+    assert result["flatten_fills"] == 1
     assert result["flatten_as_if_there_were_positions"] is False
     assert result["positions_remaining"] == 0
     assert result["trading_mode_after"] == "LIVE_BLOCKED"
@@ -127,7 +127,7 @@ def test_get_observability_does_not_flatten(session):
         at=SESSION_OPEN,
     )
     before = session.query(PaperPosition).count()
-    assert before == 0
+    assert before == 1
     snap = BoardObservability(session).snapshot()
     assert snap["paper_flatten"]["get_observability_flattens"] is False
     assert snap["paper_flatten"]["run"] is None

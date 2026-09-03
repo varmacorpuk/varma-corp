@@ -98,18 +98,17 @@ def execution_port_status() -> dict[str, Any]:
             "fills_when_allow_list_empty": False,
             "note": (
                 "Internal paper fill simulator is the paper ledger (Document 12). "
-                "Not BROKER_PAPER. Not LIVE. Board Addendum I: PAPER execution is "
-                "CLOSED. Simulator DENY all fills until Grand Opening PAPER, even "
-                "for allow-listed tickers."
+                "Not BROKER_PAPER. Not LIVE. After Grand Opening PAPER a legal "
+                "allow-list practice order may fill here. LIVE stays blocked."
             ),
         },
-        "paper_execution_closed": True,
+        "paper_execution_closed": "see_control_tables",
         "fills_when_paper_closed": False,
         "note": (
             "BROKER_PAPER and LIVE execution ports remain UNLOADED. Status only. "
             "No paper/live fills against a broker. Constructing or using those ports "
-            "is denied. Board Addendum I: PAPER execution is CLOSED. The internal "
-            "simulator DENY all fills until Grand Opening PAPER."
+            "is denied. After Grand Opening PAPER the internal simulator may fill a "
+            "legal allow-list practice order. LIVE stays blocked."
         ),
     }
 

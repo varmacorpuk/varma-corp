@@ -1,10 +1,11 @@
 """Seed persistent identities, Board Addenda A/C/E/F/I/J/K, and TEMPORARY watchlist.
 
-Numeric limits are Board Addendum A 2026-08-27 (Board-set; unused until open).
+Numeric limits are Board Addendum A 2026-08-27 (Board-set).
 Paper session is Board Addendum C 2026-08-27 (UK open through US close).
-PAPER allow-list is Board Addendum E 2026-08-27 (Board-set; no fills until open).
+PAPER allow-list is Board Addendum E 2026-08-27 (Board-set).
 Staff display is Board Addendum F 2026-08-27 (person · department).
-Company CLOSED until Grand Opening: Board Addendum I 2026-08-27.
+Company CLOSED until Grand Opening: Board Addendum I 2026-08-27
+(two-opening rule). Grand Opening PAPER 2026-09-03 (Hari explicit yes).
 Encrypted company backup: Board Addendum J 2026-08-27 (database artefact; not git).
 LSE after London cash close: Board Addendum K 2026-09-03 (Hari explicit yes).
 seed_if_empty reconciles those Board-encoded rows onto a stale SQLite copy.
@@ -111,7 +112,7 @@ def seed_if_empty(session: Session) -> None:
     Always applies Addenda A/C/E/F/I/J and the seven named employees, even when
     control_state already exists. Does not start a 24/7 daemon. trading_mode
     stays LIVE_BLOCKED. Kill switch is not reset. Trader may propose paper
-    tickets; fills stay denied while PAPER execution is CLOSED.
+    tickets; paper may fill after Grand Opening PAPER. LIVE stays blocked.
     """
     now = now_london()
     state = session.get(ControlState, 1)
@@ -369,7 +370,7 @@ def seed_board_addendum_k(session: Session) -> None:
     """Write Board Addendum K 2026-09-03 LSE-after-London-cash-close rule.
 
     Hari explicit yes. Does not rewrite Addendum C flatten. Does not invent
-    US listings. Employees cannot write this. PAPER stays CLOSED.
+    US listings. Employees cannot write this. LIVE stays blocked.
     Always reconciles onto a stale UNSET row so main gets one coherent path.
     """
     now = now_london()
@@ -401,10 +402,11 @@ def seed_lse_session_hold(session: Session) -> None:
 
 
 def seed_board_addendum_i(session: Session) -> None:
-    """Write Board Addendum I 2026-08-27 CLOSED-until-Grand-Opening flag.
+    """Write Board Addendum I plus authorised Grand Opening PAPER default.
 
-    PAPER execution is CLOSED. Employees including the CEO cannot write it.
-    Does not implement Grand Opening PAPER or LIVE. Does not fill.
+    Addendum I remains the two-opening rule. Fresh seed: paper OPEN, live
+    BLOCKED. Employees including the CEO cannot write it. Does not open LIVE.
+    Does not load brokers.
     """
     now = now_london()
     for key, value, unit in ADDENDUM_I_SETTINGS:
@@ -816,15 +818,16 @@ def _seed_trader(session: Session) -> None:
             ),
             responsibilities=(
                 "Paper-desk execution proposals inside Board locks. "
-                "May propose paper tickets. Engine denies fills while PAPER execution "
-                "is CLOSED. Cannot write control tables, allow-list, limits, or trading_mode. "
+                "May propose paper tickets. After Grand Opening PAPER the engine "
+                "may fill a legal allow-list practice order in the simulator. "
+                "Cannot write control tables, allow-list, limits, or trading_mode. "
                 "Cannot approve LIVE. Cannot open the firm. Risk stays independent of Trader."
             ),
             authority_boundaries=(
                 "No live-trading approval — Board Member only (Document 11). "
                 "No control writes. No allow-list writes. Cannot open the firm. "
                 "Risk is independent of Trader. LIVE and BROKER_PAPER remain UNLOADED. "
-                "Proposing a paper ticket is not a fill while PAPER_EXECUTION_CLOSED."
+                "Proposing a paper ticket is not LIVE. LIVE and BROKER_PAPER remain UNLOADED."
             ),
             status="AVAILABLE",
             status_bubble="AVAILABLE",
@@ -840,10 +843,10 @@ def _seed_trader(session: Session) -> None:
                 employee_id=emp.id,
                 kind="lesson",
                 content=(
-                    "Trader may propose paper tickets. Engine denies fills while "
-                    "PAPER execution is CLOSED (FIRM_CLOSED). Cannot write locks or "
-                    "approve LIVE. Risk is independent of Trader. Paper allow-list is "
-                    "Board Addendum E."
+                    "Trader may propose paper tickets. After Grand Opening PAPER "
+                    "the engine may fill a legal allow-list practice order. Cannot "
+                    "write locks or approve LIVE. Risk is independent of Trader. "
+                    "Paper allow-list is Board Addendum E."
                 ),
                 created_at=now_london(),
             )
@@ -851,15 +854,16 @@ def _seed_trader(session: Session) -> None:
     else:
         emp.responsibilities = (
             "Paper-desk execution proposals inside Board locks. "
-            "May propose paper tickets. Engine denies fills while PAPER execution "
-            "is CLOSED. Cannot write control tables, allow-list, limits, or trading_mode. "
+                "May propose paper tickets. After Grand Opening PAPER the engine "
+                "may fill a legal allow-list practice order in the simulator. "
+                "Cannot write control tables, allow-list, limits, or trading_mode. "
             "Cannot approve LIVE. Cannot open the firm. Risk stays independent of Trader."
         )
         emp.authority_boundaries = (
             "No live-trading approval — Board Member only (Document 11). "
             "No control writes. No allow-list writes. Cannot open the firm. "
             "Risk is independent of Trader. LIVE and BROKER_PAPER remain UNLOADED. "
-            "Proposing a paper ticket is not a fill while PAPER_EXECUTION_CLOSED."
+            "Proposing a paper ticket is not LIVE."
         )
     _deny_live_and_execution(session, emp.id, extra=(("place_order", True),))
 

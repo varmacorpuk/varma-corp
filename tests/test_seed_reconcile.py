@@ -9,10 +9,6 @@ from varma.clock import now_london
 from varma.controls.addendum_a import ADDENDUM_A_LIMITS
 from varma.controls.addendum_e import ADDENDUM_E_SYMBOLS
 from varma.controls.addendum_f import ALL_STAFF_SLUGS, TECH_SLUG, TRADER_SLUG, staff_display_for_slug
-from varma.controls.addendum_i import (
-    FIRM_CLOSED_REASON,
-    PAPER_EXECUTION_CLOSED_REASON,
-)
 from varma.controls.engine import ControlEngine
 from varma.db.engine import get_session_factory, init_db
 from varma.db.models import (
@@ -48,7 +44,7 @@ def test_default_seed_has_seven_named_employees_and_board_addenda(session):
         assert rows[slug].display_name == staff_display_for_slug(slug)
     assert set(ControlEngine(session).allow_list_symbols()) == set(ADDENDUM_E_SYMBOLS)
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
-    assert session.get(ControlSetting, "paper_execution").value == "CLOSED"
+    assert session.get(ControlSetting, "paper_execution").value == "OPEN"
     assert session.get(ControlSetting, "lse_session_rule").value == "DENY_LSE_AFTER_LONDON_CASH_CLOSE"
     for key, value, _unit in ADDENDUM_A_LIMITS:
         assert session.get(NumericLimit, key).value == value
@@ -77,7 +73,7 @@ def test_default_seed_has_seven_named_employees_and_board_addenda(session):
     assert get_llm().provider_name == "fake"
 
 
-def test_trader_may_propose_but_fill_is_paper_execution_closed(session):
+def test_trader_may_propose_and_fill_paper_live_still_blocked(session):
     trader = session.query(Employee).filter_by(slug=TRADER_SLUG).one()
     d = ControlEngine(session).place_order(
         actor_id=trader.id,
@@ -85,12 +81,10 @@ def test_trader_may_propose_but_fill_is_paper_execution_closed(session):
         order={"symbol": "AAPL", "side": "buy", "notional_gbp": 50, "execution_port": "SIMULATOR"},
         at=SESSION_OPEN,
     )
-    assert d.allowed is False
-    assert d.reason == PAPER_EXECUTION_CLOSED_REASON
+    assert d.allowed is True
+    assert d.reason == "PAPER_FILL_SIMULATED"
     assert d.reason != "NO_PERMISSION"
-    assert d.details["alias"] == FIRM_CLOSED_REASON
-    assert d.details["firm_closed"] is True
-    assert session.query(PaperFill).count() == 0
+    assert session.query(PaperFill).count() == 1
     live = ControlEngine(session).place_order(
         actor_id=trader.id,
         actor_type="employee",
@@ -131,7 +125,7 @@ def test_stale_sqlite_is_reconciled_to_board_encoded(db_url):
         assert set(r.symbol for r in session.query(AllowListInstrument).all()) == set(ADDENDUM_E_SYMBOLS)
         for key, value, _unit in ADDENDUM_A_LIMITS:
             assert session.get(NumericLimit, key).value == value
-        assert session.get(ControlSetting, "paper_execution").value == "CLOSED"
+        assert session.get(ControlSetting, "paper_execution").value == "OPEN"
         assert session.get(ControlSetting, "lse_session_rule").value == "DENY_LSE_AFTER_LONDON_CASH_CLOSE"
 
         trader = session.query(Employee).filter_by(slug=TRADER_SLUG).one()
@@ -148,13 +142,13 @@ def test_stale_sqlite_is_reconciled_to_board_encoded(db_url):
             order={"symbol": "MSFT", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
             at=SESSION_OPEN,
         )
-        assert d.reason == PAPER_EXECUTION_CLOSED_REASON
+        assert d.reason == "PAPER_FILL_SIMULATED"
         assert d.reason != "NO_PERMISSION"
-        assert session.query(PaperFill).count() == 0
+        assert session.query(PaperFill).count() == 1
         snap = BoardObservability(session).snapshot()
         assert snap["kill_switch"]["board_member_can_trigger"] is True
         assert snap["kill_switch"]["employees_cannot_reset"] is True
-        assert snap["paper_gate"]["paper_execution"] == "CLOSED"
+        assert snap["paper_gate"]["paper_execution"] == "OPEN"
     finally:
         session.close()
         init_db("sqlite:///:memory:", reset=True)
@@ -181,7 +175,7 @@ def test_employees_still_cannot_write_locks_or_open_the_firm(client):
     assert board_halt.json()["halted"] is True
     after = client.get("/controls").json()
     assert after["trading_mode"] == "LIVE_BLOCKED"
-    assert after["paper_execution"] == "CLOSED"
+    assert after["paper_execution"] == "OPEN"
     assert after["kill_switch"] is True
     reset = client.post("/controls/kill-switch/reset", headers=CEO_HEADERS)
     assert reset.status_code == 403

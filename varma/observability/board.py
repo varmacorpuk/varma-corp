@@ -270,14 +270,15 @@ class BoardObservability:
             "allow_list_empty": control_snap.get("allow_list_empty", True),
             "trading_mode": control_snap["trading_mode"],
             "does_not_switch_to_paper_mode": True,
-            "simulated_capital_status": "FUTURE_PAPER_STARTING_BOOK_ONLY",
-            "paper_execution_closed": True,
+            "simulated_capital_status": control_snap.get("addendum_i", {}).get(
+                "simulated_capital_status", "PAPER_STARTING_BOOK"
+            ),
+            "paper_execution_closed": bool(control_snap.get("paper_execution_closed")),
             "note": (
-                "Internal paper ledger. Not a broker. £1000 is the FUTURE paper "
-                "starting book only (Board Addendum I). PAPER execution is CLOSED. "
-                "Do not fill. Allow-list E exists but cannot be used for fills until "
-                "open. trading_mode stays LIVE_BLOCKED. Flatten ALL paper before US "
-                "regular cash close (Board Addendum C) is a no-op while closed. "
+                "Internal paper ledger. Not a broker. £1000 is the paper starting "
+                "book (Board Addendum I / Grand Opening PAPER). LIVE still blocked. "
+                "trading_mode stays LIVE_BLOCKED. Flatten ALL paper before US "
+                "regular cash close (Board Addendum C). "
                 "Do not flatten-as-if-there-were-positions."
             ),
         }
@@ -372,7 +373,7 @@ class BoardObservability:
         }
 
     def _paper_gate(self, control_snap: dict[str, Any]) -> dict[str, Any]:
-        """PAPER execution CLOSED until Grand Opening. trading_mode stays LIVE_BLOCKED."""
+        """Paper gate after Grand Opening PAPER. LIVE stays blocked."""
         live_approvals = (
             self.session.query(BoardApproval)
             .filter_by(action="transition_to_live")
@@ -384,31 +385,39 @@ class BoardObservability:
             .count()
         )
         evaluation = evaluation_snapshot(self.session)
-        addendum_i = dict(control_snap.get("addendum_i") or addendum_i_public())
+        addendum_i = dict(control_snap.get("addendum_i") or addendum_i_public(self.session))
+        paper_closed = bool(control_snap.get("paper_execution_closed"))
+        paper_status = (
+            "CLOSED (Board Addendum I gate). trading_mode LIVE_BLOCKED. LIVE still blocked."
+            if paper_closed
+            else (
+                "OPEN for PRACTICE / paper only (Grand Opening PAPER 2026-09-03). "
+                "trading_mode LIVE_BLOCKED. £1000 paper starting book. LIVE still blocked."
+            )
+        )
         return {
             "read_only": True,
             "source": "database",
             "writes_controls": False,
-            "paper_status": (
-                "CLOSED until Grand Opening PAPER (Board Addendum I). "
-                "trading_mode LIVE_BLOCKED. £1000 is FUTURE paper starting book only."
-            ),
-            "paper_started": False,
+            "paper_status": paper_status,
+            "paper_started": not paper_closed,
             "paper_mode_switched": False,
-            "paper_execution": "CLOSED",
-            "paper_execution_closed": True,
-            "paper_execution_implemented": False,
+            "paper_execution": "CLOSED" if paper_closed else "OPEN",
+            "paper_execution_closed": paper_closed,
+            "paper_execution_implemented": True,
             "first_paper_trade_path_implemented": True,
             "internal_simulator": True,
-            "firm_open": False,
-            "grand_opening_paper": "not",
-            "grand_opening_live": "not",
-            "evaluation_status": "ledger ready (unused until open)",
+            "firm_open": not paper_closed,
+            "grand_opening_paper": addendum_i.get("grand_opening_paper", "yes"),
+            "grand_opening_live": addendum_i.get("grand_opening_live", "not"),
+            "evaluation_status": (
+                "ledger ready (unused until open)" if paper_closed else "ledger in use (paper)"
+            ),
             "live_trading_recommendation": "not",
             "board_review": "not",
             "explicit_board_approval": "not",
             "trading_mode": control_snap["trading_mode"],
-            "execution": False,
+            "execution": not paper_closed,
             "live_adapter_loaded": control_snap["live_adapter_loaded"],
             "broker_paper_loaded": control_snap.get("broker_paper_loaded", False),
             "live_approvals": live_approvals,
@@ -420,8 +429,10 @@ class BoardObservability:
             "values_shown": True,
             "addendum": ADDENDUM_A_LABEL,
             "addendum_i": ADDENDUM_I_LABEL,
-            "simulated_capital_status": "FUTURE_PAPER_STARTING_BOOK_ONLY",
-            "addendum_a_unused_until_open": True,
+            "simulated_capital_status": addendum_i.get(
+                "simulated_capital_status", "PAPER_STARTING_BOOK"
+            ),
+            "addendum_a_unused_until_open": paper_closed,
             "lse_session": lse_session_public(self.session),
             "lse_hold_symbols": list(LSE_HOLD_SYMBOLS),
             "lse_session_rule_unset": lse_session_rule_is_unset(self.session),
@@ -439,13 +450,11 @@ class BoardObservability:
                 "paper_duration_threshold",
             ],
             "note": (
-                "Board Addendum I 2026-08-27: the company is CLOSED until Grand "
-                "Opening. PAPER execution is CLOSED. The first paper-trade PATH "
-                "exists (Trader proposal → ControlEngine → internal simulator). "
-                "Do not fill. Allow-list E exists but cannot be used for fills until "
-                "Hari's explicit Grand Opening PAPER yes. LIVE still blocked. Never "
-                "auto-switch. Silence is not approval. Addendum A numbers are stored "
-                "but unused until open. Next human step is Board Grand Opening."
+                "Board Addendum I 2026-08-27 is the two-opening rule. Grand Opening "
+                "PAPER happened (Hari explicit yes, 3 Sep 2026, word: Open). Practice "
+                "/ paper only. LIVE still blocked. Never auto-switch. Silence is not "
+                "approval. Next human step is paper operation. LIVE later only if "
+                "the Board says so."
             ),
             "two_openings": addendum_i.get("two_openings"),
         }

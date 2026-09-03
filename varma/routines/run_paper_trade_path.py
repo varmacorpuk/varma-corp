@@ -4,10 +4,9 @@ Usage:
     python -m varma.routines.run_paper_trade_path
 
 Chris Adeyemi · Trader proposes a legal allow-list paper buy. ControlEngine
-permit/deny is authoritative. The internal paper simulator would fill after
-Grand Opening PAPER. While PAPER execution is CLOSED the engine DENY
-(PAPER_EXECUTION_CLOSED) and nothing fills. LIVE stays off. FakeLLM is not
-called. Board-only via the API. GET /observability does not run this.
+permit/deny is authoritative. After Grand Opening PAPER the internal paper
+simulator may fill when in session and within limits. LIVE stays off.
+FakeLLM is not called. Board-only via the API. GET /observability does not run this.
 """
 
 from __future__ import annotations
@@ -37,7 +36,7 @@ def main() -> None:
     try:
         seed_if_empty(session)
         print("Trader paper-ticket proposal — first paper-trade PATH")
-        print("PAPER execution: CLOSED until Grand Opening")
+        print("PAPER execution: OPEN after Grand Opening PAPER (LIVE still blocked)")
         print("Daemon: False")
         print("AI called: False")
         print("Now Europe/London:", now_london().isoformat())

@@ -67,3 +67,11 @@ RISK_HEADERS = {"X-Varma-Employee": "risk"}
 TRADER_HEADERS = {"X-Varma-Employee": "trader"}
 QUANT_HEADERS = {"X-Varma-Employee": "quant-strategy"}
 TECH_HEADERS = {"X-Varma-Employee": "technology"}
+
+
+def close_paper(session) -> None:
+    """Re-apply the Addendum I CLOSED gate. Tests only. Production seed stays OPEN."""
+    from varma.controls.addendum_i import apply_paper_execution_closed_fixture
+
+    apply_paper_execution_closed_fixture(session)
+

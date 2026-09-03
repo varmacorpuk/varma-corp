@@ -87,13 +87,14 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
         elif row["id"] == "run-paper-trade-path":
             assert row["first_paper_trade_path_implemented"] is True
             assert row["internal_simulator"] is True
-            assert row["paper_fills"] is False
+            assert row["paper_fills"] is True
+            assert row["fills"] is True
             assert row["fills_while_closed"] is False
             assert row["ai_called"] is False
             assert row["proposer_slug"] == "trader"
         else:
             assert row["paper_fills"] is False
-        assert row["fills"] is False
+            assert row["fills"] is False
 
     assert empty["meeting_pack"]["brief_headline"] is None
     assert empty["nightly_filter"]["run"] is None
@@ -190,12 +191,12 @@ def test_board_runs_jobs_from_post_then_panel_refreshes(client):
 
     paper_path = client.post("/routines/run-paper-trade-path", headers=BOARD_HEADERS)
     assert paper_path.status_code == 200
-    _assert_job_safety(paper_path.json())
-    assert paper_path.json()["allowed"] is False
-    assert paper_path.json()["reason"] == "PAPER_EXECUTION_CLOSED"
-    assert paper_path.json()["filled"] is False
     assert paper_path.json()["ai_called"] is False
+    assert paper_path.json()["live_fills"] is False
     assert paper_path.json()["proposer"]["slug"] == "trader"
+    assert paper_path.json()["job_safety"]["loads_broker_ports"] is False
+    assert paper_path.json()["job_safety"]["live_fills"] is False
+    assert paper_path.json()["job_safety"]["changes_trading_mode"] is False
     _assert_execution_untouched(client)
 
     paper = client.post(

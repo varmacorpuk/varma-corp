@@ -23,23 +23,23 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 15. Same panel lists 07:30 meeting artefacts from the database (brief, CEO handoff, SAMPLE thesis, challenge review, Risk decision). Read-only. SAMPLE is not a live trade. Risk cannot approve LIVE.
 16. Board-only documented routine schedules in the same panel (06:30 weekday brief; nightly Europe/London filter). On-demand. No 24/7 daemon. No invented nightly clock hour.
 17. Same panel: Board-set numeric limits from **Board Addendum A 2026-08-27** (VALUES shown: simulated_capital 1000 GBP, max_position 200 GBP, max_daily_loss 50 GBP, max_orders_per_day 6, kill-switch floors 800 / -50 GBP). Not invented silent defaults. Employees cannot write limits. A missing key still DENIES execution.
-18. Same panel: Board-only control snapshot (trading_mode=LIVE_BLOCKED, Board Addendum I PAPER execution CLOSED, employees cannot write controls). Read-only except the Board-only kill switch.
-19. Same panel: Board-only paper-gate status — company CLOSED until Grand Opening. PAPER execution CLOSED. First paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator). trading_mode stays LIVE_BLOCKED. £1000 is the FUTURE paper starting book only. Allow-list E exists but cannot fill until Hari's explicit Grand Opening PAPER yes. Do not auto-switch LIVE. Paper duration remains an OPEN BOARD DECISION.
-20. Same panel: Board-only confirmation that BROKER_PAPER and LIVE execution ports remain UNLOADED. No broker fills. Constructing or using those ports is denied. Internal simulator DENY all fills while PAPER execution is CLOSED, even for allow-listed tickers.
+18. Same panel: Board-only control snapshot (trading_mode=LIVE_BLOCKED, Grand Opening PAPER OPEN for practice, employees cannot write controls). Read-only except the Board-only kill switch.
+19. Same panel: Board-only paper-gate status — Grand Opening PAPER done (Hari explicit yes, 3 Sep 2026). Practice / paper only. PAPER execution OPEN. First paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator). trading_mode stays LIVE_BLOCKED. £1000 is the paper starting book. LIVE still blocked. Never auto-switch. Paper duration remains an OPEN BOARD DECISION.
+20. Same panel: Board-only confirmation that BROKER_PAPER and LIVE execution ports remain UNLOADED. No broker fills. Constructing or using those ports is denied. Internal simulator may fill a legal allow-list practice order after Grand Opening PAPER.
 21. On-demand 07:30 Europe/London company meeting record: Board Member API or documented CLI writes a meeting artefact to the database from existing handoffs (MI brief, CEO pack, Challenge SAMPLE, Risk DENY). Shown read-only in Board observability. Not a trade. Not LIVE approval. Not a daemon. Employees cannot start LIVE from a meeting.
 22. Latest 07:30 meeting attendance list: the four existing employees only (MI, CEO, Challenge, Risk). Not a 12-employee roster. Read-only in Board observability.
-23. Board Member can run the existing on-demand jobs from the right-hand Board observability panel (POST, not GET /observability): morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter, company backup, Trader paper-ticket proposal. Employees are denied. Running a job does not load broker ports, change trading_mode, or fill paper/live orders while CLOSED. After a run the same panel refreshes from the database. CLI entry points still work.
-24. Board-usable kill switch (Board Member only): halt if paper equity <= 800 GBP OR London-day P&L <= -50 GBP, or when the Board Member triggers halt without an AI employee. Addendum A numbers are stored but unused until Grand Opening PAPER. On halt: cancel open PAPER orders only; never load LIVE; never flatten live (there is no live). Employees cannot reset it.
-25. Evaluation ledger tables exist (closed trades, P&L, win rate of profitable closes) even when fills are zero because PAPER execution is CLOSED.
-26. Board Addendum I 2026-08-27: the company is CLOSED until Grand Opening. Nothing is trading. Not paper, not live. Two openings both require Hari's explicit yes (silence is not approval). The first paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator) and is still gated CLOSED — no fills. No 07:30 diary invite to the Board Member; 07:30 may exist as an internal staff artefact and must not email or calendar-invite Hari. Do not flatten-as-if-there-were-positions.
+23. Board Member can run the existing on-demand jobs from the right-hand Board observability panel (POST, not GET /observability): morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter, company backup, Trader paper-ticket proposal. Employees are denied. Running a job does not load broker ports or change trading_mode. After Grand Opening PAPER the Trader path may fill in the internal simulator. LIVE stays off. After a run the same panel refreshes from the database. CLI entry points still work.
+24. Board-usable kill switch (Board Member only): halt if paper equity <= 800 GBP OR London-day P&L <= -50 GBP, or when the Board Member triggers halt without an AI employee. Addendum A numbers apply after Grand Opening PAPER. On halt: cancel open PAPER orders only; never load LIVE; never flatten live (there is no live). Employees cannot reset it.
+25. Evaluation ledger tables exist (closed trades, P&L, win rate of profitable closes). Zero fills is valid.
+26. Board Addendum I 2026-08-27 is the two-opening rule. Grand Opening PAPER happened (Hari explicit yes, 3 Sep 2026, word: Open). Practice / paper only. LIVE has not opened. The first paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator). No 07:30 diary invite to the Board Member; 07:30 may exist as an internal staff artefact and must not email or calendar-invite Hari. Do not flatten-as-if-there-were-positions.
 27. Board Addendum J 2026-08-27: company records are not on the Board Member's laptop and not in GitHub. GitHub is code only. System of record remains the database. Board-visible backup status (last successful backup time, last failure, included: paper ledger / evidence / organisational memory / control snapshots; excluded: secrets / live broker credentials which must not exist yet). Board-only job to run a backup now. Default schedule: daily Europe/London after US close / end of London evening. Encrypted at rest. Technology (Owen Blake · Technology) owns the job and cannot write trading_mode, allow-list, or open the firm. Employees including the CEO cannot download secrets. The backup job does not fill orders.
 28. Documents 03 and 08: each employee is a durable database record (identity, role knowledge, authority boundaries, memory pointers, skills, relationships), not an LLM prompt. An LLM call is an invocation of that person. Four memory stores: working context, employee persistent memory, shared organisational knowledge (governed promotion only), append-only evidence. Learning writes memory only, never controls. The next job for the same employee loads lessons from the database and changes behaviour. Challenge stays independent of Quant; Risk stays independent of Trader (originator “I believe this” is not loaded as their own belief). FakeLLM may simulate retrieval; the memory API is the database.
-29. Board Addendum K 2026-09-03 (Hari explicit yes): after London cash market shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. Concentrate on the US seven until US flatten. Desk still UK cash open through US cash close. Flatten still at US regular cash close. London close is not the flatten. While London cash is open those three remain on Addendum E (subject to CLOSED, limits, kill switch). Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. PAPER still CLOSED. Not Grand Opening. No fills. LIVE_BLOCKED. Employees cannot write this lock. PR #21 leftover draft: supersede after merge.
+29. Board Addendum K 2026-09-03 (Hari explicit yes): after London cash market shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. Concentrate on the US seven until US flatten. Desk still UK cash open through US cash close. Flatten still at US regular cash close. London close is not the flatten. While London cash is open those three remain on Addendum E (subject to paper OPEN/CLOSED, limits, kill switch). Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. LIVE_BLOCKED. Employees cannot write this lock. PR #21 leftover draft: leave open.
 
 ## System separation
 
 - GitHub (varmacorpuk/varma-corp): source code only. Never commit .env, DB volumes, memories, keys.
-- This box: DEVELOPMENT. Persistent org data in a database. Kernel startup reconciles Board-encoded seed (seven named employees, Addendum A numbers, Addendum E allow-list, Addendum I PAPER_EXECUTION_CLOSED) onto a stale SQLite copy. Does not start a 24/7 daemon.
+- This box: DEVELOPMENT. Persistent org data in a database. Kernel startup reconciles Board-encoded seed (seven named employees, Addendum A numbers, Addendum E allow-list, Addendum I two-opening rule with Grand Opening PAPER OPEN) onto a stale SQLite copy. Does not start a 24/7 daemon.
 - Board Member Mac/Windows: desktop client only. Local storage = cache/settings. Not the company ledger.
 - Production 24/7: backend is designed so it can later run off the Board Member PC. Not deployed now.
 
@@ -91,11 +91,11 @@ A later slice can attach the same skill to a Europe/London scheduler.
 
 ## Controls (not memory)
 
-- trading_mode: LIVE_BLOCKED (internal paper fill simulator is the paper ledger; PAPER execution is CLOSED until Grand Opening PAPER; do not load LIVE or BROKER_PAPER)
-- PAPER execution: CLOSED (Board Addendum I 2026-08-27). Employees including the CEO cannot write this flag or open the firm. Simulator DENY all fills, even for allow-listed tickers.
-- Execution allow-list: Board Addendum E 2026-08-27 PAPER membership (AAPL, MSFT, NVDA, AMZN, GOOGL, JPM, JNJ, SHEL.L, AZN.L, ULVR.L). Exists but cannot be used for fills until open. Unknown tickers deny. Gold denies. Employees including the CEO cannot write the list.
-- Numeric limits: Board Addendum A 2026-08-27 (Board-set, VALUES stored, unused until open)
-  - simulated_capital = 1000 GBP (FUTURE paper starting book only)
+- trading_mode: LIVE_BLOCKED (internal paper fill simulator is the paper ledger; PAPER execution is OPEN after Grand Opening PAPER; do not load LIVE or BROKER_PAPER)
+- PAPER execution: OPEN (Board Grand Opening PAPER 2026-09-03). Employees including the CEO cannot write this flag or open/close the firm. LIVE still blocked.
+- Execution allow-list: Board Addendum E 2026-08-27 PAPER membership (AAPL, MSFT, NVDA, AMZN, GOOGL, JPM, JNJ, SHEL.L, AZN.L, ULVR.L). After Grand Opening PAPER these names may fill in the simulator. Unknown tickers deny. Gold denies. Employees including the CEO cannot write the list.
+- Numeric limits: Board Addendum A 2026-08-27 (Board-set, VALUES stored, in use after paper open)
+  - simulated_capital = 1000 GBP (paper starting book)
   - max_position = 200 GBP (one paper trade)
   - max_daily_loss = 50 GBP
   - max_orders_per_day = 6
@@ -103,12 +103,12 @@ A later slice can attach the same skill to a Europe/London scheduler.
 - Currency GBP. Timezone Europe/London.
 - LIVE adapter: not loaded
 - BROKER_PAPER and LIVE execution ports: UNLOADED (no broker fills)
-- Internal PAPER FILL SIMULATOR exists but DENY all fills while CLOSED (Board Addendum I). First paper-trade PATH exists (Trader proposal → ControlEngine → simulator). PAPER still CLOSED. Next human step is Board Grand Opening.
-- Paper session (Board Addendum C 2026-08-27): stored. Flatten-as-if-there-were-positions is denied while closed (no-op; there are no positions).
+- Internal PAPER FILL SIMULATOR may fill a legal allow-list practice order after Grand Opening PAPER. First paper-trade PATH exists (Trader proposal → ControlEngine → simulator). LIVE stays blocked.
+- Paper session (Board Addendum C 2026-08-27): UK cash open through US regular cash close. Flatten ALL paper before US close. Do not flatten-as-if-there-were-positions.
 - Employees cannot write control tables, allow-list, limits, trading_mode, PAPER execution, or approve LIVE. CEO may recommend allow-list adds; cannot write them; cannot open the firm.
 - Board Member can trigger the kill switch without an AI employee. On halt: cancel open PAPER orders only; never load LIVE; never flatten live. Employees cannot reset it.
 
-Gate: Grand Opening PAPER (Hari explicit yes) then paper on the £1000 book then EVALUATION then recommendation then Board review then explicit Grand Opening LIVE yes. Silence is not approval. Never auto-switch. This slice does not implement either opening.
+Gate: Grand Opening PAPER happened (Hari explicit yes, 3 Sep 2026). Practice on the £1000 book, then EVALUATION then recommendation then Board review then explicit Grand Opening LIVE yes. Silence is not approval. Never auto-switch. LIVE opening is not implemented.
 
 ## Internal paper fill simulator (Document 12)
 
@@ -119,7 +119,7 @@ Not a broker. Assumptions (labelled INTERNAL, not a vendor contract):
 - Fake delayed last prices are treated as GBP notional (no FX vendor in this slice).
 - Currency GBP. Timezone Europe/London.
 
-Evaluation ledger tables (`closed_paper_trades`, fills, P&L, win rate) exist even when fills are zero because PAPER execution is CLOSED.
+Evaluation ledger tables (`closed_paper_trades`, fills, P&L, win rate) exist. Zero fills is valid.
 
 ## TEMPORARY defaults (not Board-permanent)
 
@@ -184,7 +184,7 @@ On demand, not a 24/7 daemon. Board Member right-hand panel, API, or documented 
 - Encrypted artefact stays in the database (`backup_runs`). Same StoragePort. Not a second store. Not in GitHub. Not on the Board Member laptop.
 - Included: paper ledger, evidence, organisational memory, control snapshots.
 - Excluded: secrets, live broker credentials (which must not exist yet). Employees including the CEO cannot download secrets.
-- Does not fill orders. PAPER execution stays CLOSED. LIVE stays blocked.
+- Does not fill orders. PAPER execution stays a Board control. LIVE stays blocked.
 
 ## Board observability (this slice)
 
@@ -196,13 +196,13 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 - 07:30 meeting artefact list (read-only): latest brief, CEO handoff, SAMPLE thesis, challenge review, Risk decision.
 - Board-only documented routine schedules: 06:30 weekday brief, nightly Europe/London filter, and daily backup after US close / end of London evening (on-demand, no daemon, no invented backup clock hour).
 - Board-only missing numeric-limit keys (empty after Addendum A) and Board-set VALUES (simulated_capital 1000 GBP, max_position 200 GBP, max_daily_loss 50 GBP, max_orders_per_day 6, kill-switch floors). Not invented silent defaults.
-- Board-only control snapshot: `trading_mode=LIVE_BLOCKED`, PAPER execution CLOSED (Board Addendum I), employees cannot write controls. Read-only except Board-only kill switch POST.
-- Board-only paper-gate status: company CLOSED until Grand Opening. PAPER execution CLOSED. First paper-trade PATH exists. £1000 is FUTURE paper starting book only. Allow-list E cannot fill until Hari's explicit yes. Silence is not approval.
-- Board-only execution-port status: BROKER_PAPER and LIVE remain UNLOADED. No broker fills. Internal simulator DENY all fills while PAPER execution is CLOSED.
-- Board-only kill switch status and Board Member halt/reset. On halt: cancel open PAPER orders only. Employees cannot reset it. Addendum A numbers stored but unused until open.
-- Board-only evaluation ledger (closed trades, P&L, win rate) — zero fills is valid while PAPER execution is CLOSED.
+- Board-only control snapshot: `trading_mode=LIVE_BLOCKED`, PAPER execution OPEN after Grand Opening PAPER, employees cannot write controls. Read-only except Board-only kill switch POST.
+- Board-only paper-gate status: Grand Opening PAPER done. Practice / paper only. PAPER execution OPEN. First paper-trade PATH exists. £1000 paper starting book. LIVE still blocked. Silence is not approval.
+- Board-only execution-port status: BROKER_PAPER and LIVE remain UNLOADED. No broker fills. Internal simulator may fill a legal allow-list practice order.
+- Board-only kill switch status and Board Member halt/reset. On halt: cancel open PAPER orders only. Employees cannot reset it. Addendum A numbers apply after paper open.
+- Board-only evaluation ledger (closed trades, P&L, win rate) — zero fills is valid.
 - Latest on-demand 07:30 company meeting record (read-only): internal staff artefact; no Board Member diary/calendar invite; not a trade, not LIVE approval, employees cannot start LIVE from it. Attendance is the four existing employees only — not a 12-employee roster.
-- Board-only on-demand job runs from this same panel: morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter, company backup, Trader paper-ticket proposal. POST `/routines/run-*`, not GET `/observability`. Employees are denied. Running a job does not load BROKER_PAPER or LIVE, does not change `trading_mode`, and does not fill paper/live orders while CLOSED. After a run the panel refreshes from the database. CLI entry points still work.
+- Board-only on-demand job runs from this same panel: morning intelligence brief, SAMPLE challenge, Risk deny-path, 07:30 meeting record, nightly memory filter, company backup, Trader paper-ticket proposal. POST `/routines/run-*`, not GET `/observability`. Employees are denied. Running a job does not load BROKER_PAPER or LIVE and does not change `trading_mode`. After Grand Opening PAPER the Trader path may fill in the internal simulator. After a run the panel refreshes from the database. CLI entry points still work.
 - Board-only backup status (Board Addendum J): last successful backup time, last failure, included (paper ledger, evidence, organisational memory, control snapshots), excluded (secrets, live broker credentials which must not exist yet). Encrypted at rest in the database. Not in GitHub. Not on the Board Member laptop. Technology (Owen Blake · Technology) owns the job and cannot write trading_mode, allow-list, or open the firm. Employees including the CEO cannot download secrets.
 - Board-only employee status bubbles. Click an employee (floor or bubble name) to open that person in the same right-hand panel.
 - Visible without clicking an employee. A Board observability entry returns to this view.
@@ -212,7 +212,7 @@ The right-hand panel is a Board Member projection of the database, not a ledger 
 
 ## Next slice
 
-Still closed. The first paper-trade PATH exists; PAPER execution is still CLOSED. Grand Opening PAPER is the next human step (Hari). BROKER_PAPER and LIVE remain UNLOADED. No office visual redesign. No Mac installers. Approve LIVE remains impossible until Hari's explicit Grand Opening LIVE yes after paper evidence.
+Practice / paper is open. Grand Opening PAPER happened (Hari explicit yes, 3 Sep 2026). LIVE stays blocked. BROKER_PAPER and LIVE remain UNLOADED. £1,000 fake money on the internal simulator. No office visual redesign. No Mac installers. Approve LIVE remains impossible until Hari's explicit Grand Opening LIVE yes after paper evidence.
 
 ## Specs
 

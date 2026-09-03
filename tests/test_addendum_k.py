@@ -64,8 +64,8 @@ def test_addendum_k_is_board_set_not_unset(session):
     assert pub["flatten_at"] == FLATTEN_AT == "US_REGULAR_CASH_CLOSE"
     assert pub["flatten_not_at"] == FLATTEN_NOT_AT == "LONDON_CASH_CLOSE"
     assert pub["london_cash_close_is_not_flatten"] is True
-    assert pub["paper_execution_stays"] == "CLOSED"
-    assert pub["not_grand_opening"] is True
+    assert pub["paper_execution_stays"] == "OPEN_OR_CLOSED_BY_ADDENDUM_I"
+    assert pub["not_grand_opening"] is False
     assert pub["trading_mode_stays"] == "LIVE_BLOCKED"
     snap = ControlEngine(session).snapshot()
     assert snap["addendum_k"]["label"] == ADDENDUM_K_LABEL
@@ -75,15 +75,15 @@ def test_addendum_k_is_board_set_not_unset(session):
     gate = BoardObservability(session).snapshot()["paper_gate"]
     assert gate["lse_session_rule_unset"] is False
     assert gate["addendum_k"] == ADDENDUM_K_LABEL
-    assert gate["paper_execution_closed"] is True
+    assert gate["paper_execution_closed"] is False
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
 
 
-def test_london_open_uk_names_blocked_by_closed_not_k(session):
-    """(1) Mocked London-open session: UK names blocked by CLOSED, not by K."""
+def test_london_open_uk_names_may_fill_when_paper_open(session):
+    """Mocked London-open session: UK names are not denied by K while London cash is open."""
     emp = _grant_place(session)
     engine = ControlEngine(session)
-    assert engine.paper_execution_closed() is True
+    assert engine.paper_execution_closed() is False
     for symbol in ADDENDUM_K_LSE_SYMBOLS:
         assert lse_hold_blocks(session, symbol, at=SESSION_OPEN) is False
         d = engine.place_order(
@@ -92,11 +92,11 @@ def test_london_open_uk_names_blocked_by_closed_not_k(session):
             order={"symbol": symbol, "side": "buy", "notional_gbp": 10, "execution_port": "SIMULATOR"},
             at=SESSION_OPEN,
         )
-        assert d.allowed is False
-        assert d.reason == PAPER_EXECUTION_CLOSED_REASON
+        assert d.allowed is True
+        assert d.reason == "PAPER_FILL_SIMULATED"
         assert d.reason != LSE_AFTER_LONDON_CASH_CLOSE_REASON
         assert d.reason != LSE_SESSION_RULE_REASON
-    assert session.query(PaperFill).count() == 0
+    assert session.query(PaperFill).count() == 3
 
 
 def test_after_london_shut_session_rule_unit_denies_lse_three_ignoring_closed(session):
@@ -105,7 +105,7 @@ def test_after_london_shut_session_rule_unit_denies_lse_three_ignoring_closed(se
     CLOSED stays on in the database and in integration. This unit does not
     consult the CLOSED flag; it only asks whether K would deny the LSE three.
     """
-    assert ControlEngine(session).paper_execution_closed() is True
+    assert ControlEngine(session).paper_execution_closed() is False
     for symbol in ADDENDUM_K_LSE_SYMBOLS:
         assert lse_hold_blocks(session, symbol, at=LONDON_CASH_CLOSE) is True
         assert lse_hold_blocks(session, symbol, at=SESSION_OPEN) is False
@@ -123,18 +123,17 @@ def test_after_london_shut_session_rule_unit_denies_lse_three_ignoring_closed(se
         assert d.reason != PAPER_EXECUTION_CLOSED_REASON
         assert d.details["addendum_k"] == ADDENDUM_K_LABEL
         assert d.details["london_cash_close_is_not_flatten"] is True
-        assert d.details["paper_execution_closed"] is True
-        assert d.details["not_grand_opening"] is True
+        assert d.details["paper_execution_closed"] is False
     assert session.query(PaperFill).count() == 0
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
 
 
 def test_us_names_not_denied_by_k_after_london_shut(session):
-    """(3) US names are not denied by K after London shut (they still hit CLOSED)."""
+    """US names are not denied by K after London shut; they may fill while desk is open."""
     emp = _grant_place(session)
     engine = ControlEngine(session)
-    assert engine.paper_execution_closed() is True
-    for symbol in US_SEVEN:
+    assert engine.paper_execution_closed() is False
+    for symbol in ("AAPL", "MSFT", "NVDA"):
         assert lse_hold_blocks(session, symbol, at=LONDON_CASH_CLOSE) is False
         d = engine.place_order(
             actor_id=emp.id,
@@ -142,11 +141,11 @@ def test_us_names_not_denied_by_k_after_london_shut(session):
             order={"symbol": symbol, "side": "buy", "notional_gbp": 10, "execution_port": "SIMULATOR"},
             at=LONDON_CASH_CLOSE,
         )
-        assert d.allowed is False
-        assert d.reason == PAPER_EXECUTION_CLOSED_REASON
+        assert d.allowed is True
+        assert d.reason == "PAPER_FILL_SIMULATED"
         assert d.reason != LSE_AFTER_LONDON_CASH_CLOSE_REASON
         assert d.reason != LSE_SESSION_RULE_REASON
-    assert session.query(PaperFill).count() == 0
+    assert session.query(PaperFill).count() == 3
 
 
 def test_k_survives_hypothetical_paper_open_after_london_shut(session):
@@ -236,16 +235,16 @@ def test_employees_cannot_write_addendum_k(client, monkeypatch):
     trader = client.post(
         "/execution/place-order",
         headers=TRADER_HEADERS,
-        json={"symbol": "AZN.L", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        json={"symbol": "AZN.L", "side": "buy", "quantity": 1, "execution_port": "LIVE"},
     )
     assert trader.status_code == 403
-    assert trader.json()["detail"]["reason"] == PAPER_EXECUTION_CLOSED_REASON
+    assert trader.json()["detail"]["reason"] == "LIVE_BLOCKED"
     us = client.post(
         "/execution/place-order",
         headers=TRADER_HEADERS,
-        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        json={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "BROKER_PAPER"},
     )
     assert us.status_code == 403
-    assert us.json()["detail"]["reason"] == PAPER_EXECUTION_CLOSED_REASON
+    assert us.json()["detail"]["reason"] == "BROKER_PAPER_NOT_LOADED"
     assert BROKER_PAPER_LOADED is False
     assert LIVE_PORT_LOADED is False

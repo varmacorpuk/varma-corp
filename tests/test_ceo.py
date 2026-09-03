@@ -103,8 +103,7 @@ def test_ceo_cannot_place_order(session):
         order={"symbol": "AAPL", "execution_port": "SIMULATOR"},
     )
     assert d.allowed is False
-    assert d.reason == "PAPER_EXECUTION_CLOSED"
-    assert d.details.get("alias") == "FIRM_CLOSED"
+    assert d.reason == "NO_PERMISSION"
 
 
 def test_chat_to_ceo_hits_same_runtime(session):

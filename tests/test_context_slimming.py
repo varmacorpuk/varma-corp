@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from varma.controls.addendum_f import ALL_STAFF_SLUGS
 from varma.controls.engine import ControlEngine
-from varma.db.models import Employee, PaperFill
+from varma.db.models import Employee
 from varma.db.seed import MI_SLUG
 from varma.employees.context import DYNAMIC_KEYS, PERSISTENT_KEYS, STATIC_KEYS, classify
 from varma.employees.runtime import EmployeeRuntime
@@ -52,8 +52,8 @@ def test_brief_context_drops_verbose_controls_and_keeps_compact_hint(session):
 
     # Compact, correct, informational hint is present.
     hint = ctx["controls_hint"]
-    assert hint["can_place_orders"] is False
-    assert hint["paper_trading"] == "CLOSED"
+    assert hint["can_place_orders"] is True
+    assert hint["paper_trading"] == "OPEN"
     assert hint["live_trading"] == "BLOCKED"
     assert hint["trading_mode"] == "LIVE_BLOCKED"
     assert hint["broker_paper_loaded"] is False
@@ -103,20 +103,19 @@ def test_challenge_context_supplies_required_thesis(session):
     assert classify(ctx)["other"] == []
 
 
-def test_controls_remain_deterministic_live_off_paper_closed(session):
+def test_controls_remain_deterministic_live_off_paper_open(session):
     trader = session.query(Employee).filter_by(slug="trader").one()
     d = ExecutionPort(session).place_order(
         actor_id=trader.id,
         actor_type="employee",
-        order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "LIVE"},
     )
     assert d.allowed is False
-    assert d.reason == "PAPER_EXECUTION_CLOSED"
+    assert d.reason == "LIVE_BLOCKED"
     snap = ControlEngine(session).snapshot()
     assert snap["trading_mode"] == "LIVE_BLOCKED"
     assert snap["live_adapter_loaded"] is False
-    assert ControlEngine(session).paper_execution_closed() is True
-    assert session.query(PaperFill).count() == 0
+    assert ControlEngine(session).paper_execution_closed() is False
 
 
 def test_identities_slugs_and_task_strings_unchanged(session):

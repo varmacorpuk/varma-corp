@@ -15,7 +15,7 @@ Authoritative specifications are **Documents 00–18**, which live **outside thi
 | --- | --- |
 | `varma/` | Python package: the company kernel and all domain logic |
 | `desktop/` | Static 2D "virtual office" UI (Electron/browser). Projection only, not source of truth |
-| `tests/` | Pytest suite: **188** passing (measured 2026-09-03; first paper-trade PATH + Addendum K, PAPER still CLOSED). Do not invent a percent-complete. |
+| `tests/` | Pytest suite: Grand Opening PAPER on #30 main (practice OPEN, LIVE blocked). Do not invent a percent-complete. |
 | `scripts/` | Dev helper scripts (`dev.sh`) |
 | `docs/` | `BUILD_STATE.md` (read first — current handover), this map, spec index, glossary, `knowledge/index.json` (navigation only) |
 | `data/` | TEMPORARY dev SQLite (gitignored). Not a system of record |
@@ -36,7 +36,7 @@ desktop/ (UI projection)  ──HTTP──>  varma/kernel/app.py (FastAPI)
 The database is the source of truth. The office UI is a projection. There is no scheduler/daemon;
 routines are on-demand (Board-only POST endpoints or CLI). Runtime AI is `FakeLLM` (deterministic,
 no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; trading_mode is
-`LIVE_BLOCKED`; PAPER execution is CLOSED.
+`LIVE_BLOCKED`; PAPER execution is OPEN for practice after Grand Opening PAPER.
 
 ## Components (location · purpose · key deps · key dependants)
 
@@ -79,13 +79,13 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 
 ### Trading / paper-trading components
 - `varma/paper/simulator.py` — internal paper fill simulator (not a broker). Fill only after
-  ControlEngine allows. DENY while PAPER execution is CLOSED.
+  ControlEngine allows. After Grand Opening PAPER a legal allow-list practice order may fill.
 - `varma/paper/ledger.py` — paper account/positions/P&L, evaluation snapshot.
-- `varma/paper/flatten.py` — flatten-before-US-close (internal simulator; no-op while CLOSED).
+- `varma/paper/flatten.py` — flatten-before-US-close (internal simulator).
 - `varma/skills/propose_paper_ticket.py` — Trader (Chris Adeyemi) paper-ticket proposal.
   Deterministic. No AI. ControlEngine is authoritative.
 - `varma/routines/run_paper_trade_path.py` — Board-only on-demand job that invokes the Trader
-  proposal. No daemon. No fills while CLOSED.
+  proposal. No daemon. After Grand Opening PAPER a legal ticket may fill.
 - `varma/ports/execution.py` — ExecutionPort; BROKER_PAPER + LIVE remain UNLOADED.
 
 ### Risk / controls / governance
@@ -94,7 +94,7 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
   AI never enforces controls.
 - `varma/controls/addendum_a.py` (numeric limits), `addendum_c.py` (paper session/flatten),
   `addendum_e.py` (PAPER allow-list), `addendum_f.py` (named staff/slugs), `addendum_i.py`
-  (CLOSED gate), `addendum_j.py` (backup), `addendum_k.py` (LSE after London cash close),
+  (two-opening rule + Grand Opening PAPER Board write), `addendum_j.py` (backup), `addendum_k.py` (LSE after London cash close),
   `lse_session.py` (Addendum K time window + UNSET fail-closed fallback), `risk.py`
   (RiskPolicy), `kill_switch.py` (Board-only halt/reset).
 
@@ -138,4 +138,4 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - Memory/data: `varma/memory/`, `data/` (dev SQLite).
 - Tests: `tests/` (one file per addendum/feature).
 - Specs: Documents 00–18 (outside repo); pointers in `docs/SPEC_INDEX.md`.
-- Handover: `docs/BUILD_STATE.md` (read first; current `main` after #24–#26 runtime landing).
+- Handover: `docs/BUILD_STATE.md` (read first; Grand Opening PAPER done; LIVE still blocked).

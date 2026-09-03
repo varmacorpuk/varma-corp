@@ -321,19 +321,19 @@
         <button type="button" class="kill-reset" data-kill-action="reset">Reset kill switch</button>
       </div>
       <p class="meta">Employees cannot reset the kill switch.</p>
-      <h3>Board Addendum I 2026-08-27 (CLOSED until Grand Opening)</h3>
-      <p class="meta">The company is CLOSED. Nothing is trading. Not paper, not live. PAPER execution is CLOSED. The first paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator). Allow-list E exists but cannot be used for fills until Hari's explicit Grand Opening PAPER yes. £1000 is the FUTURE paper starting book only. Addendum A numbers are stored but unused until open. LIVE still blocked. Never auto-switch. Silence is not approval. Next human step is Board Grand Opening. No fills now.</p>
+      <h3>Board Addendum I 2026-08-27 (two-opening rule)</h3>
+      <p class="meta">Addendum I still exists as the two-opening rule. Grand Opening PAPER happened (Hari explicit yes, 3 Sep 2026, word: Open). Practice / paper only. The first paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator). PAPER execution: ${escapeHtml(paperGate.paper_execution || (paperGate.paper_execution_closed === false ? "OPEN" : "CLOSED"))}. £1000 is the paper starting book. Addendum A limits apply. LIVE still blocked. Never auto-switch. Silence is not approval. Employees cannot open or close the firm. Deny reason if the Board closes paper again: PAPER_EXECUTION_CLOSED. Next human step is paper operation. LIVE later only if the Board says so.</p>
       <h3>Board Addendum K 2026-09-03 (LSE after London cash close)</h3>
-      <p class="meta">${escapeHtml(addendumK.label || "Board Addendum K 2026-09-03")}. Hari explicit yes. After London cash shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. Concentrate on the US seven until US flatten. Desk still UK cash open through US cash close. Flatten still at US regular cash close. London close is not the flatten. Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. PAPER still CLOSED. Not Grand Opening. No fills. LIVE_BLOCKED.</p>
+      <p class="meta">${escapeHtml(addendumK.label || "Board Addendum K 2026-09-03")}. Hari explicit yes. After London cash shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. Concentrate on the US seven until US flatten. Desk still UK cash open through US cash close. Flatten still at US regular cash close. London close is not the flatten. Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. LIVE_BLOCKED. Employees cannot write this lock.</p>
       <h3>Board Addendum J 2026-08-27 (company backup)</h3>
       <p class="meta">Company records are not on the Board Member laptop and not in GitHub. GitHub is code only. System of record: ${escapeHtml(backup.system_of_record || "database")}. Encrypted at rest: ${backup.encrypted_at_rest !== false}. Owner: ${escapeHtml(backup.owner_display_name || addendumJ.owner_display_name || "Owen Blake · Technology")}. Owen cannot write trading_mode, allow-list, or open the firm. Schedule: ${escapeHtml(backup.schedule || "daily after US close / end of London evening")} · daemon: ${backup.daemon === true}.</p>
       <p class="meta">Included: paper ledger, evidence, organisational memory, control snapshots. Excluded: secrets, live broker credentials (must not exist yet). Employees including the CEO cannot download secrets. Last successful backup: ${escapeHtml(backup.last_successful_backup_at || "none")}. Last failure: ${escapeHtml(backup.last_failure_at || "none")}${backup.last_failure_reason ? " · " + escapeHtml(backup.last_failure_reason) : ""}.</p>
       <h3>Paper gate</h3>
-      <p class="meta">PAPER: ${escapeHtml(paperGate.paper_status || "not started")} · trading_mode: ${escapeHtml(paperGate.trading_mode || data.trading_mode || "")} · execution: ${paperGate.execution === true} · paper_execution_closed: ${paperGate.paper_execution_closed !== false} · internal simulator: ${paperGate.internal_simulator === true}</p>
+      <p class="meta">PAPER: ${escapeHtml(paperGate.paper_status || "not started")} · trading_mode: ${escapeHtml(paperGate.trading_mode || data.trading_mode || "")} · execution: ${paperGate.execution === true} · paper_execution_closed: ${paperGate.paper_execution_closed === true} · internal simulator: ${paperGate.internal_simulator === true}</p>
       <p class="meta">EVALUATION: ${escapeHtml(paperGate.evaluation_status || "not")} · LIVE-trading recommendation: ${escapeHtml(paperGate.live_trading_recommendation || "not")} · Board review: ${escapeHtml(paperGate.board_review || "not")} · explicit Board approval: ${escapeHtml(paperGate.explicit_board_approval || "not")}</p>
       <p class="meta">Success: ${escapeHtml(paperGate.successful_trade_definition || evaluation.successful_trade_definition || "CLOSED paper trade with profit &gt; 0")}. Trigger: win rate &gt; 50% AND book profitable. Auto-switch LIVE: ${paperGate.evaluation_auto_switch_live === true}. Paper duration remains an OPEN BOARD DECISION. Silence is not approval.</p>
       <h3>Paper ledger (internal simulator)</h3>
-      <p class="meta">Not a broker. BROKER_PAPER and LIVE remain UNLOADED. PAPER allow-list is Board Addendum E (cannot fill until open). Simulated capital: ${escapeHtml(String(paperLedger.simulated_capital_gbp ?? "1000"))} GBP (FUTURE paper starting book only) · cash: ${escapeHtml(String(paperLedger.cash_gbp ?? ""))} · equity: ${escapeHtml(String(paperLedger.equity_gbp ?? ""))} · fills: ${escapeHtml(String(paperLedger.fills ?? 0))}</p>
+      <p class="meta">Not a broker. BROKER_PAPER and LIVE remain UNLOADED. PAPER allow-list is Board Addendum E. Simulated capital: ${escapeHtml(String(paperLedger.simulated_capital_gbp ?? "1000"))} GBP (paper starting book) · cash: ${escapeHtml(String(paperLedger.cash_gbp ?? ""))} · equity: ${escapeHtml(String(paperLedger.equity_gbp ?? ""))} · fills: ${escapeHtml(String(paperLedger.fills ?? 0))}</p>
       <p class="meta">Assumptions: spread ${escapeHtml(String(assumptions.spread_bps ?? 10))} bps · slippage ${escapeHtml(String(assumptions.slippage_bps ?? 5))} bps · commission ${escapeHtml(String(assumptions.commission_bps ?? 5))} bps. Fake delayed last treated as GBP (INTERNAL ASSUMPTION, no FX vendor).</p>
       <h3>Evaluation ledger</h3>
       <p class="meta">Closed trades: ${escapeHtml(String(evaluation.closed_trades ?? 0))} · profitable closes: ${escapeHtml(String(evaluation.profitable_closes ?? 0))} · win rate: ${escapeHtml(String(evaluation.win_rate ?? 0))} · book P&amp;L: ${escapeHtml(String(evaluation.book_pnl_gbp ?? 0))} GBP · trigger met: ${evaluation.evaluation_trigger_met === true} · auto-switch LIVE: ${evaluation.evaluation_auto_switch_live === true}</p>
@@ -545,10 +545,14 @@
         await showBoardObservability();
         return;
       }
+      const body = await r.json().catch(() => ({}));
       lastJobNote =
         path.indexOf("paper-trade-path") !== -1
           ? label +
-            " finished. Chris Adeyemi proposed a paper ticket. ControlEngine DENY PAPER_EXECUTION_CLOSED. No fill. LIVE still off. Panel refreshed from the database."
+            " finished. Chris Adeyemi proposed a paper ticket. ControlEngine " +
+            (body.allowed
+              ? "ALLOW " + (body.reason || "PAPER_FILL_SIMULATED") + ". Simulator fill on the £1000 paper book. LIVE still off. Panel refreshed from the database."
+              : "DENY " + (body.reason || "PAPER_EXECUTION_CLOSED") + ". No live fill. LIVE still off. Panel refreshed from the database.")
           : path.indexOf("flatten") !== -1
           ? label +
             " finished. Internal simulator flatten only. Panel refreshed from the database. trading_mode unchanged. BROKER_PAPER and LIVE remain UNLOADED. No broker fills."

@@ -38,7 +38,7 @@ Board Member UI  (office canvas + RIGHT-HAND PANEL + approvals)
         |
 Company Kernel
    Identity, Employees (person · department: Asha Patel · Research, Jordan Hale · CEO, Sam Okeke · Challenge, Elena Voss · Risk, Chris Adeyemi · Trader, Nina Kapoor · Quant, Owen Blake · Technology)
-   Board Addendum E PAPER allow_list (cannot fill), Board Addendum I PAPER execution CLOSED, Board Addendum K LSE three denied after London cash close only (Addendum C flatten unchanged at US regular cash close)
+   Board Addendum E PAPER allow_list, Board Addendum I two-opening rule (Grand Opening PAPER done), Board Addendum K LSE three denied after London cash close only (Addendum C flatten unchanged at US regular cash close)
    Skills, Routines (on-demand via Board panel POST / CLI; no 24/7 daemon)
    Memory (employee / organisation / evidence)
    Nightly Europe/London working-context filter (archive working; evidence append-only; no control writes)
@@ -53,7 +53,7 @@ Company Kernel
    Board Addendum A 2026-08-27 numeric limits (Board-set VALUES shown; missing ⇒ deny)
    Control snapshot (trading_mode=LIVE_BLOCKED, empty allow-list, employees cannot write)
    Kill switch (Board Member POST halt/reset; employees cannot reset; cancel open PAPER only)
-   Paper-gate status (CLOSED until Grand Opening; PAPER execution CLOSED; £1000 FUTURE starting book only; no fills)
+   Paper-gate status (Grand Opening PAPER done; practice OPEN; LIVE blocked; £1000 paper starting book)
    Evaluation ledger (closed trades, P&L, win rate; zero fills valid; no auto-LIVE)
    Execution-port status (BROKER_PAPER and LIVE UNLOADED; internal simulator is the paper ledger)
    Board Addendum J backup status (encrypted at rest in the database; not git; not the laptop; Technology owns the job)

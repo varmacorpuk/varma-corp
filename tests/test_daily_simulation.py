@@ -10,7 +10,7 @@ from __future__ import annotations
 from varma.backup.job import run_company_backup
 from varma.controls.engine import ControlEngine
 from varma.db.engine import get_session_factory
-from varma.db.models import AICallLog, Employee, PaperFill
+from varma.db.models import AICallLog, Employee
 from varma.db.seed import MI_SLUG
 from varma.employees.runtime import EmployeeRuntime
 from varma.observability.ai_usage import ai_usage_summary
@@ -54,17 +54,16 @@ def test_ai_only_for_reasoning_deterministic_ops_make_no_ai_calls(session):
     run_nightly_filter(session)
     run_company_backup(session, started_by="board-member")
     path = run_paper_trade_path(session, started_by="board-member")
-    assert path["allowed"] is False
-    assert path["reason"] == "PAPER_EXECUTION_CLOSED"
     assert path["ai_called"] is False
+    assert path["live_fills"] is False
     trader = session.query(Employee).filter_by(slug="trader").one()
     deny = ExecutionPort(session).place_order(
         actor_id=trader.id,
         actor_type="employee",
-        order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "SIMULATOR"},
+        order={"symbol": "AAPL", "side": "buy", "quantity": 1, "execution_port": "LIVE"},
     )
     assert deny.allowed is False
-    assert deny.reason == "PAPER_EXECUTION_CLOSED"
+    assert deny.reason == "LIVE_BLOCKED"
     assert _ai_count() == before  # meeting/filter/backup/paper-path/deny used ordinary software only
 
     # Measurement: every AI call is a reasoning task; no real model was used.
@@ -77,5 +76,4 @@ def test_ai_only_for_reasoning_deterministic_ops_make_no_ai_calls(session):
     assert snap["trading_mode"] == "LIVE_BLOCKED"
     assert snap["live_adapter_loaded"] is False
     assert snap["broker_paper_loaded"] is False
-    assert ControlEngine(session).paper_execution_closed() is True
-    assert session.query(PaperFill).count() == 0
+    assert ControlEngine(session).paper_execution_closed() is False

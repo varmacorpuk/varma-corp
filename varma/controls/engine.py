@@ -4,14 +4,15 @@ LIVE adapter is not loaded unless trading_mode is LIVE and a Board approval exis
 This slice never loads a live adapter. Unknown tickers and gold deny.
 Numeric limits are Board Addendum A 2026-08-27 (Board-set; unused until open).
 PAPER allow-list is Board Addendum E 2026-08-27. Employees cannot write control tables.
-Board Addendum I 2026-08-27: PAPER execution is CLOSED until Grand Opening.
+Board Addendum I 2026-08-27: two-opening rule. Grand Opening PAPER happened
+(Hari explicit yes, 3 Sep 2026). Practice / paper only. LIVE still blocked.
 Board Addendum K 2026-09-03: after London cash shuts, deny SHEL.L / AZN.L /
 ULVR.L only. Flatten remains US regular cash close.
 
-trading_mode stays LIVE_BLOCKED. Simulator DENY all fills while closed.
-Do not load LIVE or BROKER_PAPER. The first paper-trade PATH exists
-(Trader proposal → ControlEngine → internal simulator). PAPER execution
-remains CLOSED until Grand Opening. No fills.
+trading_mode stays LIVE_BLOCKED. Do not load LIVE or BROKER_PAPER.
+The first paper-trade PATH exists (Trader proposal → ControlEngine →
+internal simulator). Opening is a Board-only write_control. Employees
+cannot open or close the firm.
 """
 
 from __future__ import annotations
@@ -40,10 +41,19 @@ from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
     FIRM_CLOSED_REASON,
     FIRM_OPEN_WRITE_FIELDS,
-    GRAND_OPENING_NOT_IMPLEMENTED_REASON,
+    GRAND_OPENING_LIVE_NOT_IMPLEMENTED_REASON,
+    GRAND_OPENING_PAPER_LABEL,
+    GRAND_OPENING_PAPER_REASON,
+    LIVE_OPEN_WRITE_FIELDS,
+    PAPER_EXECUTION_CLOSED_BY_BOARD_REASON,
     PAPER_EXECUTION_CLOSED_REASON,
+    PAPER_OPEN_WRITE_FIELDS,
+    SIMULATED_CAPITAL_STATUS_KEY,
     addendum_i_public,
+    apply_grand_opening_paper,
+    force_paper_execution_closed,
     paper_execution_is_closed,
+    paper_open_intent,
 )
 from varma.controls.addendum_j import (
     BACKUP_WRITE_FIELDS,
@@ -210,12 +220,12 @@ class ControlEngine:
     ) -> Decision:
         """Employees propose. LIVE, gold, unknown tickers, and PAPER-closed deny.
 
-        Board Addendum I: PAPER execution is CLOSED until Grand Opening.
-        Simulator DENY all fills while closed, even for allow-listed tickers.
-        Deny reason is PAPER_EXECUTION_CLOSED (FIRM_CLOSED alias), not only
-        NO_PERMISSION. Allow-list E still exists. Addendum A numbers are stored
-        but unused until open. BROKER_PAPER and LIVE remain UNLOADED.
-        Trader may propose paper tickets; the engine still denies the fill.
+        Board Addendum I: two-opening rule. While paper is CLOSED, simulator
+        DENY all fills, even for allow-listed tickers. Deny reason is
+        PAPER_EXECUTION_CLOSED (FIRM_CLOSED alias). After Grand Opening PAPER,
+        a legal allow-list practice order may fill in the internal simulator
+        when in session and within Addendum A limits. LIVE stays blocked.
+        BROKER_PAPER and LIVE remain UNLOADED. AI never enforces this.
         """
         now = at or now_london()
         state = self.state()
@@ -259,9 +269,8 @@ class ControlEngine:
             return self._deny("SYMBOL_NOT_ON_ALLOW_LIST", actor_id, order)
 
         # Addendum K: after London cash shut, deny SHEL.L / AZN.L / ULVR.L only.
-        # Checked before CLOSED so the London-shut reason is visible in tests
-        # while PAPER stays CLOSED. During London open, K does not block and
-        # CLOSED still holds. Missing rule stays fail-closed UNSET.
+        # Checked before CLOSED so the London-shut reason is visible even if
+        # paper is later closed again. During London open, K does not block.
         if lse_hold_blocks(self.session, symbol, at=now):
             if lse_session_rule_is_unset(self.session):
                 return self._deny_lse_session_unset(actor_id, order)
@@ -363,8 +372,9 @@ class ControlEngine:
                 {"field": field, "reason": "EMPLOYEE_CANNOT_WRITE_CONTROLS"},
             )
             return Decision(False, "EMPLOYEE_CANNOT_WRITE_CONTROLS")
-        # Board writes are reserved actions; this slice does not implement LIVE transition
-        # or Grand Opening PAPER/LIVE. CLOSED gate only. Silence is not approval.
+        # Board Member is the sole writer. Grand Opening PAPER is a Board control
+        # write. Grand Opening LIVE is not given and stays unimplemented.
+        # Silence is not approval. trading_mode stays LIVE_BLOCKED.
         if field == "trading_mode" and value == "LIVE":
             return Decision(False, "LIVE_TRANSITION_NOT_IMPLEMENTED_REQUIRES_BOARD_APPROVAL_ROW")
         if field == "trading_mode" and value == "PAPER":
@@ -372,8 +382,49 @@ class ControlEngine:
                 False,
                 "TRADING_MODE_STAYS_LIVE_BLOCKED_PAPER_LEDGER_IS_INTERNAL_SIMULATOR",
             )
-        if field in FIRM_OPEN_WRITE_FIELDS:
-            return Decision(False, GRAND_OPENING_NOT_IMPLEMENTED_REASON)
+        if field in LIVE_OPEN_WRITE_FIELDS:
+            return Decision(False, GRAND_OPENING_LIVE_NOT_IMPLEMENTED_REASON)
+        if field == "addendum_i":
+            return Decision(False, "ADDENDUM_I_IS_THE_TWO_OPENING_RULE_USE_PAPER_EXECUTION")
+        if field == SIMULATED_CAPITAL_STATUS_KEY:
+            return Decision(False, "USE_BOARD_ADDENDUM_OR_KILL_SWITCH_ENDPOINT")
+        if field in PAPER_OPEN_WRITE_FIELDS:
+            intent = paper_open_intent(value)
+            if intent is True:
+                apply_grand_opening_paper(self.session, actor_id=actor_id)
+                self._evidence(
+                    "grand_opening_paper",
+                    actor_id,
+                    {
+                        "field": field,
+                        "value": value,
+                        "paper_execution": "OPEN",
+                        "grand_opening_live": "not",
+                        "trading_mode": "LIVE_BLOCKED",
+                        "source": GRAND_OPENING_PAPER_LABEL,
+                    },
+                )
+                return Decision(True, GRAND_OPENING_PAPER_REASON, {"paper_execution": "OPEN"})
+            if intent is False:
+                force_paper_execution_closed(self.session, actor_id=actor_id)
+                self._evidence(
+                    "paper_execution_closed_by_board",
+                    actor_id,
+                    {
+                        "field": field,
+                        "value": value,
+                        "paper_execution": "CLOSED",
+                        "grand_opening_live": "not",
+                        "trading_mode": "LIVE_BLOCKED",
+                        "source": ADDENDUM_I_LABEL,
+                    },
+                )
+                return Decision(
+                    True,
+                    PAPER_EXECUTION_CLOSED_BY_BOARD_REASON,
+                    {"paper_execution": "CLOSED"},
+                )
+            return Decision(False, "UNRECOGNISED_PAPER_EXECUTION_VALUE")
         if field == "allow_list":
             return Decision(False, "ALLOW_LIST_IS_BOARD_ADDENDUM_E_EMPLOYEES_CANNOT_WRITE")
         if field in LIMIT_WRITE_FIELDS:
@@ -396,7 +447,7 @@ class ControlEngine:
         paper_closed = self.paper_execution_closed()
         can_place_orders = (
             not paper_closed
-            and state.trading_mode not in ("LIVE_BLOCKED", "LIVE")
+            and state.trading_mode != "LIVE"
             and len(allow) > 0
             and not state.kill_switch
         )
@@ -409,7 +460,7 @@ class ControlEngine:
             "broker_paper_loaded": BROKER_PAPER_LOADED,
             "live_adapter_loaded": self.live_adapter_loaded(),
             "kill_switch": bool(state.kill_switch),
-            "firm_open": False,
+            "firm_open": not paper_closed,
             "authoritative_source": "deterministic ControlEngine",
             "note": (
                 "Informational only. Controls are enforced deterministically by "
@@ -436,7 +487,7 @@ class ControlEngine:
             "addendum_c": addendum_c_public(),
             "addendum_e": addendum_e_public(),
             "addendum_f": addendum_f_public(),
-            "addendum_i": addendum_i_public(),
+            "addendum_i": addendum_i_public(self.session),
             "addendum_j": addendum_j_public(),
             "addendum_k": addendum_k_public(),
             "lse_session": lse_session_public(self.session),
@@ -449,10 +500,10 @@ class ControlEngine:
             "live_gate": "PAPER → EVALUATION → LIVE-TRADING RECOMMENDATION → BOARD REVIEW → EXPLICIT BOARD APPROVAL → LIVE",
             "note": (
                 "Silence, elapsed time, paper success, and employee confidence are not approval. "
-                "The company is CLOSED until Grand Opening (Board Addendum I). "
-                "PAPER execution is CLOSED. The first paper-trade PATH exists "
+                "Board Addendum I is the two-opening rule. Grand Opening PAPER happened "
+                "(Hari explicit yes, 3 Sep 2026). Practice / paper only. "
+                "LIVE has not opened. The first paper-trade PATH exists "
                 "(Trader proposal → ControlEngine → internal simulator). "
-                "Allow-list E exists but cannot fill until open. "
                 "trading_mode stays LIVE_BLOCKED. LIVE and BROKER_PAPER remain UNLOADED."
             ),
         }
@@ -502,7 +553,8 @@ class ControlEngine:
                 "invented_us_listings": False,
                 "us_names_not_denied_by_k": True,
                 "paper_execution_closed": self.paper_execution_closed(),
-                "not_grand_opening": True,
+                "not_grand_opening_live": True,
+                "not_grand_opening": True,  # K is not a live opening
                 "employees_cannot_write": True,
             },
         )
@@ -518,7 +570,9 @@ class ControlEngine:
                 "firm_closed": True,
                 "firm_open": False,
                 "alias": FIRM_CLOSED_REASON,
-                "grand_opening_paper": "not",
+                "grand_opening_paper": addendum_i_public(self.session).get(
+                    "grand_opening_paper", "not"
+                ),
                 "grand_opening_live": "not",
                 "allow_list_cannot_fill_until_open": True,
                 "addendum_a_unused_until_open": True,

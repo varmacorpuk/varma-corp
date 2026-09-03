@@ -4,19 +4,17 @@ This is not a broker. BROKER_PAPER and LIVE adapters remain UNLOADED.
 No gold execution. No live/paper fills against a broker.
 
 The simulator still DENIES when:
-- PAPER execution is CLOSED (Board Addendum I — firm not open)
+- PAPER execution is CLOSED (Board Addendum I gate)
 - the execution allow-list is empty
 - trading_mode is LIVE or the order asks for LIVE
 - the kill switch is on
 - numeric limits are exceeded (max_position, max_orders_per_day, max_daily_loss)
 - missing Board-set limits (should not happen after Addendum A)
 
-Board Addendum I: the firm is CLOSED until Grand Opening. Simulator DENY all
-fills because the firm is not open, even for allow-listed tickers. Allow-list
-E still exists. £1000 is the FUTURE paper starting book only. Addendum A
-numbers are stored but unused until open. The first paper-trade PATH exists
-(Trader proposal → ControlEngine → internal simulator). PAPER execution
-remains CLOSED. No fills.
+Board Addendum I is the two-opening rule. After Grand Opening PAPER a legal
+allow-list practice order may fill here. LIVE stays blocked. BROKER_PAPER
+and LIVE remain UNLOADED. The first paper-trade PATH exists (Trader proposal
+→ ControlEngine → internal simulator).
 
 Empty allow-list ⇒ no orders, so production seed records zero fills. Evaluation
 ledger tables still exist (closed trades, pnl, win rate of profitable closes).
@@ -78,8 +76,8 @@ def simulator_assumptions() -> dict[str, Any]:
         "adverse_bps_vs_mid": ADVERSE_BPS,
         "fx": "none — FakeMarketData last treated as GBP (INTERNAL ASSUMPTION)",
         "source": ADDENDUM_A_LABEL,
-        "paper_execution": "CLOSED",
-        "firm_open": False,
+        "paper_execution": "see_control_tables",
+        "firm_open": "see_control_tables",
         "first_paper_trade_path_implemented": True,
         "addendum_i": ADDENDUM_I_LABEL,
         "note": ASSUMPTIONS_NOTE,
