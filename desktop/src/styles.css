@@ -104,6 +104,7 @@ body {
   min-height: 0;
 }
 .office-view, .office-pane {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
@@ -112,6 +113,34 @@ body {
   overflow: hidden;
   min-height: 0;
   min-width: 0;
+}
+.building-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  margin: 0;
+  max-width: min(420px, 92%);
+  padding: 8px 12px;
+  background: #1a1a10;
+  border: 1px solid #4a4a30;
+  border-radius: 4px;
+  color: #eee;
+  font-family: var(--pixel);
+  font-size: 8px;
+  line-height: 1.55;
+  letter-spacing: 0.04em;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+.building-banner[hidden] {
+  display: none;
+}
+#office-floor .speech-bubble {
+  white-space: normal;
+  max-width: 108px;
 }
 #office-floor {
   width: 100%;

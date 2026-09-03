@@ -1,13 +1,25 @@
 from pathlib import Path
+import json
 
 ROOT = Path(__file__).resolve().parents[1]
 HTML = (ROOT / "desktop" / "index.html").read_text(encoding="utf-8")
 CSS = (ROOT / "desktop" / "src" / "styles.css").read_text(encoding="utf-8")
 JS = (ROOT / "desktop" / "src" / "office.js").read_text(encoding="utf-8")
 FLOOR = (ROOT / "desktop" / "src" / "office-floor.js").read_text(encoding="utf-8")
+JOBS_JS = (ROOT / "desktop" / "src" / "staff-jobs.js").read_text(encoding="utf-8")
+JOBS_JSON = json.loads((ROOT / "desktop" / "staff-jobs.json").read_text(encoding="utf-8"))
 APP = (ROOT / "varma" / "kernel" / "app.py").read_text(encoding="utf-8")
 
 SITCOM = ("Michael", "Jim", "Pam", "Dwight", "Angela", "Kevin", "Oscar", "Stanley")
+STAFF_SLUGS = (
+    "ceo",
+    "market-intelligence-research",
+    "challenge",
+    "risk",
+    "trader",
+    "quant-strategy",
+    "technology",
+)
 
 
 def test_right_hand_panel_not_overlay():
@@ -28,13 +40,14 @@ def test_right_hand_panel_not_overlay():
 
 
 def test_office_click_opens_panel_logic():
+    floor_js = JS + JOBS_JS
     assert "right-panel" in JS
     assert "status" in JS.lower() or "bubble" in JS.lower()
-    assert "ceo" in JS
-    assert "challenge" in JS
-    assert "risk" in JS
-    assert "market-intelligence-research" in JS
-    assert "Ask the CEO" in JS or "ceo" in JS
+    assert "ceo" in floor_js
+    assert "challenge" in floor_js
+    assert "risk" in floor_js
+    assert "market-intelligence-research" in floor_js
+    assert "Ask the CEO" in JS or "ceo" in floor_js
     assert "right-panel" in HTML
     assert "covering overlay" in HTML.lower() or "no covering overlay" in HTML.lower()
     assert "showBoardObservability" in JS
@@ -114,14 +127,24 @@ def test_office_click_opens_panel_logic():
     assert "showBoardObservability" in JS
     assert "GET /observability does not run jobs" in JS
     assert "Ask Asha Patel · Research" in JS
-    assert 'display_name: "Asha Patel · Research"' in JS
-    assert 'display_name: "Jordan Hale · CEO"' in JS
-    assert 'display_name: "Sam Okeke · Challenge"' in JS
-    assert 'display_name: "Elena Voss · Risk"' in JS
-    assert 'display_name: "Chris Adeyemi · Trader"' in JS
-    assert 'display_name: "Nina Kapoor · Quant"' in JS
-    assert 'display_name: "Owen Blake · Technology"' in JS
+    assert 'display_name: "Asha Patel · Research"' in JOBS_JS
+    assert 'display_name: "Jordan Hale · CEO"' in JOBS_JS
+    assert 'display_name: "Sam Okeke · Challenge"' in JOBS_JS
+    assert 'display_name: "Elena Voss · Risk"' in JOBS_JS
+    assert 'display_name: "Chris Adeyemi · Trader"' in JOBS_JS
+    assert 'display_name: "Nina Kapoor · Quant"' in JOBS_JS
+    assert 'display_name: "Owen Blake · Technology"' in JOBS_JS
     assert 'display_name: "Research"' not in JS
+    assert 'display_name: "Research"' not in JOBS_JS
+    assert 'status_bubble: "OFFLINE"' not in JS
+    assert 'status_bubble: "OFFLINE"' not in JOBS_JS
+    assert "staff-jobs.json" in JS
+    assert "staff-jobs.js" in HTML
+    assert "Display off — staff still at work" in HTML
+    assert 'id="building-banner"' in HTML
+    assert "Resting" in JOBS_JS
+    assert "Resting" in FLOOR
+    assert "building-banner" in CSS
     assert "Select Asha Patel · Research" in HTML
     assert "Select Research, the CEO" not in HTML
     assert "talk-disabled" in HTML
@@ -220,7 +243,7 @@ def test_pixel_office_is_not_four_desk_placeholder():
 
 def test_office_uses_varma_staff_not_sitcom_names():
     layout = (ROOT / "desktop" / "src" / "claude-office-layout.js").read_text(encoding="utf-8")
-    blob = HTML + CSS + JS + FLOOR + layout
+    blob = HTML + CSS + JS + FLOOR + JOBS_JS + layout
     for name in SITCOM:
         assert name not in blob
     for label in (
@@ -233,4 +256,60 @@ def test_office_uses_varma_staff_not_sitcom_names():
         "Owen Blake · Technology",
     ):
         assert label in HTML
-        assert label in JS
+        assert label in JOBS_JS
+
+
+def test_floor_jobs_are_desk_text_not_kernel_presence():
+    jobs = JOBS_JSON["jobs"]
+    assert set(jobs) == set(STAFF_SLUGS)
+    assert jobs["ceo"] == "Running desk"
+    assert jobs["market-intelligence-research"] == "US pack"
+    assert jobs["challenge"] == "Challenge"
+    assert jobs["risk"] == "US ticket ready"
+    assert jobs["trader"] == "Watching SHEL"
+    assert jobs["quant-strategy"] == "US-open rule"
+    assert jobs["technology"] == "Backups"
+    for job in jobs.values():
+        assert job
+        assert job != "OFFLINE"
+        assert job != "AVAILABLE"
+        assert len(job.split()) <= 4
+    assert 'RESTING = "Resting"' in JOBS_JS
+    assert "OFFLINE: true" in JOBS_JS
+    assert "AVAILABLE: true" in JOBS_JS
+    assert "PAPER_DAY_JOBS" in JOBS_JS
+    assert "applyJobs" in JOBS_JS
+    assert "setDisplayOff" in JS
+    assert "paintJobs" in JS
+    assert "kernel unreachable — display off" in JS
+    assert "Click never grants authority" in JOBS_JS
+    assert 'data-employee-slug="board"' not in HTML
+    assert "Approve LIVE" not in HTML
+
+
+def test_staff_job_resolver_resting_not_offline():
+    import subprocess
+
+    jobs_js = str(ROOT / "desktop" / "src" / "staff-jobs.js")
+    jobs_json = str(ROOT / "desktop" / "staff-jobs.json")
+    script = f"""
+global.window = global;
+require({json.dumps(jobs_js)});
+const J = window.VarmaStaffJobs;
+const jobs = require({json.dumps(jobs_json)}).jobs;
+const painted = J.applyJobs(J.STAFF_ROSTER, jobs);
+if (painted.some((e) => e.status_bubble === "OFFLINE")) process.exit(2);
+if (painted.find((e) => e.slug === "trader").status_bubble !== "Watching SHEL") process.exit(3);
+const resting = J.applyJobs(J.STAFF_ROSTER, Object.assign({{}}, jobs, {{ challenge: "" }}));
+if (resting.find((e) => e.slug === "challenge").status_bubble !== "Resting") process.exit(4);
+const presence = J.applyJobs(
+  [{{ slug: "trader", status_bubble: "OFFLINE" }}, {{ slug: "ceo", status_bubble: "AVAILABLE" }}],
+  jobs
+);
+if (presence.find((e) => e.slug === "trader").status_bubble !== "Watching SHEL") process.exit(5);
+if (J.DISPLAY_OFF_BANNER.indexOf("staff still at work") === -1) process.exit(6);
+console.log("ok");
+"""
+    result = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=False)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "ok" in result.stdout

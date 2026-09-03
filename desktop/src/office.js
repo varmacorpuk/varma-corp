@@ -1,7 +1,11 @@
 /* Claude-Office DOM floor + right-hand work/chat panel. Same kernel runtime for chat.
    Click a person opens chat/work. Click never grants authority. LIVE stays blocked. */
 (function () {
-  const API = localStorage.getItem("varmaApi") || "http://127.0.0.1:8000";
+  const apiQuery = new URLSearchParams(location.search).get("api");
+  const API =
+    apiQuery === "off"
+      ? "http://127.0.0.1:9"
+      : localStorage.getItem("varmaApi") || "http://127.0.0.1:8000";
   const TOKEN = localStorage.getItem("varmaToken") || "dev-board-member";
   const floor = document.getElementById("office-floor");
   const rightPanel = document.getElementById("right-panel");
@@ -12,11 +16,13 @@
   const modeBanner = document.getElementById("mode-banner");
   const boardObservabilityBtn = document.getElementById("board-observability-btn");
   const staffBar = document.getElementById("staff-bar");
+  const buildingBanner = document.getElementById("building-banner");
 
   let employees = [];
   let selected = null;
   let lastJobNote = "";
   let jobRunning = false;
+  let deskJobs = {};
 
   function headers(json) {
     const h = { Authorization: "Bearer " + TOKEN };
@@ -410,7 +416,7 @@
     panelBody.innerHTML = `
       <h3>${escapeHtml(work.display_name)}</h3>
       <p class="meta">${escapeHtml(work.role_title)} · ${escapeHtml(work.department)}</p>
-      <p class="bubble-note">Status bubble: ${escapeHtml(work.status_bubble)} (short). Detail belongs here, not as an overlay.</p>
+      <p class="bubble-note">Current job: ${escapeHtml((selected && selected.status_bubble) || "Resting")} (short). Detail belongs here, not as an overlay.</p>
       <p class="meta">Click does not grant authority.</p>
       ${authorityNote}
       ${work.brief ? "<h3>Latest produced brief</h3>" + renderBrief(work.brief) : ""}
@@ -618,66 +624,53 @@
     chatInput.value = "";
   });
 
+  function setDisplayOff(on) {
+    if (!buildingBanner) return;
+    buildingBanner.hidden = !on;
+    buildingBanner.textContent = window.VarmaStaffJobs
+      ? VarmaStaffJobs.DISPLAY_OFF_BANNER
+      : "Display off — staff still at work";
+  }
+
+  async function loadDeskJobs() {
+    try {
+      const r = await fetch("staff-jobs.json", { cache: "no-store" });
+      if (!r.ok) throw new Error("staff-jobs " + r.status);
+      const data = await r.json();
+      return data.jobs || data;
+    } catch (err) {
+      return window.VarmaStaffJobs
+        ? Object.assign({}, VarmaStaffJobs.PAPER_DAY_JOBS)
+        : {};
+    }
+  }
+
+  function paintJobs(roster) {
+    if (window.VarmaStaffJobs) {
+      return VarmaStaffJobs.applyJobs(roster || [], deskJobs);
+    }
+    return (roster || []).map((emp) => {
+      const next = Object.assign({}, emp);
+      const raw = String((deskJobs && deskJobs[emp.slug]) || emp.current_job || emp.status_bubble || "").trim();
+      next.status_bubble = !raw || raw === "OFFLINE" || raw === "AVAILABLE" ? "Resting" : raw;
+      return next;
+    });
+  }
+
   async function boot() {
+    deskJobs = await loadDeskJobs();
     try {
       const health = await get("/health");
       modeBanner.textContent = "trading_mode: " + health.trading_mode;
       const state = await get("/office/state");
-      employees = state.employees || [];
+      employees = paintJobs(state.employees || []);
+      setDisplayOff(false);
       draw();
     } catch (err) {
-      modeBanner.textContent = "kernel unreachable — start the API";
-      employees = [
-        {
-          slug: "market-intelligence-research",
-          display_name: "Asha Patel · Research",
-          status_bubble: "OFFLINE",
-          office_x: 480,
-          office_y: 320,
-        },
-        {
-          slug: "ceo",
-          display_name: "Jordan Hale · CEO",
-          status_bubble: "OFFLINE",
-          office_x: 320,
-          office_y: 320,
-        },
-        {
-          slug: "challenge",
-          display_name: "Sam Okeke · Challenge",
-          status_bubble: "OFFLINE",
-          office_x: 384,
-          office_y: 384,
-        },
-        {
-          slug: "risk",
-          display_name: "Elena Voss · Risk",
-          status_bubble: "OFFLINE",
-          office_x: 192,
-          office_y: 192,
-        },
-        {
-          slug: "trader",
-          display_name: "Chris Adeyemi · Trader",
-          status_bubble: "OFFLINE",
-          office_x: 256,
-          office_y: 192,
-        },
-        {
-          slug: "quant-strategy",
-          display_name: "Nina Kapoor · Quant",
-          status_bubble: "OFFLINE",
-          office_x: 480,
-          office_y: 480,
-        },
-        {
-          slug: "technology",
-          display_name: "Owen Blake · Technology",
-          status_bubble: "OFFLINE",
-          office_x: 640,
-          office_y: 480,
-        },
-      ];
+      modeBanner.textContent = "kernel unreachable — display off";
+      const roster = window.VarmaStaffJobs ? VarmaStaffJobs.STAFF_ROSTER : [];
+      employees = paintJobs(roster);
+      setDisplayOff(true);
       draw();
     }
     requestAnimationFrame(function tick(now) {

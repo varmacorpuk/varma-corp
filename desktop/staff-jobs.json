@@ -1,0 +1,12 @@
+{
+  "note": "Desk-set current jobs for the floor. Empty or missing → Resting. Not kernel presence. Click never grants authority. Seeded for 3 Sep 2026 paper day.",
+  "jobs": {
+    "ceo": "Running desk",
+    "market-intelligence-research": "US pack",
+    "challenge": "Challenge",
+    "risk": "US ticket ready",
+    "trader": "Watching SHEL",
+    "quant-strategy": "US-open rule",
+    "technology": "Backups"
+  }
+}
