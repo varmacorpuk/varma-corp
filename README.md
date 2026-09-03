@@ -64,6 +64,8 @@ From the repository root:
     python3 -m varma.routines.run_nightly_filter
     python3 -m varma.routines.run_0730_meeting
     python3 -m varma.routines.run_backup
+    python3 -m varma.routines.run_paper_trade_path
+    python3 -m varma.routines.run_paper_trade_path --ticket PAPER-20260903-02
     python3 -m varma
 
 Health: http://127.0.0.1:8000/health

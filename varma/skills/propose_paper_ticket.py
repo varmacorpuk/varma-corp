@@ -11,11 +11,12 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from varma.clock import now_london
+from varma.clock import LONDON, now_london
 from varma.controls.addendum_f import TRADER_SLUG, staff_display_for_slug
 from varma.controls.addendum_i import (
     ADDENDUM_I_LABEL,
@@ -40,7 +41,43 @@ LEGAL_PAPER_TICKET: dict[str, Any] = {
     "execution_port": "SIMULATOR",
 }
 
+# Desk ticket PAPER-20260903-02. Practice / paper only. LIVE stays blocked.
+# Entry ref 3409.3p Yahoo LSE delayed (GBP last = pence/100). Notional ~£170.47,
+# under Addendum A £200 max per name. Stop 3384p / target 3447p are desk-managed
+# and are not resting engine orders. Overnight off. Latest London 16:30 exit is
+# a later job. Named ticket writes only to data/varma_paper_open.db.
+PAPER_20260903_02_ID = "PAPER-20260903-02"
+PAPER_20260903_02_AT = datetime(2026, 9, 3, 9, 59, tzinfo=LONDON)
+PAPER_20260903_02: dict[str, Any] = {
+    "symbol": "SHEL.L",
+    "side": "buy",
+    "quantity": 5.0,
+    "execution_port": "SIMULATOR",
+    "ticket_id": PAPER_20260903_02_ID,
+}
+
+NAMED_PAPER_TICKETS: dict[str, dict[str, Any]] = {
+    PAPER_20260903_02_ID: PAPER_20260903_02,
+}
+PAPER_OPEN_BOOK_ONLY_TICKETS = frozenset({PAPER_20260903_02_ID})
+
 PATH_STEPS = ("trader_proposal", "control_engine", "internal_simulator")
+
+REFUSE_LIVE_OR_BROKER_PORT = "REFUSE_LIVE_OR_BROKER_PORT"
+UNKNOWN_NAMED_PAPER_TICKET = "UNKNOWN_NAMED_PAPER_TICKET"
+
+
+def named_paper_ticket(ticket_id: str) -> dict[str, Any]:
+    """Return a copy of a Board paper ticket. LIVE/BROKER_PAPER are refused."""
+    key = str(ticket_id or "").strip()
+    if key not in NAMED_PAPER_TICKETS:
+        raise RuntimeError(UNKNOWN_NAMED_PAPER_TICKET)
+    ticket = dict(NAMED_PAPER_TICKETS[key])
+    port = str(ticket.get("execution_port") or "SIMULATOR").upper()
+    if port in {"LIVE", "BROKER_PAPER"}:
+        raise RuntimeError(REFUSE_LIVE_OR_BROKER_PORT)
+    ticket["execution_port"] = "SIMULATOR"
+    return ticket
 
 
 def run_propose_paper_ticket(

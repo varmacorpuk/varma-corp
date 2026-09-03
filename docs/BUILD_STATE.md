@@ -7,7 +7,7 @@ operations. The **source code on the branch you have checked out is authoritativ
 disagrees with that code, the code wins and this file must be corrected.
 
 _Last updated: 2026-09-03._ Grand Opening PAPER (Hari explicit yes, word: Open). LIVE still
-blocked. Pytest: **196 passing, 0 failures**. Do not invent a percent-complete. Chat is not
+blocked. Pytest: **198 passing, 0 failures**. Do not invent a percent-complete. Chat is not
 the record.
 
 ## 0. RECOVERY / CONTINUATION INSTRUCTION
@@ -138,8 +138,13 @@ flatten-at-US-close. London cash close is not the flatten.
 - **Do not implement any Section 7 item** until the Board decides it.
 - **Do not implement token-efficiency stages 4–5.** Measure with `ai_usage_summary` before further
   runtime token work.
-- **Next human step:** paper operation (practice on the £1,000 book). LIVE later only if the Board
-  says so. Do not open live in code.
+- **Paper operation:** named ticket `PAPER-20260903-02` is SHEL.L BUY 5 on
+  `data/varma_paper_open.db` only (`python -m varma.routines.run_paper_trade_path --ticket PAPER-20260903-02`).
+  Never `data/varma.db`. LIVE stays blocked. Overnight off. Stop/target are desk-managed, not
+  resting engine orders. Latest London 16:30 exit is a later job. GitHub remains code only
+  (the paper book is gitignored).
+- **Next human step:** further paper operation on the £1,000 book, then flatten-before-US-close
+  as a later job. LIVE later only if the Board says so. Do not open live in code.
 
 ## 9. IMPORTANT COMPATIBILITY RULES (Grok Bot)
 Do NOT rename/delete/move or structurally change: employee **slugs/identities/roles/relationships**;
@@ -150,6 +155,6 @@ repo). Keep changes additive; keep the full test suite green.
 
 ## 10. HOW TO CONTINUE
 Read this file, then `PROJECT_MAP.md` + `SPEC_INDEX.md` (+ `knowledge/index.json` for machine navigation
-and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **196** passing
-on this Grand Opening PAPER landing; **188** was main after #30). Continue from Section 8.
+and `GLOSSARY.md` for terms). Verify git state. Run `python3 -m pytest` (expect **198** passing
+on this SHEL.L BUY 5 paper-ticket landing; **196** was Grand Opening PAPER). Continue from Section 8.
 Preserve every governance and safety rule in Section 6.
