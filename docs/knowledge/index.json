@@ -2,6 +2,11 @@
   "schema": "varma-knowledge-index/v1",
   "purpose": "Compact navigation index for coding agents. Source code is authoritative; if this index disagrees with the code, the code wins and this index must be corrected.",
   "generated_by": "PR #1 (Safe Token-Efficiency Foundation) — hand-authored, additive, non-invasive",
+  "handover": {
+    "path": "docs/BUILD_STATE.md",
+    "purpose": "READ FIRST: current build state on main vs GitHub-merged stacked PRs, governance/safety, open Board decisions, and the NEXT STEP. Do not rescan the repo or re-read Documents 00-18 unless required. Do not call AI for deterministic ops.",
+    "then_read": ["docs/PROJECT_MAP.md", "docs/SPEC_INDEX.md", "docs/GLOSSARY.md"]
+  },
   "specs_note": "Authoritative Documents 00-18 live OUTSIDE this repository. See docs/SPEC_INDEX.md for pointers.",
   "runtime_invariants": [
     "trading_mode=LIVE_BLOCKED",

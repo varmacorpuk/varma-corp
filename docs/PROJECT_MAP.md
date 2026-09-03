@@ -1,8 +1,10 @@
 # Varma Corp — Project Map
 
-Navigation aid for coding agents. **Scan once, use this map, read only the relevant files.**
-The source code is authoritative. If this map disagrees with the code, the code wins and this map
-must be corrected. Nothing here changes runtime behaviour.
+Read `docs/BUILD_STATE.md` first. Then use this map. **Do not rescan the whole repository. Do not
+re-read Documents 00–18 unless a specific task requires it. Do not call AI for deterministic ops.**
+
+Navigation aid for coding agents. The source code is authoritative. If this map disagrees with the
+code, the code wins and this map must be corrected. Nothing here changes runtime behaviour.
 
 Authoritative specifications are **Documents 00–18**, which live **outside this repository**
 (see `ARCHITECTURE.md`). This map does not restate them; see `docs/SPEC_INDEX.md` for pointers.
@@ -13,9 +15,9 @@ Authoritative specifications are **Documents 00–18**, which live **outside thi
 | --- | --- |
 | `varma/` | Python package: the company kernel and all domain logic |
 | `desktop/` | Static 2D "virtual office" UI (Electron/browser). Projection only, not source of truth |
-| `tests/` | Pytest suite (baseline: 153 tests) |
+| `tests/` | Pytest suite on default branch `main`: **158** passing (measured 2026-09-03). The token-efficiency stacked branches (#24–#26, GitHub-merged, not on `main`) reported **175**. Do not invent a percent-complete. |
 | `scripts/` | Dev helper scripts (`dev.sh`) |
-| `docs/` | This map, spec index, glossary, `knowledge/index.json` (navigation only) |
+| `docs/` | `BUILD_STATE.md` (read first — current handover), this map, spec index, glossary, `knowledge/index.json` (navigation only) |
 | `data/` | TEMPORARY dev SQLite (gitignored). Not a system of record |
 | `docker-compose.yml` | Optional Postgres for the same StoragePort |
 | `README.md`, `ARCHITECTURE.md` | Overview + pointer to Documents 00–18 |
@@ -101,9 +103,13 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 ### Observability / cost / measurement
 - `varma/observability/board.py` — read-only Board observability snapshot (database projection).
 - `varma/cost/ledger.py` — fake cost-unit ledger (development accounting, not real tokens).
-- `varma/observability/ai_usage.py` — **non-invasive** AI-call measurement (PR #1). Wraps `LLMPort`,
-  records `AICallLog` rows (deterministic sizes + estimates), and `ai_usage_summary()`. Does not
-  change prompts, context, model selection, or employee behaviour.
+- `varma/observability/ai_usage.py` — **non-invasive** AI-call measurement (#23). Wraps `LLMPort`
+  (`MeasuredLLM`), records `AICallLog` rows (deterministic sizes + estimates), and
+  `ai_usage_summary()`. Does not change prompts, context, model selection, or employee behaviour.
+  **Measure here before further runtime token work.** Token-efficiency stages 4 (snapshot cache)
+  and 5 (response cache) are intentionally **not** implemented (safety). Stages from PRs #24–#26
+  (`constraints_hint()`, bounded chat, selective lessons/working/org, idempotent handoffs) are
+  GitHub-merged on stacked branches, not on `main`.
 
 ### Backup
 - `varma/backup/job.py`, `varma/backup/crypto.py` — encrypted-at-rest company backup (Technology owns).
@@ -118,3 +124,4 @@ no network) by default. `BROKER_PAPER` and `LIVE` execution ports are UNLOADED; 
 - Memory/data: `varma/memory/`, `data/` (dev SQLite).
 - Tests: `tests/` (one file per addendum/feature).
 - Specs: Documents 00–18 (outside repo); pointers in `docs/SPEC_INDEX.md`.
+- Handover: `docs/BUILD_STATE.md` (read first; current `main` vs GitHub PR topology).
