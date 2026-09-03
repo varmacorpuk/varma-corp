@@ -9,9 +9,24 @@ from tests.conftest import (
     TECH_HEADERS,
     TRADER_HEADERS,
 )
-from varma.controls.addendum_e import ADDENDUM_E_LABEL, ADDENDUM_E_SYMBOLS, addendum_e_public
+from varma.controls.addendum_e import (
+    ADDENDUM_E_INSTRUMENTS,
+    ADDENDUM_E_LABEL,
+    ADDENDUM_E_SYMBOLS,
+    ADDENDUM_E_VENUES,
+    addendum_e_public,
+)
 from varma.controls.engine import LIVE_ADAPTER_LOADED, ControlEngine
-from varma.db.models import AllowListInstrument, ControlState, Employee, Permission
+from varma.db.models import (
+    AllowListInstrument,
+    ControlSetting,
+    ControlState,
+    Employee,
+    PaperAccount,
+    PaperFill,
+    PaperPosition,
+    Permission,
+)
 from varma.db.seed import MI_SLUG
 from varma.ports.execution import BROKER_PAPER_LOADED, LIVE_PORT_LOADED
 
@@ -37,6 +52,36 @@ def test_addendum_e_allow_list_is_board_set(session):
     assert "ULVR.L" in engine.allow_list_symbols()
     assert "SHEL.L" in engine.allow_list_symbols()
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
+
+
+def test_addendum_e_jpm_jnj_list_nyse_other_venues_unchanged(session):
+    expected = {
+        "AAPL": "NASDAQ",
+        "MSFT": "NASDAQ",
+        "NVDA": "NASDAQ",
+        "AMZN": "NASDAQ",
+        "GOOGL": "NASDAQ",
+        "JPM": "NYSE",
+        "JNJ": "NYSE",
+        "SHEL.L": "LSE",
+        "AZN.L": "LSE",
+        "ULVR.L": "LSE",
+    }
+    seeded = {row.symbol: row.venue for row in session.query(AllowListInstrument).all()}
+    assert dict(ADDENDUM_E_INSTRUMENTS) == expected
+    assert ADDENDUM_E_VENUES == expected
+    assert addendum_e_public()["venues"] == expected
+    assert seeded == expected
+    assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
+    assert session.get(ControlSetting, "paper_execution").value == "OPEN"
+    account = session.get(PaperAccount, 1)
+    assert account.simulated_capital == 1000.0
+    assert account.cash == 1000.0
+    assert session.query(PaperFill).count() == 0
+    assert session.query(PaperPosition).count() == 0
+    assert LIVE_ADAPTER_LOADED is False
+    assert BROKER_PAPER_LOADED is False
+    assert LIVE_PORT_LOADED is False
 
 
 def test_employees_and_ceo_cannot_write_allow_list(client):

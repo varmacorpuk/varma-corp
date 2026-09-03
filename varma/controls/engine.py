@@ -7,7 +7,9 @@ PAPER allow-list is Board Addendum E 2026-08-27. Employees cannot write control 
 Board Addendum I 2026-08-27: two-opening rule. Grand Opening PAPER happened
 (Hari explicit yes, 3 Sep 2026). Practice / paper only. LIVE still blocked.
 Board Addendum K 2026-09-03: after London cash shuts, deny SHEL.L / AZN.L /
-ULVR.L only. Flatten remains US regular cash close.
+ULVR.L only. CEO desk 02F binds LSE flatten to the London closing auction
+16:30–16:35; US names still flatten at US regular cash close. split_flatten_clocks
+is true. The LSE auction exit cannot be dropped independently of the opening buy.
 
 trading_mode stays LIVE_BLOCKED. Do not load LIVE or BROKER_PAPER.
 The first paper-trade PATH exists (Trader proposal → ControlEngine →
@@ -72,6 +74,12 @@ from varma.controls.lse_session import (
     lse_hold_blocks,
     lse_session_public,
     lse_session_rule_is_unset,
+)
+from varma.controls.venue_flatten import (
+    SPLIT_FLATTEN_CLOCKS,
+    bound_session_exit,
+    ceo_desk_public,
+    risk_02f_public,
 )
 from varma.db.models import (
     AllowListInstrument,
@@ -345,6 +353,10 @@ class ControlEngine:
 
         decision = PaperFillSimulator(self.session).fill(actor_id=actor_id, order=order, at=now)
         maybe_auto_trip(self.session, actor_id=actor_id)
+        if decision.allowed:
+            decision.details.update(bound_session_exit(symbol))
+            decision.details["split_flatten_clocks"] = SPLIT_FLATTEN_CLOCKS
+            decision.details["risk_02f"] = risk_02f_public()
         return decision
 
     def _requested_notional_gbp(self, order: dict[str, Any]) -> float:
@@ -451,6 +463,7 @@ class ControlEngine:
             and len(allow) > 0
             and not state.kill_switch
         )
+        risk_02f = risk_02f_public()
         return {
             "can_place_orders": can_place_orders,
             "paper_trading": "CLOSED" if paper_closed else "OPEN",
@@ -461,6 +474,11 @@ class ControlEngine:
             "live_adapter_loaded": self.live_adapter_loaded(),
             "kill_switch": bool(state.kill_switch),
             "firm_open": not paper_closed,
+            "split_flatten_clocks": SPLIT_FLATTEN_CLOCKS,
+            "risk_02f": risk_02f["id"],
+            "risk_02f_bound": True,
+            "lse_flatten_at": risk_02f["lse_flatten_at"],
+            "us_flatten_at": risk_02f["us_flatten_at"],
             "authoritative_source": "deterministic ControlEngine",
             "note": (
                 "Informational only. Controls are enforced deterministically by "
@@ -468,6 +486,13 @@ class ControlEngine:
                 "GET /observability and the control tables."
             ),
         }
+
+    def risk_02f(self) -> dict[str, Any]:
+        """Bound 02F state. Risk re-clears from engine snapshot, not from chat."""
+        return risk_02f_public()
+
+    def bound_session_exit(self, symbol: str) -> dict[str, Any]:
+        return bound_session_exit(symbol)
 
     def snapshot(self) -> dict[str, Any]:
         state = self.state()
@@ -491,6 +516,9 @@ class ControlEngine:
             "addendum_j": addendum_j_public(),
             "addendum_k": addendum_k_public(),
             "lse_session": lse_session_public(self.session),
+            "ceo_desk": ceo_desk_public(),
+            "risk_02f": risk_02f_public(),
+            "split_flatten_clocks": SPLIT_FLATTEN_CLOCKS,
             "paper_execution": "CLOSED" if self.paper_execution_closed() else "OPEN",
             "paper_execution_closed": self.paper_execution_closed(),
             "paper_session": paper_session_status(),
@@ -524,8 +552,11 @@ class ControlEngine:
                 "session_rule": "UNSET",
                 "cannot_silently_fill_at_grand_opening": True,
                 "addendum_c_not_rewritten": True,
-                "split_flatten_clocks": False,
+                "split_flatten_clocks": SPLIT_FLATTEN_CLOCKS,
+                "risk_02f": risk_02f_public(),
+                "risk_02f_bound": True,
                 "flatten_at": "US_REGULAR_CASH_CLOSE",
+                "lse_flatten_at": "LONDON_CLOSING_AUCTION",
                 "flatten_not_at": "LONDON_CASH_CLOSE",
                 "invented_us_listings": False,
                 "us_names_wait_on_grand_opening": True,
@@ -547,7 +578,10 @@ class ControlEngine:
                 "addendum_k": ADDENDUM_K_LABEL,
                 "london_cash_close_is_not_flatten": True,
                 "addendum_c_not_rewritten": True,
-                "split_flatten_clocks": False,
+                "split_flatten_clocks": SPLIT_FLATTEN_CLOCKS,
+                "risk_02f": risk_02f_public(),
+                "risk_02f_bound": True,
+                "lse_flatten_at": "LONDON_CLOSING_AUCTION",
                 "flatten_at": "US_REGULAR_CASH_CLOSE",
                 "flatten_not_at": "LONDON_CASH_CLOSE",
                 "invented_us_listings": False,

@@ -38,7 +38,7 @@ Board Member UI  (office canvas + RIGHT-HAND PANEL + approvals)
         |
 Company Kernel
    Identity, Employees (person · department: Asha Patel · Research, Jordan Hale · CEO, Sam Okeke · Challenge, Elena Voss · Risk, Chris Adeyemi · Trader, Nina Kapoor · Quant, Owen Blake · Technology)
-   Board Addendum E PAPER allow_list, Board Addendum I two-opening rule (Grand Opening PAPER done), Board Addendum K LSE three denied after London cash close only (Addendum C flatten unchanged at US regular cash close)
+   Board Addendum E PAPER allow_list, Board Addendum I two-opening rule (Grand Opening PAPER done), Board Addendum K LSE three denied after London cash close only, CEO desk 02F bound LSE London-auction flatten (US names at US close; split_flatten_clocks true)
    Skills, Routines (on-demand via Board panel POST / CLI; no 24/7 daemon)
    Memory (employee / organisation / evidence)
    Nightly Europe/London working-context filter (archive working; evidence append-only; no control writes)

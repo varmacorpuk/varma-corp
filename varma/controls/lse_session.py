@@ -1,8 +1,11 @@
-"""LSE names on allow-list E: Board Addendum K session rule.
+"""LSE names on allow-list E: Board Addendum K session rule plus CEO desk 02F.
 
 SHEL.L, AZN.L, ULVR.L stay on the LSE form already used by this repo.
-Do not invent US listings. Do not rewrite Board Addendum C: flatten remains
-US regular cash close, not London cash close 16:30.
+Do not invent US listings. Addendum K still denies new LSE tickets after
+London cash close. CEO desk 02F binds those three to the London closing
+auction 16:30–16:35 so the exit cannot be dropped independently of the
+opening buy. US names still flatten at US regular cash close. Firm day
+still runs to NY close. split_flatten_clocks is true.
 
 Board Addendum K 2026-09-03 (Hari explicit yes): after London cash market
 shuts, deny paper orders in those three names only. While London cash is
@@ -22,7 +25,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from varma.clock import as_london, now_london
-from varma.controls.addendum_c import FLATTEN_AT, FLATTEN_NOT_AT, london_cash_close_london
+from varma.controls.addendum_c import london_cash_close_london
 from varma.controls.addendum_k import (
     ADDENDUM_K_LABEL,
     ADDENDUM_K_LSE_SYMBOLS,
@@ -34,6 +37,12 @@ from varma.controls.addendum_k import (
     LSE_SESSION_RULE_DENY_AFTER_LONDON_CASH_CLOSE,
     LSE_SESSION_RULE_KEY,
     addendum_k_public,
+)
+from varma.controls.venue_flatten import (
+    LSE_FLATTEN_AT,
+    SPLIT_FLATTEN_CLOCKS,
+    US_FLATTEN_AT,
+    risk_02f_public,
 )
 from varma.db.models import ControlSetting
 
@@ -109,9 +118,13 @@ def lse_session_public(session: Session | None = None) -> dict[str, Any]:
         "fail_closed_if_unset": True,
         "cannot_silently_fill_if_unset": True,
         "addendum_c_not_rewritten": True,
-        "flatten_at": FLATTEN_AT,
-        "flatten_not_at": FLATTEN_NOT_AT,
-        "split_flatten_clocks": False,
+        "flatten_at": LSE_FLATTEN_AT,
+        "flatten_not_at": US_FLATTEN_AT,
+        "split_flatten_clocks": SPLIT_FLATTEN_CLOCKS,
+        "lse_flatten_at": LSE_FLATTEN_AT,
+        "us_flatten_at": US_FLATTEN_AT,
+        "risk_02f": risk_02f_public(),
+        "risk_02f_bound": True,
         "london_cash_close_is_not_flatten": True,
         "us_names_not_denied_by_k": True,
         "us_names_wait_on_grand_opening": True,

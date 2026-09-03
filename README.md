@@ -34,7 +34,7 @@ Human user terminology: Board Member. The CEO is an AI employee. Never MD.
 26. Board Addendum I 2026-08-27 is the two-opening rule. Grand Opening PAPER happened (Hari explicit yes, 3 Sep 2026, word: Open). Practice / paper only. LIVE has not opened. The first paper-trade PATH exists (Trader proposal → ControlEngine → internal simulator). No 07:30 diary invite to the Board Member; 07:30 may exist as an internal staff artefact and must not email or calendar-invite Hari. Do not flatten-as-if-there-were-positions.
 27. Board Addendum J 2026-08-27: company records are not on the Board Member's laptop and not in GitHub. GitHub is code only. System of record remains the database. Board-visible backup status (last successful backup time, last failure, included: paper ledger / evidence / organisational memory / control snapshots; excluded: secrets / live broker credentials which must not exist yet). Board-only job to run a backup now. Default schedule: daily Europe/London after US close / end of London evening. Encrypted at rest. Technology (Owen Blake · Technology) owns the job and cannot write trading_mode, allow-list, or open the firm. Employees including the CEO cannot download secrets. The backup job does not fill orders.
 28. Documents 03 and 08: each employee is a durable database record (identity, role knowledge, authority boundaries, memory pointers, skills, relationships), not an LLM prompt. An LLM call is an invocation of that person. Four memory stores: working context, employee persistent memory, shared organisational knowledge (governed promotion only), append-only evidence. Learning writes memory only, never controls. The next job for the same employee loads lessons from the database and changes behaviour. Challenge stays independent of Quant; Risk stays independent of Trader (originator “I believe this” is not loaded as their own belief). FakeLLM may simulate retrieval; the memory API is the database.
-29. Board Addendum K 2026-09-03 (Hari explicit yes): after London cash market shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. Concentrate on the US seven until US flatten. Desk still UK cash open through US cash close. Flatten still at US regular cash close. London close is not the flatten. While London cash is open those three remain on Addendum E (subject to paper OPEN/CLOSED, limits, kill switch). Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. LIVE_BLOCKED. Employees cannot write this lock. PR #21 leftover draft: leave open.
+29. Board Addendum K 2026-09-03 (Hari explicit yes): after London cash market shuts, deny paper orders in SHEL.L, AZN.L, ULVR.L only. CEO desk 02F (bound in ControlEngine): those three flatten in the London closing auction 16:30–16:35 and cannot be held to New York. US names still flatten at US regular cash close. Firm day still runs to NY close. split_flatten_clocks true. Dual-listed US lines SHEL/AZN/ULVR are not on the allow-list. LIVE_BLOCKED. Employees cannot write this lock. PR #21 leftover draft: leave open.
 
 ## System separation
 
@@ -64,6 +64,8 @@ From the repository root:
     python3 -m varma.routines.run_nightly_filter
     python3 -m varma.routines.run_0730_meeting
     python3 -m varma.routines.run_backup
+    python3 -m varma.routines.run_paper_trade_path
+    python3 -m varma.routines.run_paper_trade_path --ticket PAPER-20260903-02
     python3 -m varma
 
 Health: http://127.0.0.1:8000/health
@@ -93,7 +95,7 @@ A later slice can attach the same skill to a Europe/London scheduler.
 
 - trading_mode: LIVE_BLOCKED (internal paper fill simulator is the paper ledger; PAPER execution is OPEN after Grand Opening PAPER; do not load LIVE or BROKER_PAPER)
 - PAPER execution: OPEN (Board Grand Opening PAPER 2026-09-03). Employees including the CEO cannot write this flag or open/close the firm. LIVE still blocked.
-- Execution allow-list: Board Addendum E 2026-08-27 PAPER membership (AAPL, MSFT, NVDA, AMZN, GOOGL, JPM, JNJ, SHEL.L, AZN.L, ULVR.L). After Grand Opening PAPER these names may fill in the simulator. Unknown tickers deny. Gold denies. Employees including the CEO cannot write the list.
+- Execution allow-list: Board Addendum E 2026-08-27 PAPER membership (AAPL, MSFT, NVDA, AMZN, GOOGL on NASDAQ; JPM, JNJ on NYSE; SHEL.L, AZN.L, ULVR.L on LSE). After Grand Opening PAPER these names may fill in the simulator. Unknown tickers deny. Gold denies. Employees including the CEO cannot write the list.
 - Numeric limits: Board Addendum A 2026-08-27 (Board-set, VALUES stored, in use after paper open)
   - simulated_capital = 1000 GBP (paper starting book)
   - max_position = 200 GBP (one paper trade)
@@ -104,7 +106,7 @@ A later slice can attach the same skill to a Europe/London scheduler.
 - LIVE adapter: not loaded
 - BROKER_PAPER and LIVE execution ports: UNLOADED (no broker fills)
 - Internal PAPER FILL SIMULATOR may fill a legal allow-list practice order after Grand Opening PAPER. First paper-trade PATH exists (Trader proposal → ControlEngine → simulator). LIVE stays blocked.
-- Paper session (Board Addendum C 2026-08-27): UK cash open through US regular cash close. Flatten ALL paper before US close. Do not flatten-as-if-there-were-positions.
+- Paper session (Board Addendum C 2026-08-27): UK cash open through US regular cash close. CEO desk 02F: LSE names flatten in the London closing auction 16:30–16:35; US names flatten at US close. split_flatten_clocks true. Do not flatten-as-if-there-were-positions.
 - Employees cannot write control tables, allow-list, limits, trading_mode, PAPER execution, or approve LIVE. CEO may recommend allow-list adds; cannot write them; cannot open the firm.
 - Board Member can trigger the kill switch without an AI employee. On halt: cancel open PAPER orders only; never load LIVE; never flatten live. Employees cannot reset it.
 
@@ -130,7 +132,7 @@ These exist so development can run. They are not Board-approved universe members
 - News freshness window: 18 hours — TEMPORARY DEVELOPMENT DEFAULT
 - Price freshness window: 26 hours — TEMPORARY DEVELOPMENT DEFAULT
 - Auth stub: see .env.example — DEVELOPMENT only
-- SQLite path: data/varma.db — TEMPORARY until Postgres
+- SQLite path: data/varma_paper_open.db — paper-OPEN practice book (TEMPORARY until Postgres). Do not use empty data/varma.db.
 - Fake delayed prices and news: in-process FakeMarketData — not a vendor contract
 - Simulator FX: none — last treated as GBP (INTERNAL ASSUMPTION)
 
