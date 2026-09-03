@@ -74,6 +74,7 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
     assert "Flatten paper before US cash close" in labels
     assert "Run company backup now" in labels
     assert "Run Trader paper-ticket proposal" in labels
+    assert "Run US-open PAPER scanner" in labels
     for row in jobs["items"]:
         assert row["method"] == "POST"
         assert row["path"] != "/observability"
@@ -102,6 +103,15 @@ def test_runnable_jobs_listed_on_observability_not_run_by_get(client):
             assert row["fills_while_closed"] is False
             assert row["ai_called"] is False
             assert row["proposer_slug"] == "trader"
+        elif row["id"] == "run-us-open-scanner":
+            assert row["internal_simulator"] is True
+            assert row["paper_fills"] is True
+            assert row["fills"] is True
+            assert row["live_fills"] is False
+            assert row["ai_called"] is False
+            assert row["scanner"] == "us_open"
+            assert row["completed_bars_only"] is True
+            assert row["max_concurrent_is_proposal_not_control"] is True
         else:
             assert row["paper_fills"] is False
             assert row["fills"] is False
@@ -241,6 +251,7 @@ def test_board_job_catalog_matches_cli(session):
     assert clis["run-flatten-london-close"] == "python -m varma.routines.run_flatten_london_close"
     assert clis["run-backup"] == "python -m varma.routines.run_backup"
     assert clis["run-paper-trade-path"] == "python -m varma.routines.run_paper_trade_path"
+    assert clis["run-us-open-scanner"] == "python -m varma.routines.run_us_open_scanner"
     assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
     assert snap["writes_controls"] is False
     assert LIVE_ADAPTER_LOADED is False

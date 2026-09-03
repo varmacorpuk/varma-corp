@@ -158,7 +158,7 @@ def paper_order_economics(
     """
     symbol = str(order.get("symbol") or "")
     side = str(order.get("side") or "buy").lower()
-    row = price_row or delayed_price_row(symbol)
+    row = price_row or order.get("price_row") or delayed_price_row(symbol)
     injected = fx_quote if fx_quote is not None else order.get("fx_quote")
     native_mid, mid_gbp, quote_ccy, quote_unit, fx = mid_gbp_from_row(
         symbol, row, at=at, fx_quote=injected

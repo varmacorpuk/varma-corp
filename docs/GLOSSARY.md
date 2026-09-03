@@ -27,11 +27,11 @@ file does not invent governance terms. Where a term maps to code, the code is au
   when in session and within Addendum A limits. Addendum I still exists as the two-opening rule;
   live opening has not happened. The CLOSED gate remains (`PAPER_EXECUTION_CLOSED`) if the Board
   closes paper again.
-- **Allow-list (Addendum E)** — PAPER execution membership. After Grand Opening PAPER these names
-  may fill in the simulator (subject to session, limits, kill switch, Addendum K). Listing venues:
-  US tech (`AAPL`, `MSFT`, `NVDA`, `AMZN`, `GOOGL`) NASDAQ; `JPM` and `JNJ` NYSE; `SHEL.L`,
-  `AZN.L`, `ULVR.L` LSE. Empty allow-list denies. Gold is never authorised. After London cash
-  close, Addendum K denies the three LSE names only; US names are not denied by K.
+- **Allow-list (Addendum E / L)** — PAPER execution membership. Final 15 US-listed names: equities
+  `NVDA`, `AAPL`, `GOOGL`, `MSFT`, `AMZN`, `SPCX`, `AVGO`, `META`, `TSLA`, `BRK-B`; commodity ETP
+  proxies `GLD`, `SLV`, `USO`, `UNG`, `CPER`. All USD, NYSE/Nasdaq. Not futures. Gold futures
+  (`XAU`/`XAUUSD`/`GOLD`/`GC`) stay denied. Empty allow-list denies. After London cash close,
+  Addendum K still denies the historical LSE three only; they are no longer executable members.
 - **02F / venue-split flatten** — CEO desk rule bound in `ControlEngine`. `SHEL.L`, `AZN.L`,
   `ULVR.L` flatten in the London closing auction 16:30–16:35 Europe/London; that exit cannot be
   dropped independently of the opening buy. US names flatten at US regular cash close. Firm day

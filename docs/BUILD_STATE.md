@@ -185,6 +185,11 @@ re-clear. Not a Board tap. Not a Hari card. LIVE_BLOCKED. paper OPEN.
   for any later LSE three (02F) / flatten-before-US-close for US names as later jobs. LIVE later only if
   the Board says so. Do not open live in code. Risk can re-clear 02F from engine state
   (`risk_02f.bound` / `split_flatten_clocks`).
+- **US-open scanner / universe (this branch):** final book is 15 US-listed names (10 equities +
+  GLD/SLV/USO/UNG/CPER listed ETP proxies, not futures). On-demand scanner at
+  `python -m varma.routines.run_us_open_scanner`. Canonical runtime ledger path is
+  `/workspace/varma-canonical/varma_paper_open.db` when that file already exists — do not commit
+  or overwrite it. Practice book remains `data/varma_paper_open.db`. LIVE_BLOCKED.
 
 ## 9. IMPORTANT COMPATIBILITY RULES (Grok Bot)
 Do NOT rename/delete/move or structurally change: employee **slugs/identities/roles/relationships**;

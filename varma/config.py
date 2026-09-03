@@ -8,6 +8,21 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
+PAPER_OPEN_DB_FILENAME = "varma_paper_open.db"
+# Operational runtime ledger on the firm box. Never committed. Never overwritten
+# by this repository's tests or PRs. Used only when the file already exists.
+CANONICAL_PAPER_OPEN_DB = Path("/workspace/varma-canonical/varma_paper_open.db")
+
+
+def operational_paper_open_db() -> Path:
+    """Prefer the canonical runtime ledger when it is already present.
+
+    Does not create or overwrite that file. Falls back to the repo data/
+    practice book so tests and fresh checkouts stay isolated.
+    """
+    if CANONICAL_PAPER_OPEN_DB.is_file():
+        return CANONICAL_PAPER_OPEN_DB
+    return DATA_DIR / PAPER_OPEN_DB_FILENAME
 
 
 class Settings(BaseSettings):
@@ -19,7 +34,9 @@ class Settings(BaseSettings):
 
     env: str = "development"
     # SQLite under data/ is TEMPORARY DEVELOPMENT storage (StoragePort).
-    database_url: str = f"sqlite:///{DATA_DIR / 'varma_paper_open.db'}"
+    # Operational box: /workspace/varma-canonical/varma_paper_open.db when present.
+    database_url: str = f"sqlite:///{DATA_DIR / PAPER_OPEN_DB_FILENAME}"
+    canonical_paper_open_db: str = str(CANONICAL_PAPER_OPEN_DB)
     timezone: str = "Europe/London"
     llm_provider: str = "fake"
     llm_api_key: str | None = None  # unused by default; never commit a live key

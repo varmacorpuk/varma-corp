@@ -534,14 +534,16 @@ def seed_board_addendum_j(session: Session) -> None:
 
 
 def seed_board_addendum_e(session: Session) -> None:
-    """Write Board Addendum E 2026-08-27 PAPER execution allow-list.
+    """Write Board Addendum E PAPER execution allow-list.
 
     Board-set. Employees including the CEO cannot write this list.
     Does not load LIVE or BROKER_PAPER. Does not switch trading_mode.
-    Recodes listing venues onto a stale copy (JPM/JNJ are NYSE).
+    Reconciles a stale copy to the exact 15-name US universe (adds missing
+    names, recodes venues, removes extras). Does not rewrite paper fills.
     Addendum I: the list exists but cannot be used for fills until open.
     """
     now = now_london()
+    wanted = {symbol: venue for symbol, venue in ADDENDUM_E_INSTRUMENTS}
     for symbol, venue in ADDENDUM_E_INSTRUMENTS:
         row = session.query(AllowListInstrument).filter_by(symbol=symbol).one_or_none()
         if row is None:
@@ -558,6 +560,13 @@ def seed_board_addendum_e(session: Session) -> None:
             row.venue = venue
             row.approved_by = ADDENDUM_E_SET_BY
             row.approved_at = now
+    extras = (
+        session.query(AllowListInstrument)
+        .filter(AllowListInstrument.symbol.notin_(list(wanted)))
+        .all()
+    )
+    for row in extras:
+        session.delete(row)
     session.flush()
 
 

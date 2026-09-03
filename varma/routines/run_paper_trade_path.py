@@ -23,7 +23,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from varma.clock import LONDON, now_london
-from varma.config import DATA_DIR
+from varma.config import DATA_DIR, operational_paper_open_db
 from varma.controls.addendum_f import TRADER_SLUG
 from varma.db.engine import get_session_factory, init_db
 from varma.db.seed import seed_if_empty
@@ -43,8 +43,12 @@ REFUSE_DEFAULT_VARMA_DB = "REFUSE_DEFAULT_VARMA_DB"
 
 
 def paper_open_book_sqlite_path() -> Path:
-    """Practice paper book. Must not resolve to data/varma.db."""
-    path = (DATA_DIR / PAPER_OPEN_DB_FILENAME).resolve()
+    """Practice paper book. Must not resolve to data/varma.db.
+
+    Prefers the canonical runtime ledger when that file already exists.
+    Never creates or overwrites ``/workspace/varma-canonical/varma_paper_open.db``.
+    """
+    path = operational_paper_open_db().resolve()
     forbidden = (DATA_DIR / DEFAULT_DEV_DB_FILENAME).resolve()
     if path == forbidden or path.name == DEFAULT_DEV_DB_FILENAME:
         raise RuntimeError(REFUSE_DEFAULT_VARMA_DB)

@@ -162,7 +162,7 @@ def test_stale_sqlite_is_reconciled_to_board_encoded(db_url):
 
 
 def test_stale_allow_list_is_reconciled_to_final_strategy(db_url):
-    """A stale SQLite copy with old names gets the final 10-name universe."""
+    """A stale SQLite copy with old names gets the final 15-name universe."""
     init_db(db_url, reset=True)
     factory = get_session_factory(db_url, reset=False)
     session = factory()
@@ -197,6 +197,9 @@ def test_stale_allow_list_is_reconciled_to_final_strategy(db_url):
         assert venues["SPCX"] == "NASDAQ"
         assert venues["AAPL"] == "NASDAQ"
         assert venues["GOOGL"] == "NASDAQ"
+        assert venues["GLD"] == "NYSE"
+        assert venues["CPER"] == "NYSE"
+        assert set(venues) == set(ADDENDUM_E_SYMBOLS)
         assert session.get(ControlState, 1).trading_mode == "LIVE_BLOCKED"
         assert session.get(ControlSetting, "paper_execution").value == "OPEN"
         account = session.get(PaperAccount, 1)
@@ -204,6 +207,42 @@ def test_stale_allow_list_is_reconciled_to_final_strategy(db_url):
         assert account.cash == 1000.0
         assert session.query(PaperFill).count() == 0
         assert session.query(PaperPosition).count() == 0
+    finally:
+        session.close()
+        init_db("sqlite:///:memory:", reset=True)
+
+
+def test_stale_extras_are_removed_from_allow_list(db_url):
+    init_db(db_url, reset=True)
+    factory = get_session_factory(db_url, reset=False)
+    session = factory()
+    try:
+        now = now_london()
+        session.add(
+            ControlState(
+                id=1,
+                trading_mode="LIVE_BLOCKED",
+                kill_switch=False,
+                updated_at=now,
+                updated_by="stale-copy",
+            )
+        )
+        for symbol in ("AAPL", "JPM", "SHEL.L"):
+            session.add(
+                AllowListInstrument(
+                    symbol=symbol,
+                    venue="NASDAQ" if symbol == "AAPL" else ("LSE" if symbol.endswith(".L") else "NYSE"),
+                    approved_by="stale-copy",
+                    approved_at=now,
+                )
+            )
+        session.commit()
+        seed_if_empty(session)
+        symbols = {r.symbol for r in session.query(AllowListInstrument).all()}
+        assert symbols == set(ADDENDUM_E_SYMBOLS)
+        assert "JPM" not in symbols
+        assert "SHEL.L" not in symbols
+        assert "GLD" in symbols
     finally:
         session.close()
         init_db("sqlite:///:memory:", reset=True)

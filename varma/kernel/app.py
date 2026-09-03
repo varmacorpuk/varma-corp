@@ -21,6 +21,7 @@ from varma.clock import (
     describe_flatten_us_close,
     describe_nightly_memory_filter,
     describe_paper_session,
+    describe_us_open_scanner,
     now_london,
 )
 from varma.controls.engine import ControlEngine
@@ -53,7 +54,13 @@ from varma.routines.run_0730_meeting import run_0730_meeting
 from varma.routines.run_flatten_us_close import run_flatten_us_close
 from varma.routines.run_flatten_london_close import run_flatten_london_close
 from varma.routines.run_paper_trade_path import run_paper_trade_path
-from varma.routines.board_jobs import with_flatten_safety, with_job_safety, with_paper_trade_safety
+from varma.routines.run_us_open_scanner import run_us_open_scan
+from varma.routines.board_jobs import (
+    with_flatten_safety,
+    with_job_safety,
+    with_paper_trade_safety,
+    with_scanner_safety,
+)
 from varma.controls.addendum_j import (
     EMPLOYEE_CANNOT_DOWNLOAD_SECRETS_REASON,
     SECRETS_ARE_NOT_DOWNLOADABLE_REASON,
@@ -102,6 +109,13 @@ class OrderIn(BaseModel):
 
 class KillSwitchIn(BaseModel):
     halt: bool = True
+
+
+class UsOpenScanIn(BaseModel):
+    plan: list[dict[str, Any]] = Field(default_factory=list)
+    submit: bool = False
+    max_concurrent_positions: int = 1
+    at: str | None = None
 
 
 def create_app() -> FastAPI:
@@ -426,6 +440,33 @@ def create_app() -> FastAPI:
             run_paper_trade_path(session, started_by="board-member"),
         )
 
+    @app.post("/routines/run-us-open-scanner")
+    def api_run_us_open_scanner(
+        payload: UsOpenScanIn | None = Body(default=None),
+        _board: Actor = Depends(require_board_member),
+        session: Session = Depends(_session),
+    ) -> dict[str, Any]:
+        body = payload or UsOpenScanIn()
+        at = None
+        if body.at:
+            from datetime import datetime
+
+            from varma.clock import LONDON
+
+            parsed = datetime.fromisoformat(body.at)
+            at = parsed.replace(tzinfo=LONDON) if parsed.tzinfo is None else parsed
+        return with_scanner_safety(
+            session,
+            run_us_open_scan(
+                session,
+                plan=body.plan,
+                at=at,
+                submit=body.submit,
+                max_concurrent_positions=body.max_concurrent_positions,
+                started_by="board-member",
+            ),
+        )
+
     @app.get("/routines/backup-schedule")
     def backup_schedule() -> dict[str, Any]:
         return {
@@ -562,6 +603,22 @@ def create_app() -> FastAPI:
             "cli": "python -m varma.routines.run_nightly_filter",
             "writes_controls": False,
             "deletes_evidence": False,
+        }
+
+    @app.get("/routines/us-open-scanner-schedule")
+    def us_open_scanner_schedule() -> dict[str, Any]:
+        return {
+            "schedule": "New York open through first 32 minutes",
+            "timezone": "America/New_York",
+            "plan_meeting": "14:00 Europe/London",
+            "daemon": False,
+            "completed_bars_only": True,
+            "universe_count": 15,
+            "description": describe_us_open_scanner(),
+            "cli": "python -m varma.routines.run_us_open_scanner",
+            "writes_controls": False,
+            "internal_simulator": True,
+            "live_fills": False,
         }
 
     @app.get("/routines/brief-schedule")

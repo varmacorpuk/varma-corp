@@ -269,8 +269,11 @@ class ControlEngine:
         if state.kill_switch:
             return self._deny("KILL_SWITCH", actor_id, order)
 
-        # Gold is never an execution universe, even if someone writes it onto the list.
-        if symbol.upper() in {"XAU", "XAUUSD", "GOLD", "GC"}:
+        # Gold futures / bullion codes are never an execution universe.
+        # GLD is a listed ETP on the allow-list and is not in this deny set.
+        from varma.controls.addendum_e import is_gold_futures_symbol
+
+        if is_gold_futures_symbol(symbol):
             return self._deny("GOLD_NOT_AUTHORISED", actor_id, order)
 
         allow = self.allow_list_symbols()

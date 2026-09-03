@@ -101,6 +101,21 @@ def describe_flatten_us_close() -> str:
     )
 
 
+def describe_us_open_scanner() -> str:
+    return (
+        "On-demand US-open PAPER scanner. New York cash open through the first "
+        "32 minutes on the final 15-name US book (10 equities + 5 listed "
+        "commodity ETP proxies). Frozen 14:00 Europe/London plan levels. "
+        "Completed 1m and 5m bars only, with exchange timestamps and a latency "
+        "buffer. Minute-2 needs two completed 1m bars and a close through a "
+        "frozen level. From minute 5, completed 5m opening-range structure. "
+        "Technical toolkit is descriptive context — no indicator unanimity, "
+        "no news gate. Entry is the next available price, never the signal "
+        "close. One concurrent position is a proposal default, not a control. "
+        "Fills use the sanctioned USD→GBP paper path. LIVE_BLOCKED. No daemon."
+    )
+
+
 def describe_flatten_london_close() -> str:
     return (
         "CEO desk 02F (bound in ControlEngine): flatten SHEL.L, AZN.L, ULVR.L "

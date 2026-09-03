@@ -17,6 +17,7 @@ from varma.clock import (
     describe_flatten_us_close,
     describe_nightly_memory_filter,
     describe_paper_session,
+    describe_us_open_scanner,
 )
 from varma.controls.addendum_a import ADDENDUM_A_LABEL, CURRENCY, TIMEZONE, addendum_a_public
 from varma.controls.addendum_c import ADDENDUM_C_LABEL, addendum_c_public
@@ -793,6 +794,21 @@ class BoardObservability:
                     "internal_simulator": True,
                     "broker": False,
                     "flatten_as_if_there_were_positions": False,
+                },
+                "us_open_scanner": {
+                    "schedule": "New York open through first 32 minutes",
+                    "timezone": "America/New_York",
+                    "plan_meeting": "14:00 Europe/London",
+                    "daemon": False,
+                    "completed_bars_only": True,
+                    "universe_count": 15,
+                    "method": "POST",
+                    "path": "/routines/run-us-open-scanner",
+                    "cli": "python -m varma.routines.run_us_open_scanner",
+                    "description": describe_us_open_scanner(),
+                    "internal_simulator": True,
+                    "live_fills": False,
+                    "get_observability_runs_scanner": False,
                 },
                 "backup": {
                     "schedule": "daily after US close / end of London evening",

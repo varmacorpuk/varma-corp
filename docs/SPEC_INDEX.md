@@ -19,8 +19,8 @@ the index.
 | 03 | AI employee architecture | `varma/employees/brain.py`, `db/models.py` (Employee, EmployeeFoundation, EmployeeRelationship, Skill, SkillInvocation) | `tests/test_brains_and_people.py`, `test_employee.py` |
 | 04 | Trading strategy / approach | `varma/controls/` (allow-list, limits) | `tests/test_addendum_e.py`, `test_watchlist.py` |
 | 05 | Trading workflow / decision | `varma/skills/`, `varma/meetings/handoff.py` | `tests/test_challenge_risk.py` |
-| 06 | Strategy / market universe | `varma/controls/addendum_e.py`, `db/seed.py` (watchlist) | `tests/test_watchlist.py`, `test_addendum_e.py` |
-| 07 | Trade lifecycle / decisions | `varma/controls/engine.py`, `varma/paper/`, `varma/skills/propose_paper_ticket.py` | `tests/test_execution.py`, `test_paper_simulator.py`, `test_paper_trade_path.py` |
+| 06 | Strategy / market universe | `varma/controls/addendum_e.py`, `addendum_l.py`, `db/seed.py` (watchlist) | `tests/test_watchlist.py`, `test_addendum_e.py`, `test_us_open_scanner.py` |
+| 07 | Trade lifecycle / decisions | `varma/controls/engine.py`, `varma/paper/`, `varma/scanner/`, `varma/skills/propose_paper_ticket.py` | `tests/test_execution.py`, `test_paper_simulator.py`, `test_paper_trade_path.py`, `test_us_open_scanner.py` |
 | 08 | Employee behaviour / memory / learning | `varma/memory/stores.py`, `varma/memory/filter.py` | `tests/test_memory_filter.py`, `test_brains_and_people.py` |
 | 09 | Meetings / communication / office | `varma/meetings/`, `desktop/` | `tests/test_company_meeting.py`, `test_office_layout.py`, `test_chat.py` |
 | 10 | CEO / management / governance | `varma/skills/`, `db/seed.py` (ceo) | `tests/test_ceo.py` |
@@ -28,7 +28,7 @@ the index.
 | 12 | Paper trading / evaluation / live transition | `varma/paper/`, `varma/controls/addendum_i.py`, `varma/routines/run_paper_trade_path.py` | `tests/test_paper_simulator.py`, `test_addendum_i.py`, `test_paper_trade_path.py` |
 | 13 | Technology / IT / self-maintenance | `varma/backup/`, `varma/controls/addendum_j.py` | `tests/test_addendum_j.py` |
 | 14 | MVP technical architecture | `varma/kernel/app.py`, `varma/db/engine.py` | `tests/test_health.py` |
-| 15 | Data / market intelligence / tools | `varma/ports/data.py`, `varma/verification/brief.py` | `tests/test_brief.py` |
+| 15 | Data / market intelligence / tools | `varma/ports/data.py`, `varma/technical/`, `varma/verification/brief.py` | `tests/test_brief.py`, `test_technical_toolkit.py` |
 | 16 | Virtual office / UX | `desktop/`, `varma/kernel/app.py` (`/office/state`) | `tests/test_office_layout.py` |
 | 17 | Resource / cost / sustainability | `varma/cost/ledger.py`, `varma/observability/ai_usage.py` | `tests/test_ai_usage.py` |
 | 18 | Final build package | whole `varma/` slice | full suite |
@@ -45,3 +45,4 @@ the index.
 | J (2026-08-27) | Encrypted company backup | `varma/controls/addendum_j.py`, `varma/backup/` | `tests/test_addendum_j.py` |
 | K (2026-09-03) | After London cash close, deny SHEL.L/AZN.L/ULVR.L only | `varma/controls/addendum_k.py`, `lse_session.py` | `tests/test_addendum_k.py`, `test_lse_session.py` |
 | 02F (CEO desk) | Bound LSE London-auction flatten; US names at US close | `varma/controls/venue_flatten.py`, `engine.py`, `paper/flatten.py` | `tests/test_venue_flatten_02f.py` |
+| L (2026-09-03) | Final 15-name US universe (10 equities + 5 listed commodity ETPs) | `varma/controls/addendum_l.py`, `addendum_e.py` | `tests/test_us_open_scanner.py`, `test_addendum_e.py` |

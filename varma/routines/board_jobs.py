@@ -143,6 +143,29 @@ BOARD_JOBS: tuple[dict[str, Any], ...] = (
         "daemon": False,
     },
     {
+        "id": "run-us-open-scanner",
+        "label": "Run US-open PAPER scanner",
+        "method": "POST",
+        "path": "/routines/run-us-open-scanner",
+        "cli": "python -m varma.routines.run_us_open_scanner",
+        "sample": False,
+        "is_live_trade": False,
+        "is_live_approval": False,
+        "internal_simulator": True,
+        "paper_execution_closed": False,
+        "fills_while_closed": False,
+        "paper_fills": True,
+        "fills": True,
+        "live_fills": False,
+        "ai_called": False,
+        "daemon": False,
+        "scanner": "us_open",
+        "universe_count": 15,
+        "completed_bars_only": True,
+        "max_concurrent_is_proposal_not_control": True,
+        "grand_opening_paper_done": True,
+    },
+    {
         "id": "run-paper-trade-path",
         "label": "Run Trader paper-ticket proposal",
         "method": "POST",
@@ -224,6 +247,18 @@ def runnable_jobs_catalog() -> dict[str, Any]:
             item["grand_opening_not_performed"] = False
             item["grand_opening_paper_done"] = True
             item["daemon"] = False
+        if job["id"] == "run-us-open-scanner":
+            item["paper_fills"] = True
+            item["fills"] = True
+            item["live_fills"] = False
+            item["fills_while_closed"] = False
+            item["internal_simulator"] = True
+            item["ai_called"] = False
+            item["scanner"] = "us_open"
+            item["completed_bars_only"] = True
+            item["max_concurrent_is_proposal_not_control"] = True
+            item["grand_opening_paper_done"] = True
+            item["daemon"] = False
         items.append(item)
     catalog = {
         "read_only_list": True,
@@ -268,6 +303,24 @@ def with_job_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
         "broker_paper_status": ports["broker_paper"]["status"],
         "live_status": ports["live"]["status"],
     }
+    return out
+
+
+def with_scanner_safety(session: Session, result: dict[str, Any]) -> dict[str, Any]:
+    """Safety flags for the US-open scanner. Simulator fills only if submitted and allowed."""
+    out = with_job_safety(session, result)
+    filled = any(bool(row.get("filled")) for row in result.get("submissions") or [])
+    out["job_safety"]["fills"] = filled
+    out["job_safety"]["paper_fills"] = filled
+    out["job_safety"]["live_fills"] = False
+    out["job_safety"]["fills_while_closed"] = False
+    out["job_safety"]["internal_simulator"] = True
+    out["job_safety"]["ai_called"] = False
+    out["job_safety"]["scanner"] = "us_open"
+    out["job_safety"]["completed_bars_only"] = True
+    out["job_safety"]["loads_broker_ports"] = False
+    out["job_safety"]["changes_trading_mode"] = False
+    out["job_safety"]["writes_controls"] = False
     return out
 
 

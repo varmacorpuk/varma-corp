@@ -78,7 +78,7 @@ true.
 - `varma/skills/propose_paper_ticket.py` — Trader paper-ticket proposal (no AI call; engine permit/deny).
 
 ### Market intelligence / data
-- `varma/ports/data.py` — `FakeMarketData` (delayed fake news + prices). No paid vendor. Equities only.
+- `varma/ports/data.py` — `FakeMarketData` (delayed fake news + prices + 1m/5m OHLCV). No paid vendor.
 - `varma/verification/brief.py` — deterministic freshness + required-field verification.
 
 ### Trading / paper-trading components
@@ -118,8 +118,10 @@ true.
 
 ### Orchestration / routines (on-demand; no daemon)
 - `varma/routines/run_brief.py`, `run_challenge.py`, `run_risk_deny.py`, `run_nightly_filter.py`,
-  `run_0730_meeting.py`, `run_flatten_us_close.py`, `run_flatten_london_close.py`, `run_backup.py`, `run_paper_trade_path.py` —
+  `run_0730_meeting.py`, `run_flatten_us_close.py`, `run_flatten_london_close.py`, `run_backup.py`,
+  `run_paper_trade_path.py`, `run_us_open_scanner.py` —
   CLI + called by kernel POSTs.
+- `varma/scanner/` — deterministic US-open PAPER scanner (completed 1m/5m bars, frozen 14:00 levels).
 - `varma/routines/board_jobs.py` — Board-only job catalog + safety flag wrappers.
 
 ### Observability / cost / measurement
