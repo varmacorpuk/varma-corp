@@ -669,13 +669,7 @@
       const on = selected && selected.slug === emp.slug;
       const walkFrame = pos.walking && Math.floor(t / 180) % 2 === 0;
       drawSprite(ctx, pos.x, pos.y, look, on, bob, pos.facing, walkFrame);
-      const talking = Math.floor((t / 1600 + i) % 5) === 0 || pos.walking;
-      if (talking) {
-        drawBubble(ctx, pos.x + (i % 2 === 0 ? -6 : 4), pos.y + bob, "...");
-      } else {
-        drawBubble(ctx, pos.x + (i % 2 === 0 ? -6 : 4), pos.y + bob, emp.status_bubble || emp.status || "OK");
-      }
-      nameplate(ctx, pos.x + 8, pos.y + 28, emp.display_name || emp.slug);
+      drawBubble(ctx, pos.x + (i % 2 === 0 ? -6 : 4), pos.y + bob, "...");
       emp._hit = {
         x: (pos.x - 16) * S,
         y: (pos.y - 18) * S,
